@@ -24,7 +24,8 @@ lives in one place instead of being reconstructed from two codebases every time.
 | What ships next and why | [product/roadmap.md](product/roadmap.md) |
 | What is built, in which repo, and whether it is documented | [product/feature-status.md](product/feature-status.md) |
 | The complete database migration history | [architecture/database-migrations.md](architecture/database-migrations.md) |
-| The API surface | [backend/api/API_REFERENCE.md](backend/api/API_REFERENCE.md) |
+| The API surface | [API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/API_REFERENCE.md) — lives in the backend repo |
+| Which repo a document belongs in | [**where-documents-live.md**](where-documents-live.md) |
 | How to keep this repo true | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ---
@@ -32,30 +33,27 @@ lives in one place instead of being reconstructed from two codebases every time.
 ## How this is organised
 
 ```
-README.md · STATUS.md · INDEX.md · CONTRIBUTING.md   ← the curated layer, written for this repo
+README · STATUS · INDEX · CONTRIBUTING · where-documents-live   ← written for this repo
 product/          roadmap and cross-repo feature status
 architecture/     system overview and the migration history — things neither repo owns alone
-backend/          mirror of the backend's docs/ tree, plus its changelog and conventions
-frontend/         mirror of the frontend's docs/ tree, plus its conventions
+backend/          architecture, features, plans, ADRs, audits, incidents
+frontend/         features and the architecture overview
 ```
 
-`backend/` and `frontend/` are **faithful mirrors** of each repo's `docs/` directory, imported on
-2026-07-31. The tree shape was kept exactly as it was so that the relative links *between* those
-documents still resolve. The trade-off is that their internal links to **source files**
-(`src/main/java/...`, `src/features/...`) do not resolve here — those point into the code repos,
-and are still correct there.
+`backend/` and `frontend/` keep the tree shape each repo's `docs/` directory had, so the relative
+links *between* those documents still resolve. Their links to **source files**
+(`src/main/java/...`, `src/features/...`) do not resolve here — those point into the code repos, and
+are still correct there.
 
-Two things were deliberately **not** imported:
+**Not everything moved, and that is deliberate.** API contracts, the endpoint changelog, deployment
+guides, each repo's changelog, the frontend's how-to guides, the agent definitions and the Postman
+collection all stayed with their code, because they change in the same commit as the code they
+describe — which is the only thing that has reliably kept documentation here accurate. The full
+split, with the reasoning and links to everything that stayed, is in
+[**where-documents-live.md**](where-documents-live.md).
 
-- **The 14 agent definitions** in the backend's `.github/agents/`. They are executable
-  configuration for the pipeline that drives that repo, so they have to live beside the code they
-  act on. A summary of what the pipeline is lives in
-  [backend/AGENT-PIPELINE.md](backend/AGENT-PIPELINE.md).
-- **The Postman collection** (`postman/`). It is a machine-readable artefact, versioned with the
-  API it exercises. Its current state is recorded in [STATUS.md](STATUS.md) — it is well behind.
-
-The roadmap existed identically in both repos; the duplicates were removed and the single copy
-lives at [product/roadmap.md](product/roadmap.md).
+Nothing is duplicated in both places. The roadmap used to be, in both repos, and both copies
+drifted; it is now one file at [product/roadmap.md](product/roadmap.md).
 
 ---
 

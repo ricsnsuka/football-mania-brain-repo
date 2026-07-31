@@ -1,76 +1,53 @@
 # Documentation Index
 
-Every document in this repo. ⚠️ marks one with known drift — see
-[STATUS.md](STATUS.md#known-documentation-drift).
+Everything in this repo, plus pointers to the documents that deliberately stayed with the code.
+⚠️ marks known drift — see [STATUS.md](STATUS.md#known-documentation-drift).
+Why a document is here rather than there: [where-documents-live.md](where-documents-live.md).
 
 ---
 
-## Curated (written for this repo)
+## Start here
 
 | Document | What it is |
 |---|---|
 | [README](README.md) | What this repo is and the source-of-truth rule |
-| [STATUS](STATUS.md) | Where the project stands, live hazards, the documentation drift register |
+| [STATUS](STATUS.md) | Where the project stands, live hazards, the drift register |
+| [where-documents-live](where-documents-live.md) | Which repo owns which document, and why |
 | [CONTRIBUTING](CONTRIBUTING.md) | How to keep this true, and the ship checklist |
-| [product/roadmap](product/roadmap.md) | The five-phase improvement and mobile roadmap — the single copy |
+| [product/roadmap](product/roadmap.md) | The five-phase improvement and mobile roadmap |
 | [product/feature-status](product/feature-status.md) | Every feature × backend × frontend × docs |
-| [architecture/system-overview](architecture/system-overview.md) | How the two repos fit together; the conventions that bite |
+| [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
 | [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V19 history + deployment state |
 
 ---
 
 ## Backend
 
-### API
+### Architecture and features
 
 | Document | What it is |
 |---|---|
-| [API_REFERENCE](backend/api/API_REFERENCE.md) ⚠️ | The whole API surface in one file. Missing Push and Payments sections |
-| [player-API-CONTRACT](backend/api/player-API-CONTRACT.md) | Player management, incl. self-edit and PII gating |
-| [PLAYER-LINK-ME-API-CONTRACT](backend/api/PLAYER-LINK-ME-API-CONTRACT.md) | Linking your own account to a player |
-| [ROLES-API-CONTRACT](backend/api/ROLES-API-CONTRACT.md) | Composable roles (V18) |
-| [ADMIN-API-CONTRACT](backend/api/ADMIN-API-CONTRACT.md) | Runtime settings and system endpoints |
-| [PAYMENTS-API-CONTRACT](backend/api/PAYMENTS-API-CONTRACT.md) | The match fee ledger |
-| [PUSH-API-CONTRACT](backend/api/PUSH-API-CONTRACT.md) | Subscriptions, per-category preferences, the seven categories |
-| [MOTM-API-CONTRACT](backend/api/MOTM-API-CONTRACT.md) | Crowd Man-of-the-Match voting |
-| [BADGES-API-CONTRACT](backend/api/BADGES-API-CONTRACT.md) | Achievement badges |
-| [LEADERBOARDS-API-CONTRACT](backend/api/LEADERBOARDS-API-CONTRACT.md) | League table and category tops |
-| [MATCH-RATING-RECALCULATION-API-CONTRACT](backend/api/MATCH-RATING-RECALCULATION-API-CONTRACT.md) | Idempotent admin recalculation |
-| [DRAFT-SESSION-ADMIN-API-CONTRACT](backend/api/DRAFT-SESSION-ADMIN-API-CONTRACT.md) | Admin control over a running draft |
-| [DRAFT-SESSION-RESUME-API-CONTRACT](backend/api/DRAFT-SESSION-RESUME-API-CONTRACT.md) | SSE reconnect and resume |
-| [PRIVACY-API-CONTRACT](backend/api/PRIVACY-API-CONTRACT.md) | GDPR export and erasure |
-
-### Architecture & features
-
-| Document | What it is |
-|---|---|
-| [ARCHITECTURE](backend/architecture/ARCHITECTURE.md) ⚠️ | Layering, packages, schema. Migration table stops at V13 |
+| [ARCHITECTURE](backend/architecture/ARCHITECTURE.md) ⚠️ | Layering, packages, schema. Its migration table stops at V13 — use [database-migrations](architecture/database-migrations.md) |
 | [ARCHITECTURE_DECISIONS](backend/next-release/ARCHITECTURE_DECISIONS.md) | ADR-001 optimistic locking · ADR-002 async completion · ADR-003 Caffeine · ADR-004 LLM vendor |
 | [MICROSERVICES_ARCHITECTURE](backend/features/MICROSERVICES_ARCHITECTURE.md) | Why it is still one deployable |
-| [CALCULATION_SERVICE](backend/features/CALCULATION_SERVICE.md) | The skill-rating engine, formula versions and worked examples |
+| [CALCULATION_SERVICE](backend/features/CALCULATION_SERVICE.md) | The skill-rating engine — formulas, constants, worked examples |
 | [MATCH_FEATURE](backend/features/MATCH_FEATURE.md) | Match lifecycle, completion, amendment |
 | [MATCH_PLANS_FEATURE](backend/features/MATCH_PLANS_FEATURE.md) ⚠️ | Plans and the availability poll. **Stale since 2026-05-27** |
 | [PLAYER_FEATURE](backend/features/PLAYER_FEATURE.md) | Roster, aggregates, soft delete |
 | [USERS](backend/features/USERS.md) | Accounts, authentication, roles |
 | [SEASON_FEATURE](backend/features/SEASON_FEATURE.md) | Seasons and the single-current invariant |
-| [TEAM_GENERATION_FEATURE](backend/features/TEAM_GENERATION_FEATURE.md) | The six strategies |
-| [TEAM_GENERATION_DESIGN](backend/features/TEAM_GENERATION_DESIGN.md) | How they were evaluated against each other |
+| [TEAM_GENERATION_FEATURE](backend/features/TEAM_GENERATION_FEATURE.md) · [DESIGN](backend/features/TEAM_GENERATION_DESIGN.md) | The six strategies, and how they were evaluated |
 | [DRAFT_SESSION_FEATURE](backend/features/DRAFT_SESSION_FEATURE.md) | Interactive captain pick |
 | [PRIVACY_AND_DATA_PROTECTION](backend/features/PRIVACY_AND_DATA_PROTECTION.md) | What personal data exists, and both GDPR paths |
 | [MATCH_TEAM_SPEC](backend/next-release/MATCH_TEAM_SPEC.md) | Match & team feature specification |
+| [RELEASE_NOTES](backend/next-release/RELEASE_NOTES.md) | Accumulated notes for the next release |
 
-### Integration, operations, history
+### History
 
 | Document | What it is |
 |---|---|
-| [DRAFT_SESSION_SSE_GUIDE](backend/frontend/DRAFT_SESSION_SSE_GUIDE.md) | How the frontend consumes the draft SSE stream |
-| [FRONTEND_ENDPOINT_CHANGES](backend/frontend/FRONTEND_ENDPOINT_CHANGES.md) | Endpoint changes the frontend must react to |
-| [HEROKU_DEPLOYMENT_GUIDE](backend/deployment/HEROKU_DEPLOYMENT_GUIDE.md) | Deploying the backend |
-| [CHANGELOG](backend/CHANGELOG.md) ⚠️ | **Twelve commits behind** |
-| [RELEASE_NOTES](backend/next-release/RELEASE_NOTES.md) | Accumulated notes for the next release |
 | [INCIDENT 2026-05-26](backend/fixes/INCIDENT_2026-05-26_Java_Version_Mismatch.md) | Java 21 vs IntelliJ's 17 |
 | [SECURITY-AUDIT 2025-07-09](backend/security/SECURITY-AUDIT-2025-07-09.md) · [2025-07-16](backend/security/SECURITY-AUDIT-2025-07-16.md) | Two audit passes |
-| [PROJECT-README](backend/PROJECT-README.md) · [docs README](backend/README.md) | The backend's own front pages |
 
 ### Plans and handoffs
 
@@ -84,28 +61,13 @@ Every document in this repo. ⚠️ marks one with known drift — see
 | [REVIEW_HANDOFF_2026-07-27](backend/plans/REVIEW_HANDOFF_2026-07-27.md) | ✅ backlog cleared |
 | [ORCHESTRATOR_SESSION](backend/plans/ORCHESTRATOR_SESSION.md) ⚠️ | Session log — **no entries since 2026-07-28** |
 
-### Conventions
-
-| Document | What it is |
-|---|---|
-| [CONVENTIONS-copilot-instructions](backend/CONVENTIONS-copilot-instructions.md) | The backend's coding and review conventions |
-| [AGENT-PIPELINE](backend/AGENT-PIPELINE.md) | What the agent pipeline is. The 14 agent definitions stay in the code repo |
-
 ---
 
 ## Frontend
 
 | Document | What it is |
 |---|---|
-| [PROJECT-README](frontend/PROJECT-README.md) | Front page — **push does not work under `npm run dev`** |
 | [architecture/overview](frontend/architecture/overview.md) | Tech stack, folder structure, data flow |
-| [INDEX](frontend/INDEX.md) ⚠️ | The frontend's own index — omits seven of its files |
-| [CONVENTIONS-AGENTS](frontend/CONVENTIONS-AGENTS.md) | "This is NOT the Next.js you know" — read before writing Next.js code here |
-
-### Features
-
-| Document | What it is |
-|---|---|
 | [login](frontend/features/login.md) | Auth flow, change-password |
 | [dashboard](frontend/features/dashboard.md) | Role-based overview |
 | [players](frontend/features/players.md) · [matches](frontend/features/matches.md) | The two main tables |
@@ -120,14 +82,20 @@ Every document in this repo. ⚠️ marks one with known drift — see
 | [language-switcher](frontend/features/language-switcher.md) · [theme](frontend/features/theme.md) | Locale and light/dark |
 | *payments* ⚠️ | **Missing.** The ledger UI shipped in `a3efac0` with no feature doc |
 
-### Guides
+---
 
-| Document | What it is |
+## Not here — and why
+
+These stayed with their code because they change in the same commit as it does. Full reasoning in
+[where-documents-live.md](where-documents-live.md).
+
+| Document | Lives in |
 |---|---|
-| [getting-started](frontend/guides/getting-started.md) | Local setup |
-| [component-conventions](frontend/guides/component-conventions.md) | How to write components here |
-| [shared-components](frontend/guides/shared-components.md) | The shared primitives |
-| [styling](frontend/guides/styling.md) | Semantic colour tokens and control surfaces |
-| [i18n](frontend/guides/i18n.md) | en / pt / es — **every user-visible string needs all three** |
-| [testing](frontend/guides/testing.md) | Unit and visual regression |
-| [netlify-deployment](frontend/guides/netlify-deployment.md) | Deploying the frontend |
+| [API_REFERENCE](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/API_REFERENCE.md) and the 14 per-surface contracts ⚠️ | [backend `docs/api/`](https://github.com/ricsnsuka/FootMania-Back/tree/master/docs/api) — *reference is missing Push and Payments sections* |
+| [FRONTEND_ENDPOINT_CHANGES](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/frontend/FRONTEND_ENDPOINT_CHANGES.md) · [draft SSE guide](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) | [backend `docs/frontend/`](https://github.com/ricsnsuka/FootMania-Back/tree/master/docs/frontend) |
+| [Heroku deployment](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/deployment/HEROKU_DEPLOYMENT_GUIDE.md) | backend `docs/deployment/` |
+| [Backend CHANGELOG](https://github.com/ricsnsuka/FootMania-Back/blob/master/CHANGELOG.md) ⚠️ | backend root — **twelve commits behind** |
+| [copilot-instructions](https://github.com/ricsnsuka/FootMania-Back/blob/master/.github/copilot-instructions.md) · [the 14 agent definitions](https://github.com/ricsnsuka/FootMania-Back/tree/master/.github/agents) | backend `.github/` |
+| Postman collection ⚠️ | backend `postman/` — **~28 endpoints missing** |
+| [Getting started](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/getting-started.md) · [component conventions](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/component-conventions.md) · [shared components](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/shared-components.md) · [styling](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/styling.md) · [i18n](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/i18n.md) · [testing](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/testing.md) · [Netlify](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/netlify-deployment.md) | [frontend `docs/guides/`](https://github.com/ricsnsuka/FootMania-Simple-Front/tree/v1.0.0/docs/guides) |
+| [AGENTS.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/AGENTS.md) — *"this is NOT the Next.js you know"* | frontend root |
