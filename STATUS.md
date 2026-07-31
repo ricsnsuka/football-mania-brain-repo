@@ -1,0 +1,91 @@
+# Project Status
+
+**Snapshot: 2026-07-31.** Written when this repo was created. Update it when the answers change,
+not on a schedule — a status page nobody trusts is worse than none.
+
+| | Backend | Frontend |
+|---|---|---|
+| Branch | `v1.0.0` (level with `origin`, merged into `master`) | `v1.0.0` |
+| Head | `e87d624` — *Return the pitch cost in MatchPlanDTO* | `4f47bf5` — *Fix the cost field, lift toasts above modals…* |
+| Working tree | clean | clean |
+| Tests | 853 (as recorded in the role-migration plan) | 455 unit + 20 visual regression |
+| Latest migration | `V19__match_fee_ledger.sql` | — |
+
+---
+
+## Where we are on the roadmap
+
+See [product/roadmap.md](product/roadmap.md) for the plan itself.
+
+| Phase | State |
+|---|---|
+| **0** — branding, `is_current` season gap, GDPR posture | ✅ done |
+| **1** — PWA groundwork | ✅ done (frontend) |
+| **2** — Web Push | ✅ done, delivery observed end to end against a real push service |
+| **3** — the "steal from Capo" set | 🟡 balance-at-a-glance, waitlist, leaderboards/rankings, MOTM voting and badges all shipped in both repos. **Remaining: AI match reports** |
+| **4** — Capacitor + app stores | ⬜ not started, deliberately gated on real usage data |
+| **5** — multi-tenancy + billing | ⬜ not started |
+
+Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
+system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee
+ledger. The ledger is bookkeeping only — **no money moves through the application**, by design.
+See [backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md) §14 for how a
+real payment integration would bolt on later without any of it being wasted.
+
+---
+
+## Live hazards
+
+**1. V18 and V19 have never run against a real database.** Both are merged and CI-green against
+Testcontainers, and neither has touched staging or production. **V18 drops a column**
+(`users.role`, replaced by the composable-roles join table), so it is not a migration to discover
+problems with during a deploy. The `integrationTest` Gradle task runs the real Flyway chain on a
+PostgreSQL container and is the cheapest pre-flight available — it is opt-in and not wired into
+`check`, so it has to be run deliberately.
+
+**2. A stale JVM will lie to you.** On 2026-07-31 a bug was reported where a match plan's pitch
+cost saved correctly, notified players with the right amount, and still read "not set" in the UI.
+The code was correct in all three layers. The Spring Boot process had been started *before* the
+class was recompiled, so it was still serving the previous `MatchPlanDTO` — the running app's own
+`/v3/api-docs` schema was missing the field. If a field is definitely in the DTO and definitely
+absent from the response, check the process start time against the class file's mtime before
+looking anywhere else.
+
+---
+
+## Known documentation drift
+
+Found by auditing the imported documents against the code on 2026-07-31. Each line is a document
+that is **wrong or incomplete**, not merely old. Fix the document, then delete its line.
+
+| Where | Problem | Correction |
+|---|---|---|
+| [backend/CHANGELOG.md](backend/CHANGELOG.md) | `[Unreleased]` stops at 2026-07-29. Twelve commits missing: leaderboards/rankings, MOTM, badges, competition rules, admin settings/system, match-count perf, kickoff + lifecycle, composable roles, NPE/security-CI, self-edit + past plans, fee ledger, pitch cost | Backfill from the commit messages, which are unusually descriptive |
+| [backend/architecture/ARCHITECTURE.md](backend/architecture/ARCHITECTURE.md) | Migration table stops at **V13** of 19 | Superseded by [architecture/database-migrations.md](architecture/database-migrations.md) — reconcile or point at it |
+| [backend/api/API_REFERENCE.md](backend/api/API_REFERENCE.md) | No Push section, no Payments/match-fee section; `totalCostCents` on `MatchPlanDTO` documented nowhere | Contracts exist standalone ([PUSH](backend/api/PUSH-API-CONTRACT.md), [PAYMENTS](backend/api/PAYMENTS-API-CONTRACT.md)); the reference needs the sections and the field |
+| [backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md) | Last touched 2026-05-27 — predates kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | Rewrite against current behaviour |
+| [backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md) | Header read "DRAFT — not implemented"; it shipped in `828db3b` | ✅ corrected here on import; **the copy in the backend repo is still wrong** |
+| [backend/plans/ORCHESTRATOR_SESSION.md](backend/plans/ORCHESTRATOR_SESSION.md) | Last entry 2026-07-28, though `orchestrator.agent.md` still mandates an entry per session | Resume it, or retire the convention deliberately |
+| Postman collection (not imported) | Last updated 2026-07-10: 60 requests against 81 controller mappings. Missing entirely: Payments (9), Push (5), Admin settings/system (5), Privacy (4), MOTM (2), rankings, leaderboards, badges. Its changelog still describes a 37-request collection | Regenerate; roughly 28 endpoints of work |
+| [frontend/INDEX.md](frontend/INDEX.md) | States "Every new doc file must be linked here" and then omits seven of its own: badges, motm-voting, rankings, roles, settings, team-generation, theme | Relink |
+| frontend — missing file | No `features/payments.md`, though `a3efac0` shipped the whole "what you owe" UI and every other feature has one | Write it |
+
+A related failure, already fixed: the notification-settings screen rendered `MVP_VOTE_OPEN` and
+`FEE_CHARGED` as raw enum names because both categories were added backend-side without anyone
+adding the `en`/`pt`/`es` strings. Two separate commits missed it, and nothing tests that the
+locale files cover `NotificationCategory`. **A key-parity test still does not exist.**
+
+The shape of all of this is the same: the code shipped, the follow-through did not. That is the
+reason this repo exists.
+
+---
+
+## Suggested next steps
+
+1. Run `integrationTest`, then deploy V17–V19 somewhere real. This is the only item with a
+   deadline attached to it, because the risk grows with every migration stacked on top.
+2. Backfill the changelog and fix the drift table above.
+3. Regenerate the Postman collection.
+4. Add the locale key-parity test, and a controller test asserting `totalCostCents` serialises.
+5. Then Phase 3's last item — AI match reports — or Phase 5, which the roadmap says to gate on a
+   real engagement signal from push.
