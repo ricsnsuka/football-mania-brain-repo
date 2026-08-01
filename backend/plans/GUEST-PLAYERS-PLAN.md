@@ -348,8 +348,36 @@ spec alone would get wrong:
 **`GuestIsolationIT` has never been executed.** It was written to cover exactly the things unit
 tests cannot reach — the `guest = false` aggregate guards, `chk_guest_has_no_account`,
 `uq_active_delegation_per_debtor` and `chk_no_self_delegation` — and it needs Docker, which the
-authoring environment did not have. It is the pre-flight, and it stacks on V17–V20 which have also
-never run against a real database. **Run `./gradlew integrationTest` before deploying.**
+authoring environment did not have. The migrations themselves have since applied cleanly in
+production, but the isolation assertions remain unexercised. **Run `./gradlew integrationTest`.**
+
+## 12b. The first production defect (2026-08-01, same day it shipped)
+
+**Removing a guest failed for everyone** — inviter and manager alike — with a
+`TransientObjectException` at commit. The remove path *ended* the guest's delegation, scheduling an
+UPDATE on a row whose debtor FK points at the guest, then hard-deleted the guest player; at flush,
+Hibernate found a persistent row referencing a deleted entity and refused the transaction. Every
+mocked test was green, because mocks cannot see flush ordering.
+
+Two lessons, both recorded here because they generalise:
+
+1. **The fix is semantic, not mechanical.** A guest who never played has no history worth keeping,
+   and that includes the arrangement that pointed at them — their delegations are now *deleted*
+   (as a bulk statement, so no managed entity survives to reference the removed player) rather
+   than ended. That is also exactly what the schema's `ON DELETE CASCADE` would have done behind
+   Hibernate's back; the persistence context and the schema now tell the same story. The
+   ended-never-deleted rule keeps its single carve-out where the *player themselves* is deleted.
+2. **Anything that deletes needs a real-persistence test.** `GuestLifecycleTest` (H2, real JPA, in
+   the `service` test package) now runs the add/remove flow end to end — it reproduced the
+   production failure exactly, and would have caught it before merge. Mock-based service tests
+   cannot stand in for Hibernate on delete paths.
+
+The same day's use also surfaced a **mobile layout overlap** in the plan modal's roster rows: the
+name column was `flex-1 min-w-0`, so its hypothetical width was zero and the row's `flex-wrap`
+never fired — the shrink-proof actions block squeezed the name into a sliver and its text painted
+over the status chip. Fixed by giving the info column a real minimum (`min-w-[10rem]`), which is
+what makes the wrap actually trigger. The removal-error toast now also surfaces the server's 4xx
+message — the generic toast is what made the flush failure undiagnosable from the UI.
 
 ---
 
