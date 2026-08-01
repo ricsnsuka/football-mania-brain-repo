@@ -18,6 +18,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [product/feature-status](product/feature-status.md) | Every feature × backend × frontend × docs |
 | [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
 | [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V21 history + deployment state |
+| [architecture/multi-tenancy](architecture/multi-tenancy.md) | Phase 5 cross-repo contract: tenant resolution, cache/key rules, the rollout ladder |
 
 ---
 
@@ -56,6 +57,11 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [ROLE-MODEL-MIGRATION-PLAN](backend/plans/ROLE-MODEL-MIGRATION-PLAN.md) | ✅ complete, both repos |
 | [PAYMENT-DELEGATION-PLAN](backend/plans/PAYMENT-DELEGATION-PLAN.md) | ✅ shipped, both repos — V20, live 2026-08-01 |
 | [GUEST-PLAYERS-PLAN](backend/plans/GUEST-PLAYERS-PLAN.md) | ✅ shipped, both repos — V21, live 2026-08-01. §12b: day-one removal bug, fixed same day. ⚠️ `GuestIsolationIT` never run |
+| [TENANCY-SCHEMA-PLAN](backend/plans/TENANCY-SCHEMA-PLAN.md) | 📝 DRAFT — Phase 5a-1: organizations, memberships, tenant_id everywhere (V22–V27). Ships dark |
+| [TENANCY-ENFORCEMENT-PLAN](backend/plans/TENANCY-ENFORCEMENT-PLAN.md) | 📝 DRAFT — 5a-2: X-Group-Id, filters + asserts, tenant cache keys, `TenantIsolationIT`. Ships dark |
+| [TENANT-PRIVACY-PLAN](backend/plans/TENANT-PRIVACY-PLAN.md) | 📝 DRAFT — 5a-3: leave-group vs erase-platform, controller/processor split. Gates onboarding |
+| [GROUP-ONBOARDING-PLAN](backend/plans/GROUP-ONBOARDING-PLAN.md) | 📝 DRAFT — 5a-4: creation codes, invites, picker/switcher. **The visibility flip**; owner gate |
+| [GROUP-BILLING-PLAN](backend/plans/GROUP-BILLING-PLAN.md) | 📝 DRAFT — 5b, design-only: Stripe subscriptions per group, grandfathered 5a groups |
 | [MATCH-FEE-LEDGER-PLAN](backend/plans/MATCH-FEE-LEDGER-PLAN.md) | ✅ shipped — §14 covers a future payment integration |
 | [PLAYER-LINK-ME-PLAN](backend/plans/PLAYER-LINK-ME-PLAN.md) | ✅ shipped |
 | [PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM](backend/plans/PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM.md) | 🟡 all done except AI match reports |
