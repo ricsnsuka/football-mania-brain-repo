@@ -55,6 +55,8 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Phase 4 — Capacitor wrap, app stores | ⬜ Gated on real PWA install data. Needs Apple ($99/yr) + Play ($25) accounts and a public privacy policy page |
 | Phase 5 — multi-tenancy + billing | ⬜ No organisation/tenant concept anywhere in the schema. Blocks any self-serve public launch |
 | Tiered invitations (core vs extended) | ⬜ Overlaps Phase 5 — the roadmap warns against over-building it first |
+| Payment delegation (one player answers for others' fees) | ⬜ Spec drafted 2026-08-01 — [plan](../backend/plans/PAYMENT-DELEGATION-PLAN.md). V20. Prerequisite for guest players |
+| Guest players (members bring outsiders to fill spots) | ⬜ Spec drafted 2026-08-01 — [plan](../backend/plans/GUEST-PLAYERS-PLAN.md). V21. Depends on payment delegation; deliberately not `isCore` |
 | **Real in-app payments** | ⬜ **Deliberately out of scope.** The ledger records who owes what; money moves over MB WAY between phones. Collecting money makes somebody a merchant of record with PSP, KYC and PSD2 obligations |
 
 ---
