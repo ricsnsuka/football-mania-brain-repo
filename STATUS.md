@@ -24,7 +24,7 @@ See [product/roadmap.md](product/roadmap.md) for the plan itself.
 | **2** — Web Push | ✅ done, delivery observed end to end against a real push service |
 | **3** — the "steal from Capo" set | 🟡 balance-at-a-glance, waitlist, leaderboards/rankings, MOTM voting and badges all shipped in both repos. **Remaining: AI match reports** |
 | **4** — Capacitor + app stores | ⬜ not started, deliberately gated on real usage data |
-| **5** — multi-tenancy + billing | 📝 **specced 2026-08-01** — five-plan dark-launch chain, see [product/roadmap.md](product/roadmap.md) Phase 5 and [architecture/multi-tenancy.md](architecture/multi-tenancy.md). Not started in code |
+| **5** — multi-tenancy + billing | 📝 **specced 2026-08-01** — five-plan dark-launch chain, see [product/roadmap.md](product/roadmap.md) Phase 5 and [architecture/multi-tenancy.md](architecture/multi-tenancy.md). Not started in code. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
 
 Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
 system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee

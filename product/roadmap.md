@@ -124,7 +124,8 @@ independently shippable and invisible until the fourth:
 [enforcement](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) (isolation at every layer) →
 [tenant privacy](../backend/plans/TENANT-PRIVACY-PLAN.md) (leave-group vs erase-platform) →
 [group onboarding](../backend/plans/GROUP-ONBOARDING-PLAN.md) (**the visibility flip** — creation
-codes, invites, picker) → [billing](../backend/plans/GROUP-BILLING-PLAN.md) (5b, design-only).
+codes, invites, picker) → [billing](../backend/plans/GROUP-BILLING-PLAN.md) (5b — ⛔ **ON HOLD
+by owner decision, do not implement until the owner lifts it explicitly**).
 Cross-repo contract: [architecture/multi-tenancy](../architecture/multi-tenancy.md). Owner
 decisions locked: multiple groups per account; picker addressing (not subdomains); invite-code-
 gated creation; tenancy first, billing later. The engagement-signal gate above applies to the

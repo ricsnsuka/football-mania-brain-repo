@@ -1,7 +1,7 @@
 # Group Billing (Stripe Subscriptions) — Technical Specification
 
 **Date:** 2026-08-01
-**Status:** DRAFT (2026-08-01) — Phase 5b, **design only by owner decision**: 5a ships with all groups free; nothing here is scheduled until 5a-4 has real groups on it
+**Status:** ⛔ **ON HOLD (owner decision, 2026-08-01) — DO NOT IMPLEMENT.** Not deferred-meaning-next: **stopped**. The owner lifts this hold explicitly, in their own words, or it stays on hold — no session, agent, or reader picks this up on their own initiative, however finished the design below looks. Everything beneath this line is design reference only.
 **Priority:** MEDIUM (the commercial step, deliberately after the product step)
 **Estimated Effort:** L (≈4–5 days backend, ≈3 days frontend) — held loosely at design stage
 **Depends on:** `GROUP-ONBOARDING-PLAN.md` — you cannot bill groups that cannot exist

@@ -66,7 +66,7 @@ unmodified.**
 | 2 | TENANCY-ENFORCEMENT (header, filters, asserts, cache keys, V28) | Dark (single-membership fallback) | Suite unmodified **+ `TenantIsolationIT`** — two seeded orgs invisible to each other at every layer, numerically for the rating/fee aggregates |
 | 3 | TENANT-PRIVACY (leave-group / erase-platform fork) | Dark (fork degenerates at one org) | Real-persistence byte-comparison tests |
 | 4 | GROUP-ONBOARDING (codes, invites, picker) | **The flip** | Owner sign-off; first creation codes issued |
-| 5 | GROUP-BILLING (Stripe) | Commercial | Design-only until scheduled |
+| 5 | GROUP-BILLING (Stripe) | ⛔ **ON HOLD (owner)** | **Do not schedule or implement** — the owner lifts the hold explicitly or it stays |
 
 Standing pre-work, before rung 1: **`integrationTest` wired into CI** (the entire safety story
 lives in that tier, and `GuestIsolationIT` — the template for `TenantIsolationIT` — has never

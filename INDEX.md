@@ -61,7 +61,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [TENANCY-ENFORCEMENT-PLAN](backend/plans/TENANCY-ENFORCEMENT-PLAN.md) | 📝 DRAFT — 5a-2: X-Group-Id, filters + asserts, tenant cache keys, `TenantIsolationIT`. Ships dark |
 | [TENANT-PRIVACY-PLAN](backend/plans/TENANT-PRIVACY-PLAN.md) | 📝 DRAFT — 5a-3: leave-group vs erase-platform, controller/processor split. Gates onboarding |
 | [GROUP-ONBOARDING-PLAN](backend/plans/GROUP-ONBOARDING-PLAN.md) | 📝 DRAFT — 5a-4: creation codes, invites, picker/switcher. **The visibility flip**; owner gate |
-| [GROUP-BILLING-PLAN](backend/plans/GROUP-BILLING-PLAN.md) | 📝 DRAFT — 5b, design-only: Stripe subscriptions per group, grandfathered 5a groups |
+| [GROUP-BILLING-PLAN](backend/plans/GROUP-BILLING-PLAN.md) | ⛔ **ON HOLD (owner decision, 2026-08-01)** — design reference only, **do not implement** until the owner lifts the hold |
 | [MATCH-FEE-LEDGER-PLAN](backend/plans/MATCH-FEE-LEDGER-PLAN.md) | ✅ shipped — §14 covers a future payment integration |
 | [PLAYER-LINK-ME-PLAN](backend/plans/PLAYER-LINK-ME-PLAN.md) | ✅ shipped |
 | [PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM](backend/plans/PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM.md) | 🟡 all done except AI match reports |
