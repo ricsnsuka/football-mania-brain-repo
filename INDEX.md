@@ -54,6 +54,8 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | Document | Status |
 |---|---|
 | [ROLE-MODEL-MIGRATION-PLAN](backend/plans/ROLE-MODEL-MIGRATION-PLAN.md) | ✅ complete, both repos |
+| [PAYMENT-DELEGATION-PLAN](backend/plans/PAYMENT-DELEGATION-PLAN.md) | 📝 DRAFT 2026-08-01 — V20; who answers for whose fees |
+| [GUEST-PLAYERS-PLAN](backend/plans/GUEST-PLAYERS-PLAN.md) | 📝 DRAFT 2026-08-01 — V21; members bring outsiders, inviter pays, promotable. Depends on delegation |
 | [MATCH-FEE-LEDGER-PLAN](backend/plans/MATCH-FEE-LEDGER-PLAN.md) | ✅ shipped — §14 covers a future payment integration |
 | [PLAYER-LINK-ME-PLAN](backend/plans/PLAYER-LINK-ME-PLAN.md) | ✅ shipped |
 | [PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM](backend/plans/PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM.md) | 🟡 all done except AI match reports |

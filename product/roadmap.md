@@ -79,6 +79,19 @@ Here's what stood out from Capo, mapped against what you already have, so you ca
 
 **Recommended order inside this phase:** balance\-at\-a\-glance UI → leaderboards/rankings API → MOTM voting → waitlist logic → achievements/badges → AI match reports last, since it's the only one with an ongoing external cost.
 
+### Added along the way: guest players + payment delegation (specced 2026-08-01)
+
+Two specs now cover the "filling the pitch with outsiders" problem the waitlist doesn't:
+[payment delegation](../backend/plans/PAYMENT-DELEGATION-PLAN.md) (one player designated to answer
+for others' fees — the organiser sees who covers whom, the per-player books stay intact) and, on
+top of it, [guest players](../backend/plans/GUEST-PLAYERS-PLAN.md) (any member brings an outsider
+into a plan's open spots; guests are flagged in the schema, kept out of every group aggregate, and
+their fee is answered for by the inviter; repeat guests are promotable to members by a `MANAGER`).
+
+Deliberately **not** the "tiered invitations / `isCore`" row above — a guest is *not part of the
+group at all*, which is a different fact from "extended member", and it composes with whatever
+membership model Phase 5 lands on instead of pre-empting it. The `isCore` warning stands.
+
 * * *
 
 ## Phase 4 — App store presence (only once Phase 1–2 prove out)

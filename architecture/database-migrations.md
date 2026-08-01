@@ -31,6 +31,17 @@ editable — correct it with a new one.
 | V18 | `V18__composable_roles.sql` | `user_roles` join table, and **`ALTER TABLE users DROP COLUMN role`**. One role per user became a set, so running the matches, handling the money and administering the system can be held by different people — which the fee ledger requires |
 | V19 | `V19__match_fee_ledger.sql` | `match_plans.total_cost_cents` (`NULL` = not recorded, `0` = the match was free), plus append-only `player_charges` and `player_payments`. Balance is derived as `SUM(payments) − SUM(charges)`; there is no allocation table. **No backfill** — inventing figures for past matches would produce debts nobody agreed to |
 
+### Reserved — specced, not yet written
+
+| # | File | Spec |
+|---|------|------|
+| V20 | `V20__payment_delegation.sql` | [PAYMENT-DELEGATION-PLAN](../backend/plans/PAYMENT-DELEGATION-PLAN.md) — `payment_delegations` (standing debtor → payer responsibility) + `player_payments.paid_by_player_id` |
+| V21 | `V21__guest_players.sql` | [GUEST-PLAYERS-PLAN](../backend/plans/GUEST-PLAYERS-PLAN.md) — `players.is_guest` + `players.invited_by_player_id` + `chk_guest_has_no_account`. Ships after V20 |
+
+Both stack on top of V17–V19, which have never run against a real database (below) — run
+`./gradlew integrationTest` before writing either, and move each row into the main table when it
+merges.
+
 ---
 
 ## Deployment state — read before deploying
