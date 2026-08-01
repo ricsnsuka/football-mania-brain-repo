@@ -55,7 +55,7 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Feature | State |
 |---|---|
 | Phase 4 — Capacitor wrap, app stores | ⬜ Gated on real PWA install data. Needs Apple ($99/yr) + Play ($25) accounts and a public privacy policy page |
-| Phase 5 — multi-tenancy + billing | ⬜ No organisation/tenant concept anywhere in the schema. Blocks any self-serve public launch |
+| Phase 5 — multi-tenancy + billing | 📝 **Specced 2026-08-01** as a five-plan dark-launch chain: [schema](../backend/plans/TENANCY-SCHEMA-PLAN.md) → [enforcement](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) → [privacy](../backend/plans/TENANT-PRIVACY-PLAN.md) → [onboarding](../backend/plans/GROUP-ONBOARDING-PLAN.md) → [billing](../backend/plans/GROUP-BILLING-PLAN.md) ⛔ **ON HOLD (owner)**, + [architecture/multi-tenancy](../architecture/multi-tenancy.md). Owner decisions locked: multi-membership, picker addressing, code-gated creation, tenancy before billing. Pre-work: ~~`integrationTest` into CI~~ done 2026-08-01 |
 | Tiered invitations (core vs extended) | ⬜ Overlaps Phase 5 — the roadmap warns against over-building it first |
 | **Real in-app payments** | ⬜ **Deliberately out of scope.** The ledger records who owes what; money moves over MB WAY between phones. Collecting money makes somebody a merchant of record with PSP, KYC and PSD2 obligations |
 

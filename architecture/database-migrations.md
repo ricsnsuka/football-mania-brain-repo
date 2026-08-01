@@ -49,6 +49,24 @@ Two things survive it:
 - The day-one production defect in guest removal (see the guest plan §12b) was a flush-ordering
   bug no mocked test could see. Real-persistence coverage for delete paths is now the house rule.
 
+### Reserved — Phase 5, specced not written
+
+| # | Concern | Plan |
+|---|---------|------|
+| V22 | `organizations` + org #1 seed | [TENANCY-SCHEMA-PLAN](../backend/plans/TENANCY-SCHEMA-PLAN.md) |
+| V23 | `memberships`/`membership_roles` + backfill; `user_roles` frozen | same |
+| V24 | `tenant_id` on every owned table, backfilled `= 1`, NOT NULL | same |
+| V25 | Composite `(tenant_id, id)` FKs — cross-tenant references unrepresentable | same |
+| V26 | Unique re-scoping: player↔user per group, season names, **one current season per group** | same |
+| V27 | `app_settings` PK → `(tenant_id, setting_key)` | same |
+| V28 | Drop `user_roles` (after one release of soak — expand/contract) | [TENANCY-ENFORCEMENT-PLAN](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) |
+| V29 | `group_invites` | [GROUP-ONBOARDING-PLAN](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
+| V30+ | `org_subscriptions` + entitlements | [GROUP-BILLING-PLAN](../backend/plans/GROUP-BILLING-PLAN.md), design-only |
+
+V22–V27 ship as **one release** (the deploy is the migration) behind a DB-backup gate and a green
+`integrationTest` — which must be wired into CI first; the constraint work in this chain is
+invisible to the H2 unit tier.
+
 The pre-flight for the next migration is unchanged:
 
 ```bash

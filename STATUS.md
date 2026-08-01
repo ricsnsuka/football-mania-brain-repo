@@ -8,8 +8,8 @@ not on a schedule — a status page nobody trusts is worse than none.
 | Branch | `v1.0.0` (level with `origin`, merged into `master`) | `v1.0.0` |
 | Head | `e87d624` — *Return the pitch cost in MatchPlanDTO* | `4f47bf5` — *Fix the cost field, lift toasts above modals…* |
 | Working tree | clean | clean |
-| Tests | 853 (as recorded in the role-migration plan) | 455 unit + 20 visual regression |
-| Latest migration | `V19__match_fee_ledger.sql` | — |
+| Tests | 938 unit (+ integrationTest tier, still opt-in) | 470 unit + 20 visual regression |
+| Latest migration | `V21__guest_players.sql` — applied in production 2026-08-01 | — |
 
 ---
 
@@ -24,7 +24,7 @@ See [product/roadmap.md](product/roadmap.md) for the plan itself.
 | **2** — Web Push | ✅ done, delivery observed end to end against a real push service |
 | **3** — the "steal from Capo" set | 🟡 balance-at-a-glance, waitlist, leaderboards/rankings, MOTM voting and badges all shipped in both repos. **Remaining: AI match reports** |
 | **4** — Capacitor + app stores | ⬜ not started, deliberately gated on real usage data |
-| **5** — multi-tenancy + billing | ⬜ not started |
+| **5** — multi-tenancy + billing | 📝 **specced 2026-08-01** — five-plan dark-launch chain, see [product/roadmap.md](product/roadmap.md) Phase 5 and [architecture/multi-tenancy.md](architecture/multi-tenancy.md). Not started in code. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
 
 Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
 system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee
@@ -83,8 +83,10 @@ reason this repo exists.
 
 ## Suggested next steps
 
-1. Run `integrationTest`, then deploy V17–V19 somewhere real. This is the only item with a
-   deadline attached to it, because the risk grows with every migration stacked on top.
+1. **Wire `integrationTest` into CI and run it** (V17–V21 are deployed and fine — that old worry
+   resolved itself in production — but `GuestIsolationIT` has still never executed, and the whole
+   Phase 5 tenancy safety story lives in that tier; the schema plan names this as blocking
+   pre-work).
 2. Backfill the changelog and fix the drift table above.
 3. Regenerate the Postman collection.
 4. Add the locale key-parity test, and a controller test asserting `totalCostCents` serialises.
