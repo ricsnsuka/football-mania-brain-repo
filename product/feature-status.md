@@ -44,6 +44,8 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Admin settings & system endpoints | ✅ `c7d3554` | ✅ `2b961a3` | [ADMIN contract](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/ADMIN-API-CONTRACT.md) |
 | Composable roles (V18) | ✅ `d6b908f` | ✅ `418256e` | [ROLES contract](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/ROLES-API-CONTRACT.md) · [migration plan](../backend/plans/ROLE-MODEL-MIGRATION-PLAN.md) · [FE roles](../frontend/features/roles.md) |
 | Match fee ledger (V19) | ✅ `828db3b` | ✅ `a3efac0` | [PAYMENTS contract](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/PAYMENTS-API-CONTRACT.md) · [ledger plan](../backend/plans/MATCH-FEE-LEDGER-PLAN.md) · ⚠️ **no FE feature doc** |
+| Payment delegation (V20) | ✅ `d3b3339` | ✅ `722335c` | [PAYMENTS contract](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/PAYMENTS-API-CONTRACT.md) · [plan](../backend/plans/PAYMENT-DELEGATION-PLAN.md) · ⚠️ **not deployed — V20 has never run against a real database** |
+| Guest players (V21) | ✅ `d3b3339`, `2eac528` | ✅ `722335c` | [GUEST-PLAYERS contract](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/GUEST-PLAYERS-API-CONTRACT.md) · [plan](../backend/plans/GUEST-PLAYERS-PLAN.md) · ⚠️ **not deployed; `GuestIsolationIT` never executed (needs Docker)** |
 | Pitch cost on `MatchPlanDTO` | ✅ `e87d624` | ✅ `4f47bf5` | ⚠️ **documented nowhere** |
 | i18n — en / pt / es | — | ✅ | [FE i18n guide](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/i18n.md) · [language switcher](../frontend/features/language-switcher.md) |
 | Theme (light / dark) | — | ✅ | [FE theme](../frontend/features/theme.md) |
@@ -55,8 +57,6 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Phase 4 — Capacitor wrap, app stores | ⬜ Gated on real PWA install data. Needs Apple ($99/yr) + Play ($25) accounts and a public privacy policy page |
 | Phase 5 — multi-tenancy + billing | ⬜ No organisation/tenant concept anywhere in the schema. Blocks any self-serve public launch |
 | Tiered invitations (core vs extended) | ⬜ Overlaps Phase 5 — the roadmap warns against over-building it first |
-| Payment delegation (one player answers for others' fees) | ⬜ Spec drafted 2026-08-01 — [plan](../backend/plans/PAYMENT-DELEGATION-PLAN.md). V20. Prerequisite for guest players |
-| Guest players (members bring outsiders to fill spots) | ⬜ Spec drafted 2026-08-01 — [plan](../backend/plans/GUEST-PLAYERS-PLAN.md). V21. Depends on payment delegation; deliberately not `isCore` |
 | **Real in-app payments** | ⬜ **Deliberately out of scope.** The ledger records who owes what; money moves over MB WAY between phones. Collecting money makes somebody a merchant of record with PSP, KYC and PSD2 obligations |
 
 ---

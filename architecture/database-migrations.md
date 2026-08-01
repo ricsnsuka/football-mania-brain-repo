@@ -31,16 +31,17 @@ editable — correct it with a new one.
 | V18 | `V18__composable_roles.sql` | `user_roles` join table, and **`ALTER TABLE users DROP COLUMN role`**. One role per user became a set, so running the matches, handling the money and administering the system can be held by different people — which the fee ledger requires |
 | V19 | `V19__match_fee_ledger.sql` | `match_plans.total_cost_cents` (`NULL` = not recorded, `0` = the match was free), plus append-only `player_charges` and `player_payments`. Balance is derived as `SUM(payments) − SUM(charges)`; there is no allocation table. **No backfill** — inventing figures for past matches would produce debts nobody agreed to |
 
-### Reserved — specced, not yet written
+### Merged, not yet deployed
 
-| # | File | Spec |
-|---|------|------|
-| V20 | `V20__payment_delegation.sql` | [PAYMENT-DELEGATION-PLAN](../backend/plans/PAYMENT-DELEGATION-PLAN.md) — `payment_delegations` (standing debtor → payer responsibility) + `player_payments.paid_by_player_id` |
-| V21 | `V21__guest_players.sql` | [GUEST-PLAYERS-PLAN](../backend/plans/GUEST-PLAYERS-PLAN.md) — `players.is_guest` + `players.invited_by_player_id` + `chk_guest_has_no_account`. Ships after V20 |
+| # | File | What it does |
+|---|------|--------------|
+| V20 | `V20__payment_delegation.sql` | `payment_delegations` — a standing debtor → payer mapping recording **who the organiser chases**, plus `player_payments.paid_by_player_id` for who physically handed money over. No charge or payment moves: `uq_player_charges_plan` forbids a second charge on the payer for the same plan, charge amounts are frozen at creation, and the per-player breakdown is the requirement. Ended, never deleted; one active payer per debtor via a partial unique index. [Plan](../backend/plans/PAYMENT-DELEGATION-PLAN.md) |
+| V21 | `V21__guest_players.sql` | `players.is_guest` (state, cleared on promotion) + `players.invited_by_player_id` (provenance, kept) + `chk_guest_has_no_account`, which fixes the ordering promote → register → link. `DEFAULT FALSE` means no backfill: every existing player is a member by definition. [Plan](../backend/plans/GUEST-PLAYERS-PLAN.md) |
 
-Both stack on top of V17–V19, which have never run against a real database (below) — run
-`./gradlew integrationTest` before writing either, and move each row into the main table when it
-merges.
+⚠️ **Neither has run against a real database, and they stack on V17–V19 which have not either**
+(below). `GuestIsolationIT` — which covers both new CHECK constraints, the partial unique index and
+the guest aggregate guards — was written but **never executed**, because the authoring environment
+had no Docker. Run `./gradlew integrationTest` before deploying.
 
 ---
 

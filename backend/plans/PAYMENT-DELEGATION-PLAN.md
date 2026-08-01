@@ -1,7 +1,10 @@
 # Payment Delegation — Technical Specification
 
 **Date:** 2026-08-01
-**Status:** DRAFT (2026-08-01) — nothing built in either repo
+**Status:** **IMPLEMENTED** (2026-08-01) — backend `d3b3339` (migration `V20`, `PaymentDelegation`,
+`MatchFeeService.setDelegate`/`endDelegation`, `PaymentController`, `PAYMENTS-API-CONTRACT.md`) and
+frontend `722335c`. **Not yet deployed** — see the migration caveat in §4. The document below is
+the design record: it is why the feature has the shape it has.
 **Priority:** MEDIUM
 **Estimated Effort:** S (≈½ day backend, ≈½–1 day frontend)
 **Depends on:** `MATCH-FEE-LEDGER-PLAN.md` *(satisfied — shipped in `828db3b` / `a3efac0`)*
