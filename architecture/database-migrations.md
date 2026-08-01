@@ -1,6 +1,6 @@
 # Database Migration History
 
-Complete as of **V19**, verified against `src/main/resources/db/migration/` on 2026-07-31.
+Complete as of **V21**, verified against `src/main/resources/db/migration/` on 2026-08-01.
 
 This supersedes the table in [backend/architecture/ARCHITECTURE.md](../backend/architecture/ARCHITECTURE.md),
 which stops at V13.
@@ -30,26 +30,26 @@ editable — correct it with a new one.
 | V17 | `V17__match_plan_kickoff_and_lifecycle.sql` | `match_plans.proposed_date` `DATE` → `TIMESTAMPTZ`, so a plan can record a kickoff **time**; and a `GENERATED` terminal status (the status check constraint is dropped and rebuilt). Not backfilled precisely, because `Match` has no FK to `MatchPlan` |
 | V18 | `V18__composable_roles.sql` | `user_roles` join table, and **`ALTER TABLE users DROP COLUMN role`**. One role per user became a set, so running the matches, handling the money and administering the system can be held by different people — which the fee ledger requires |
 | V19 | `V19__match_fee_ledger.sql` | `match_plans.total_cost_cents` (`NULL` = not recorded, `0` = the match was free), plus append-only `player_charges` and `player_payments`. Balance is derived as `SUM(payments) − SUM(charges)`; there is no allocation table. **No backfill** — inventing figures for past matches would produce debts nobody agreed to |
-
-### Reserved — specced, not yet written
-
-| # | File | Spec |
-|---|------|------|
-| V20 | `V20__payment_delegation.sql` | [PAYMENT-DELEGATION-PLAN](../backend/plans/PAYMENT-DELEGATION-PLAN.md) — `payment_delegations` (standing debtor → payer responsibility) + `player_payments.paid_by_player_id` |
-| V21 | `V21__guest_players.sql` | [GUEST-PLAYERS-PLAN](../backend/plans/GUEST-PLAYERS-PLAN.md) — `players.is_guest` + `players.invited_by_player_id` + `chk_guest_has_no_account`. Ships after V20 |
-
-Both stack on top of V17–V19, which have never run against a real database (below) — run
-`./gradlew integrationTest` before writing either, and move each row into the main table when it
-merges.
+| V20 | `V20__payment_delegation.sql` | `payment_delegations` — a standing debtor → payer mapping recording **who the organiser chases**, plus `player_payments.paid_by_player_id` for who physically handed money over. No charge or payment moves: `uq_player_charges_plan` forbids a second charge on the payer for the same plan, charge amounts are frozen at creation, and the per-player breakdown is the requirement. Ended, never deleted (with one carve-out: the delegations of a hard-deleted never-played guest are deleted with them — ending one would leave a row referencing a removed player, which is exactly how guest removal first broke in production); one active payer per debtor via a partial unique index. [Plan](../backend/plans/PAYMENT-DELEGATION-PLAN.md) |
+| V21 | `V21__guest_players.sql` | `players.is_guest` (state, cleared on promotion) + `players.invited_by_player_id` (provenance, kept) + `chk_guest_has_no_account`, which fixes the ordering promote → register → link. `DEFAULT FALSE` means no backfill: every existing player is a member by definition. [Plan](../backend/plans/GUEST-PLAYERS-PLAN.md) |
 
 ---
 
-## Deployment state — read before deploying
+## Deployment state
 
-**V17, V18 and V19 have never run against a real database.** They are merged and green against
-Testcontainers only. V18 **drops a column**, so a failed run there is not a small problem.
+**The whole chain through V21 is applied in production as of 2026-08-01** — the guest-players
+feature was observed live the day V20/V21 merged, which means V17–V19 (including V18's column
+drop) went through cleanly too. The long-standing "never run against a real database" hazard is
+closed; STATUS.md records it as resolved.
 
-The pre-flight that exists:
+Two things survive it:
+
+- `GuestIsolationIT` and the rest of the integration suite remain **opt-in and still unexecuted**
+  in any environment — the schema applied, but the isolation assertions it makes have never run.
+- The day-one production defect in guest removal (see the guest plan §12b) was a flush-ordering
+  bug no mocked test could see. Real-persistence coverage for delete paths is now the house rule.
+
+The pre-flight for the next migration is unchanged:
 
 ```bash
 ./gradlew integrationTest    # real Flyway chain on a PostgreSQL Testcontainer,

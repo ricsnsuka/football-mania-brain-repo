@@ -36,12 +36,13 @@ real payment integration would bolt on later without any of it being wasted.
 
 ## Live hazards
 
-**1. V18 and V19 have never run against a real database.** Both are merged and CI-green against
-Testcontainers, and neither has touched staging or production. **V18 drops a column**
-(`users.role`, replaced by the composable-roles join table), so it is not a migration to discover
-problems with during a deploy. The `integrationTest` Gradle task runs the real Flyway chain on a
-PostgreSQL container and is the cheapest pre-flight available — it is opt-in and not wired into
-`check`, so it has to be run deliberately.
+**1. ~~V18 and V19 have never run against a real database.~~ Resolved 2026-08-01.** The whole
+chain through **V21** is now applied in production — the guest-players feature (V20+V21, and
+therefore everything before it) was observed live the day it merged. The lasting lesson stands,
+twice over: `integrationTest` is the cheapest pre-flight and is still opt-in, and the first real
+use of the guest feature immediately surfaced a defect the mocked suite could not see (guest
+removal failed at Hibernate flush — see the guest plan's "what actually happened"). Run the real
+chain, and prefer real-persistence tests for anything that deletes.
 
 **2. A stale JVM will lie to you.** On 2026-07-31 a bug was reported where a match plan's pitch
 cost saved correctly, notified players with the right amount, and still read "not set" in the UI.

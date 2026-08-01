@@ -17,7 +17,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [product/roadmap](product/roadmap.md) | The five-phase improvement and mobile roadmap |
 | [product/feature-status](product/feature-status.md) | Every feature × backend × frontend × docs |
 | [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
-| [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V19 history + deployment state |
+| [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V21 history + deployment state |
 
 ---
 
@@ -54,8 +54,8 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | Document | Status |
 |---|---|
 | [ROLE-MODEL-MIGRATION-PLAN](backend/plans/ROLE-MODEL-MIGRATION-PLAN.md) | ✅ complete, both repos |
-| [PAYMENT-DELEGATION-PLAN](backend/plans/PAYMENT-DELEGATION-PLAN.md) | 📝 DRAFT 2026-08-01 — V20; who answers for whose fees |
-| [GUEST-PLAYERS-PLAN](backend/plans/GUEST-PLAYERS-PLAN.md) | 📝 DRAFT 2026-08-01 — V21; members bring outsiders, inviter pays, promotable. Depends on delegation |
+| [PAYMENT-DELEGATION-PLAN](backend/plans/PAYMENT-DELEGATION-PLAN.md) | ✅ shipped, both repos — V20, live 2026-08-01 |
+| [GUEST-PLAYERS-PLAN](backend/plans/GUEST-PLAYERS-PLAN.md) | ✅ shipped, both repos — V21, live 2026-08-01. §12b: day-one removal bug, fixed same day. ⚠️ `GuestIsolationIT` never run |
 | [MATCH-FEE-LEDGER-PLAN](backend/plans/MATCH-FEE-LEDGER-PLAN.md) | ✅ shipped — §14 covers a future payment integration |
 | [PLAYER-LINK-ME-PLAN](backend/plans/PLAYER-LINK-ME-PLAN.md) | ✅ shipped |
 | [PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM](backend/plans/PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM.md) | 🟡 all done except AI match reports |

@@ -1,11 +1,18 @@
 # Guest Players — Technical Specification
 
 **Date:** 2026-08-01
-**Status:** DRAFT (2026-08-01) — nothing built in either repo
+**Status:** **IMPLEMENTED** (2026-08-01) — backend `d3b3339` (migration `V21`, `Player.guest`,
+`MatchPlanService.addGuest`/`removeGuest`, `PlayerService.promoteGuest`, aggregate guards,
+`GUEST-PLAYERS-API-CONTRACT.md`) plus `2eac528` (`GET /api/players/me`), and frontend `722335c`.
+**Not yet deployed** — see the migration caveat in §4. The document below is the design record.
 **Priority:** HIGH — plans keep falling short of a full pitch, and today only a `MANAGER` can do anything about it
 **Estimated Effort:** M (≈1 day backend, ≈1 day frontend)
 **Depends on:** `PAYMENT-DELEGATION-PLAN.md` (V20) — a guest's fee is answered for by their inviter via an auto-created delegation. **Build that first.**
-**Contract:** `docs/api/MATCH-PLANS-API-CONTRACT.md` and `docs/api/player-API-CONTRACT.md` (updated in the same backend commit)
+**Contract:** `docs/api/GUEST-PLAYERS-API-CONTRACT.md` — written as its own file rather than split
+across the match-plan and player contracts as this spec first proposed. The feature's rules
+(capacity, the inviter cap, aggregate isolation, the promotion ordering) only make sense read
+together, and splitting them across two documents would have left neither one able to explain the
+feature.
 
 ---
 
@@ -315,6 +322,62 @@ The delegation created for a guest is covered by the delegation plan's §10.
 7. Brain repo on ship: move this to SHIPPED with commit refs, feature-status row to ✅, migration
    table row for V21, drift check on `MATCH_PLANS_FEATURE.md` (already stale — do not make it
    staler by documenting guests only here).
+
+---
+
+## 12a. What actually happened, and where it differed
+
+Built in the order above. Four things worth recording, because they are the parts a reader of the
+spec alone would get wrong:
+
+1. **`GET /api/players/me` had to be added** (`2eac528`). The spec says a member removes "their own"
+   guest, which needs their own player id — and a member can never load `/api/players`. The
+   counterpart `PATCH /me` already existed; this is its missing pair, 409ing for an unlinked
+   account like `/payments/me`.
+2. **The contract is one file, not two.** See the header.
+3. **Two React Compiler placement constraints**, both in `MatchPlanDetailModal`: the guest chip has
+   to be a module-level component, and the guest closures have to sit *below* the roster memo.
+   Either one above it makes the compiler treat `canOverride` as possibly mutated and refuse to
+   preserve that memo — which is doing real work over the whole player list. Both are commented at
+   the site; they look arbitrary otherwise.
+4. **The manager roster view merges in confirmation-only rows.** A guest created seconds ago is not
+   in the `['players','all']` cache yet — that query has its own `staleTime` — so the merged view
+   falls back to the confirmation. Without it a manager adds a guest and appears to see nothing
+   happen.
+
+**`GuestIsolationIT` has never been executed.** It was written to cover exactly the things unit
+tests cannot reach — the `guest = false` aggregate guards, `chk_guest_has_no_account`,
+`uq_active_delegation_per_debtor` and `chk_no_self_delegation` — and it needs Docker, which the
+authoring environment did not have. The migrations themselves have since applied cleanly in
+production, but the isolation assertions remain unexercised. **Run `./gradlew integrationTest`.**
+
+## 12b. The first production defect (2026-08-01, same day it shipped)
+
+**Removing a guest failed for everyone** — inviter and manager alike — with a
+`TransientObjectException` at commit. The remove path *ended* the guest's delegation, scheduling an
+UPDATE on a row whose debtor FK points at the guest, then hard-deleted the guest player; at flush,
+Hibernate found a persistent row referencing a deleted entity and refused the transaction. Every
+mocked test was green, because mocks cannot see flush ordering.
+
+Two lessons, both recorded here because they generalise:
+
+1. **The fix is semantic, not mechanical.** A guest who never played has no history worth keeping,
+   and that includes the arrangement that pointed at them — their delegations are now *deleted*
+   (as a bulk statement, so no managed entity survives to reference the removed player) rather
+   than ended. That is also exactly what the schema's `ON DELETE CASCADE` would have done behind
+   Hibernate's back; the persistence context and the schema now tell the same story. The
+   ended-never-deleted rule keeps its single carve-out where the *player themselves* is deleted.
+2. **Anything that deletes needs a real-persistence test.** `GuestLifecycleTest` (H2, real JPA, in
+   the `service` test package) now runs the add/remove flow end to end — it reproduced the
+   production failure exactly, and would have caught it before merge. Mock-based service tests
+   cannot stand in for Hibernate on delete paths.
+
+The same day's use also surfaced a **mobile layout overlap** in the plan modal's roster rows: the
+name column was `flex-1 min-w-0`, so its hypothetical width was zero and the row's `flex-wrap`
+never fired — the shrink-proof actions block squeezed the name into a sliver and its text painted
+over the status chip. Fixed by giving the info column a real minimum (`min-w-[10rem]`), which is
+what makes the wrap actually trigger. The removal-error toast now also surfaces the server's 4xx
+message — the generic toast is what made the flush failure undiagnosable from the UI.
 
 ---
 

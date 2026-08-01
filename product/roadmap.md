@@ -79,9 +79,11 @@ Here's what stood out from Capo, mapped against what you already have, so you ca
 
 **Recommended order inside this phase:** balance\-at\-a\-glance UI → leaderboards/rankings API → MOTM voting → waitlist logic → achievements/badges → AI match reports last, since it's the only one with an ongoing external cost.
 
-### Added along the way: guest players + payment delegation (specced 2026-08-01)
+### Added along the way: guest players + payment delegation (shipped 2026-08-01)
 
-Two specs now cover the "filling the pitch with outsiders" problem the waitlist doesn't:
+Two features now cover the "filling the pitch with outsiders" problem the waitlist doesn't — both
+built in `d3b3339` / `722335c`, both **merged but not yet deployed** (V20 and V21 have never run
+against a real database):
 [payment delegation](../backend/plans/PAYMENT-DELEGATION-PLAN.md) (one player designated to answer
 for others' fees — the organiser sees who covers whom, the per-player books stay intact) and, on
 top of it, [guest players](../backend/plans/GUEST-PLAYERS-PLAN.md) (any member brings an outsider
