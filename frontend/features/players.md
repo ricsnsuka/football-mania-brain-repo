@@ -49,7 +49,7 @@ Changing the page size resets to page 0.
 ## Page size selector
 
 The shared `Pagination` component (`src/components/ui/Pagination.tsx` — see
-[Shared UI Primitives](../guides/shared-components.md)) renders a page-size `<select>`
+[Shared UI Primitives](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/shared-components.md)) renders a page-size `<select>`
 letting users switch between 5, 10, and 20 rows per page. It is visible whenever the page
 contains at least one player (`totalElements > 0`).
 
@@ -132,10 +132,10 @@ one is not evidence the other went missing by mistake.
 
 **Pagination**: the players page uses the shared `Pagination` component and its top-level
 `pagination.*` keys (`position`, `totalItems`, `pageSize`, `previous`, `next`) — see
-[Shared UI Primitives](../guides/shared-components.md) — not a players-namespaced
+[Shared UI Primitives](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/shared-components.md) — not a players-namespaced
 `players.pagination.*` set.
 
 **Empty/error states**: there are no players-namespaced keys for these. Empty, error and
 loading all go through the shared `DataStateMessage` / `TableSkeleton` components and their
 `states.*` / `common.loading` keys — see
-[Shared UI Primitives](../guides/shared-components.md).
+[Shared UI Primitives](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/shared-components.md).

@@ -63,7 +63,7 @@ Note on `tests/`: it is organized by feature/domain area (`players/`, `matches/`
 `dashboard/`, `auth/`, …) rather than by the source-tree category folders (`hooks/`,
 `services/`, `features/`) a prior version of this doc described — a hook test like
 `useDraft.test.ts` lives in `tests/draft/`, not `tests/hooks/`. See
-[Testing Guide](../guides/testing.md) for the exact convention.
+[Testing Guide](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/testing.md) for the exact convention.
 
 ## Data Flow
 
@@ -178,10 +178,10 @@ plus a colocated `utils.ts`, so the dynamically-imported chunk isn't itself a mo
 - **Zero** Tailwind utility classes inside `.tsx` files
 - All styles defined in `src/app/globals.css` under `@layer components`
 - Class names follow BEM-inspired convention: `block__element--modifier`
-- See [Styling Guide](../guides/styling.md) for the full rule set, including the shared
+- See [Styling Guide](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/styling.md) for the full rule set, including the shared
   `.page-container` width contract and the actual (non-bottom-sheet) modal pattern.
 
 ## Version Source
 
 The canonical app version is owned by the backend (`GET /api/version`).  
-`package.json` and `CHANGELOG.md` mirror it — see [Version Updater agent](../.github/agents/version-updater.agent.md).
+`package.json` and `CHANGELOG.md` mirror it — see [Version Updater agent](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/.github/agents/version-updater.agent.md).

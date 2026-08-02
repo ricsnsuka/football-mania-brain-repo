@@ -17,7 +17,7 @@ frontend `1af7973`) are done. Remaining: AI match reports.
 ## 1. Leaderboards & Rankings — ✅ done
 
 > **Built.** `GET /api/rankings` and `GET /api/leaderboards`, contract in
-> [`docs/api/LEADERBOARDS-API-CONTRACT.md`](../api/LEADERBOARDS-API-CONTRACT.md). The three
+> [`docs/api/LEADERBOARDS-API-CONTRACT.md`](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/LEADERBOARDS-API-CONTRACT.md). The three
 > decisions this section asked for were taken as: **all-time only** (no `seasonId` parameter at
 > all, rather than one that ignores the season), **`qualified` flag at 3 matches** (everyone is
 > listed; unqualified players get `rank: null` and sort last), and **Season write API deferred** to
@@ -101,7 +101,7 @@ changes everyone's rank and looks like a bug rather than a fix.
 
 > **Built.** `GET`/`POST /api/matches/{id}/mvp-vote`, migration V14, hourly resolution job,
 > `MVP_VOTE_OPEN` notification, GDPR in all three places. Contract in
-> [`docs/api/MOTM-API-CONTRACT.md`](../api/MOTM-API-CONTRACT.md).
+> [`docs/api/MOTM-API-CONTRACT.md`](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/MOTM-API-CONTRACT.md).
 >
 > The three decisions this section left open were taken as: **ties produce no crowd MVP** (the match
 > is still marked resolved, so a tie is a final answer rather than a poll left hanging);

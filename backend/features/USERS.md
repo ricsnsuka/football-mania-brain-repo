@@ -10,8 +10,8 @@
 
 A **User** represents a person who can log in to the Football Management System. Users are
 the authentication layer of the application. They may optionally be linked to a **Player**
-profile, which is managed from the Player entity side. If a user holds the `ADMIN_USER` role
-they cannot be linked to a player.
+profile, which is managed from the Player entity side — including accounts holding `ADMIN`,
+since V18 removed the rule that once forbade it.
 
 ---
 
@@ -20,23 +20,37 @@ they cannot be linked to a player.
 - A user must have a unique **username** (3–50 chars) and a unique **email**.
 - A user can log in using **either** their username or their email address.
 - Passwords must be at least **8 characters** and are stored BCrypt-hashed.
-- There are three roles: `BASIC_USER`, `MASTER_USER`, `ADMIN_USER`.
-- `ADMIN_USER` accounts **cannot** be linked to a player profile.
+- There are three roles — `ORGANIZER`, `MANAGER`, `ADMIN` — and since V18 they are **flat and
+  independent**: a user holds a *set* of them, and `ADMIN` implies neither of the others.
+- An account may hold **no roles at all**. That is the normal state of a new account and the
+  replacement for the old `BASIC_USER`: authenticated, and nothing more.
+- Any account may be linked to a player profile, `ADMIN` included.
+- **Registration is self-service** — `POST /api/users/register` is public and always creates an
+  account with no roles. Callers cannot choose their own grants.
+- Since V23 the grants are held **per group**, on the membership rather than on the account:
+  holding `ADMIN` in one group says nothing about any other.
 - **Deactivation is soft** — setting `isActive = false` prevents login without deleting data.
 - On first login, `forcePasswordChange = true` signals the client to prompt a password change.
 - Only the account owner (or an admin) can change a password; current password must be verified.
-- Only admins can change a user's role or active status.
+- Only admins can change a user's roles or active status.
 - Owners can update their own `firstName`, `lastName`, and `email` (email must remain unique).
 
 ---
 
 ## Roles
 
-| Role          | Capabilities                                                              |
-|---------------|---------------------------------------------------------------------------|
-| `ADMIN_USER`  | Full system access. Cannot own a player profile.                         |
-| `MASTER_USER` | Creates and manages matches, seasons. Can link to a player profile.      |
-| `BASIC_USER`  | Views own stats and match history. Can link to a player profile.         |
+| Role        | Capabilities                                                                     |
+|-------------|----------------------------------------------------------------------------------|
+| `ADMIN`     | System: settings, user administration, rating recalculation, GDPR actions, purge. |
+| `MANAGER`   | Matches: create plans and matches, manage the roster, generate teams, record results. |
+| `ORGANIZER` | Money: see all balances, record payments, set fees, void and waive charges.       |
+| *(none)*    | Authenticated, and nothing more.                                                  |
+
+> **A set, not a ladder.** Holding `ADMIN` grants system administration and says nothing about
+> whether the holder may manage matches — grant `MANAGER` as well if they should. There is
+> deliberately no `PLAYER` role: "is a player" is already a fact in the schema
+> (`players.user_id` is UNIQUE), and a role asserting the same thing would be a second source of
+> truth free to disagree with the first.
 
 ---
 
@@ -47,15 +61,21 @@ Base path: `/api/users` · Auth endpoints: `/api/auth`
 | Method | Path                            | Description                        | Auth Required      |
 |--------|---------------------------------|------------------------------------|--------------------|
 | POST   | `/api/auth/login`               | Obtain JWT token                   | Public             |
-| GET    | `/api/users`                 | List all users (paginated)         | `ADMIN_USER`       |
+| POST   | `/api/users/register`        | Self-service registration — always creates an account with **no roles** | Public |
+| GET    | `/api/users`                 | List all users (paginated)         | `ADMIN`            |
 | GET    | `/api/users/me`              | Get own user profile               | Any authenticated  |
-| GET    | `/api/users/{id}`            | Get user by ID                     | `ADMIN_USER` or own|
-| POST   | `/api/users`                 | Create a new user                  | `ADMIN_USER`       |
-| PATCH  | `/api/users/{id}`            | Update profile (name, email)       | `ADMIN_USER` or own|
-| PATCH  | `/api/users/{id}/role`       | Update role / active status        | `ADMIN_USER`       |
-| ~~PATCH~~ | ~~`/api/users/{id}/reactivate`~~ | **Removed** — use `PATCH /{id}/role` with `{"isActive": true}` | `ADMIN_USER` |
-| DELETE | `/api/users/{id}`            | Deactivate user (soft delete)      | `ADMIN_USER`       |
-| POST   | `/api/users/{id}/change-password` | Change own password           | `ADMIN_USER` or own|
+| GET    | `/api/users/{id}`            | Get user by ID                     | `ADMIN` or own     |
+| POST   | `/api/users`                 | Create a new user (roles may be set) | `ADMIN`          |
+| PATCH  | `/api/users/{id}`            | Update profile (name, email)       | `ADMIN` or own     |
+| PATCH  | `/api/users/{id}/role`       | Update roles / active status       | `ADMIN`            |
+| ~~PATCH~~ | ~~`/api/users/{id}/reactivate`~~ | **Removed** — use `PATCH /{id}/role` with `{"isActive": true}` | `ADMIN` |
+| DELETE | `/api/users/{id}`            | Deactivate user (soft delete)      | `ADMIN`            |
+| POST   | `/api/users/{id}/change-password` | Change own password           | `ADMIN` or own     |
+
+> `POST /api/users` and `POST /api/users/register` are **different endpoints with different
+> payloads**. The first is admin-only and accepts `roles`; the second is public and has no
+> `roles` field at all, because self-service role selection would be a privilege-escalation
+> route.
 
 ---
 
@@ -76,7 +96,8 @@ Base path: `/api/users` · Auth endpoints: `/api/auth`
 | `userId`              | Long    | Database ID of the authenticated user               |
 | `username`            | String  |                                                     |
 | `email`               | String  |                                                     |
-| `role`                | String  | `BASIC_USER` / `MASTER_USER` / `ADMIN_USER`         |
+| `role`                | String  | **Deprecated.** The single name this set would have carried before V18, emitted for one release so an already-deployed frontend does not read every user as unprivileged. Delete with `Role.legacyNameFor` once the frontend reads `roles` |
+| `roles`               | String[] | Every grant held, sorted; **empty for an unprivileged account** |
 | `forcePasswordChange` | boolean | `true` → client must redirect to change-password UI |
 
 ### `UserDTO` — Read view
@@ -88,7 +109,7 @@ Base path: `/api/users` · Auth endpoints: `/api/auth`
 | `email`               | String  |                                         |
 | `firstName`           | String  | nullable                                |
 | `lastName`            | String  | nullable                                |
-| `role`                | String  | `BASIC_USER` / `MASTER_USER` / `ADMIN_USER` |
+| `roles`               | String[] | Sorted list — a `List` rather than a `Set` so the response is byte-for-byte stable; empty for an unprivileged account |
 | `isActive`            | boolean |                                         |
 | `forcePasswordChange` | boolean |                                         |
 | `createdAt`           | Instant | ISO-8601 UTC timestamp                  |
@@ -102,7 +123,21 @@ Base path: `/api/users` · Auth endpoints: `/api/auth`
 | `password`  | String | ✅       | 8–100 chars         |
 | `firstName` | String | ❌       | max 100 chars       |
 | `lastName`  | String | ❌       | max 100 chars       |
-| `role`      | String | ✅       | `BASIC_USER` / `MASTER_USER` / `ADMIN_USER` |
+| `roles`     | String[] | ❌     | Any of `ORGANIZER` / `MANAGER` / `ADMIN`. Empty or absent creates an account that is authenticated and nothing more |
+
+### `UserRegisterDTO` — POST /api/users/register (Request — public)
+
+| Field       | Type   | Required | Constraints        |
+|-------------|--------|----------|--------------------|
+| `username`  | String | ✅       | 3–50 chars         |
+| `email`     | String | ✅       | valid email format |
+| `password`  | String | ✅       | 8–100 chars        |
+| `firstName` | String | ❌       | max 100 chars      |
+| `lastName`  | String | ❌       | max 100 chars      |
+
+> **There is no `roles` field, deliberately.** The account is created with no grants whatever the
+> caller sends, so a hand-rolled request cannot escalate. An administrator grants roles afterwards
+> via `PATCH /api/users/{id}/role`.
 
 ### `UserUpdateDTO` — PATCH /api/users/{id} (Request — owner or ADMIN)
 
@@ -114,10 +149,15 @@ Base path: `/api/users` · Auth endpoints: `/api/auth`
 
 ### `AdminUserUpdateDTO` — PATCH /api/users/{id}/role (Request — ADMIN only)
 
-| Field      | Type    | Required | Notes                |
-|------------|---------|----------|----------------------|
-| `role`     | String  | ❌       | null = no change     |
-| `isActive` | Boolean | ❌       | null = no change     |
+| Field      | Type     | Required | Notes                                                        |
+|------------|----------|----------|--------------------------------------------------------------|
+| `roles`    | String[] | ❌       | `null` = no change. When supplied it **replaces** the grants wholesale — send the intended end state, not a delta. Any of `ORGANIZER` / `MANAGER` / `ADMIN` |
+| `isActive` | Boolean  | ❌       | `null` = no change                                           |
+
+> There is no grant/revoke pair by design: sending the end state means two administrators editing
+> at once cannot interleave into a combination neither of them chose. An **explicitly empty set is
+> therefore meaningful** — it strips every role, leaving the account authenticated and nothing
+> more. Only `null` means "leave alone".
 
 ### `ChangePasswordDTO` — POST /api/users/{id}/change-password (Request)
 
@@ -150,8 +190,13 @@ Client
               │
               ├─ JwtTokenProvider.generateToken(authentication)
               │
-              └─ return LoginResponseDTO { token, userId, username, email, role, forcePasswordChange }
+              └─ return LoginResponseDTO { token, userId, username, email,
+                                           role (deprecated), roles, forcePasswordChange }
 ```
+
+Authorities on the token's principal come from the caller's **membership** for the current group
+since V23 — `user_roles` is frozen and no longer read. An account with no membership authenticates
+and holds nothing, which is a legitimate state rather than an error.
 
 ### Caching
 
@@ -195,10 +240,14 @@ Content-Type: application/json
   "userId": 5,
   "username": "johndoe",
   "email": "john@example.com",
-  "role": "BASIC_USER",
+  "role": null,
+  "roles": [],
   "forcePasswordChange": false
 }
 ```
+
+*(This is an account with no grants — `roles` is empty and the deprecated `role` is `null`. An
+administrator who also runs match day would show `"roles": ["ADMIN", "MANAGER"]`.)*
 
 ---
 
@@ -233,7 +282,7 @@ Authorization: Bearer <admin-token>
   "password": "securePass1",
   "firstName": "Jane",
   "lastName": "Doe",
-  "role": "BASIC_USER"
+  "roles": ["MANAGER"]
 }
 ```
 
@@ -245,7 +294,7 @@ Authorization: Bearer <admin-token>
   "email": "jane@example.com",
   "firstName": "Jane",
   "lastName": "Doe",
-  "role": "BASIC_USER",
+  "roles": ["MANAGER"],
   "isActive": true,
   "forcePasswordChange": false,
   "createdAt": "2026-05-15T10:30:00Z"
@@ -285,7 +334,7 @@ deactivation endpoint is `DELETE /api/users/{id}` (soft delete — sets `isActiv
 |--------|-------|
 | **Method** | `PATCH` |
 | **Path** | `/api/users/{id}/role` |
-| **Auth** | `ADMIN_USER` only |
+| **Auth** | `ADMIN` only |
 | **Request body** | `AdminUserUpdateDTO` — `{"isActive": true}` |
 | **Success response** | `200 OK` — `UserDTO` with `isActive: true` |
 
@@ -306,7 +355,7 @@ Content-Type: application/json
   "email": "jane@example.com",
   "firstName": "Jane",
   "lastName": "Doe",
-  "role": "BASIC_USER",
+  "roles": ["MANAGER"],
   "isActive": true,
   "forcePasswordChange": false,
   "createdAt": "2026-05-15T10:30:00Z"
@@ -317,7 +366,7 @@ Content-Type: application/json
 
 | Status | Condition | Message |
 |--------|-----------|---------|
-| `403 Forbidden` | Caller is not `ADMIN_USER` | Forbidden |
+| `403 Forbidden` | Caller does not hold `ADMIN` | Forbidden |
 | `404 Not Found` | User ID does not exist | `User with id {id} not found` |
 | `409 Conflict` | User is already active | `User is already active` |
 
@@ -335,7 +384,7 @@ Content-Type: application/json
 | Inactive user login attempt        | 401    | User is inactive                           |
 | Duplicate username on create       | 409    | `Username already taken: {username}`       |
 | Duplicate email on create/update   | 409    | `Email already registered: {email}`        |
-| Invalid role string                | 400    | `Invalid role: {role}. Must be one of: ...`|
+| Unrecognised role in `roles`       | 400    | Field-level validation error — `must be one of ORGANIZER, MANAGER, ADMIN`. The constraint sits on the set's *elements*, so a bad value is reported against the field rather than reaching `UserService` as a parse failure |
 | Wrong current password on change   | 400    | `Current password is incorrect`            |
 | User not found                     | 404    | `User with id {id} not found`              |
 | Non-admin accessing admin endpoint | 403    | Forbidden                                  |
@@ -346,6 +395,5 @@ Content-Type: application/json
 ## Known Limitations
 
 - No password reset via email (not yet implemented — future feature)
-- No account registration self-service — only admins can create users via `POST /api/users`
 - JWT expiry defaults to 24 hours (`app.jwt.expiration-ms=86400000`); no refresh token mechanism yet
 

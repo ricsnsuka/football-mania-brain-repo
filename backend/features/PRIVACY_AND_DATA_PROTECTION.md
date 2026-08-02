@@ -25,6 +25,8 @@ advice and it is not the privacy policy — see [What is still outstanding](#wha
 | Data | Where | Why it is held |
 |------|-------|----------------|
 | Username, email, first/last name | `users` | Authentication and identifying who did what |
+| Which groups you belong to, and when you joined | `memberships` | Knowing who is in a group. Associational data about one person; retained for the life of the membership, and removed with the account |
+| What you are allowed to do in a group | `membership_roles` | Authorisation. Per group since V23 — a grant held in one group says nothing about any other |
 | Password (bcrypt hash) | `users` | Authentication. Not personal data in a portable sense — a hash cannot be handed to another controller, so it is excluded from exports |
 | Display name, phone number | `players` | Organising matches; contacting players about fixtures |
 | Match appearances, goals, assists, own goals, MVP, per-match rating | `player_stats`, `goals` | The competitive record the group exists for |
@@ -45,15 +47,58 @@ location beyond a free-text pitch name, and biometric or special-category data o
 
 ---
 
-## Lawful basis
+## Who is responsible for what: the controller/processor split
 
-For a private group running its own matches, the relevant bases are **contract** (you joined the
-group; organising fixtures and keeping the results is what the group does) and **legitimate
-interest** (retaining historical match results so the competition's record stays coherent).
+**Revised in Phase 5a-3.** The previous version of this section assumed one deployment serving one
+group, and booked its own revisit: *"the operator of a hosted service and the group organiser are
+then different parties, and the controller/processor split has to be written down."* This is that.
 
-If Phase 5 makes this a self-serve product, this section needs revisiting with the tenant boundary
-in mind — the operator of a hosted service and the group organiser are then different parties, and
-the controller/processor split has to be written down.
+There are two parties and two kinds of data, and conflating them is what makes multi-tenant
+privacy go wrong.
+
+| | Controller | Processor | What it covers |
+|---|---|---|---|
+| **A group's competition data** | the group, through whoever holds `ADMIN`/`ORGANIZER` in it | the platform operator | roster, matches, goals, ratings, availability, the fee ledger, badges, MOTM votes |
+| **Account data** | the platform operator | — | credentials, email, push endpoints, notification preferences, memberships |
+| **Platform operations** | the platform operator | — | logs, backups |
+
+The practical consequences, which are what the code now enforces:
+
+- **A group's administrators decide who is on their roster and when somebody is erased from it.**
+  The operator acts on those instructions through the product's features. That is why
+  `DELETE /api/privacy/players/{id}` anonymises the player *in that group* and ends that
+  membership — it no longer deletes the account, which was never the group's to delete.
+- **A group administrator's export gives them what their group processes, nothing more.** The
+  admin-actioned export carries no platform tier: not the person's email, not their devices. A
+  group has no standing to hand out account data it does not control.
+- **Direct requests to the right party.** Sports-data questions ("delete my record from this
+  group") go to the group's organisers. Account questions ("delete my account entirely") go to the
+  operator, and the person can action that themselves.
+
+### Lawful basis
+
+**For a group's competition data:** **contract** (you joined the group; organising fixtures and
+keeping the results is what the group does) and **legitimate interest** (retaining historical
+match results so the competition's record stays coherent). Unchanged in substance — but it is now
+the *group* relying on them, per group.
+
+**For account data:** **contract** with the operator (you asked for an account, the operator
+provides one).
+
+Note that the guest-players data-minimisation argument survives this rewrite intact: a guest
+joined nothing, has no account, and the group holds only a name and a skill estimate for them —
+which is why guests were deliberately given no phone number.
+
+### Sub-processors
+
+*None at present.* This section exists and is deliberately empty so that the first one has an
+obvious home. The billing rung would add a payment processor here; it is on hold.
+
+### Data processing agreement
+
+A DPA between the operator and each group is an **operator task requiring legal review**, flagged
+here rather than drafted. This document is an engineering record of what the system does; it is
+not legal advice and no template belongs in it.
 
 ---
 
@@ -63,21 +108,22 @@ the controller/processor split has to be written down.
 |-------|---------|------------------|
 | Access | 15 | `GET /api/privacy/me/export` |
 | Portability | 20 | Same endpoint — JSON, offered as a file download |
-| Erasure | 17 | `DELETE /api/privacy/me` |
+| Erasure | 17 | `DELETE /api/privacy/me/groups/{groupId}` to leave one group; `DELETE /api/privacy/me` to erase the account once it is your last |
 | Rectification | 16 | Existing `PATCH /api/players/{id}` and `PATCH /api/users/{id}` |
 | Restriction / objection | 18, 21 | Manual — no automated route. Deactivating a player (`PATCH /api/players/{id}/status`) removes them from selection without erasing anything |
 
-Implementation: [`PrivacyService`](../../src/main/java/pt/rics/demo/football/service/PrivacyService.java),
-[`PrivacyController`](../../src/main/java/pt/rics/demo/football/controller/PrivacyController.java).
+Implementation: [`PrivacyService`](https://github.com/ricsnsuka/FootMania-Back/blob/master/src/main/java/pt/rics/demo/football/service/PrivacyService.java),
+[`PrivacyController`](https://github.com/ricsnsuka/FootMania-Back/blob/master/src/main/java/pt/rics/demo/football/controller/PrivacyController.java).
 
 ### Endpoints
 
 | Method | Path | Access | Purpose |
 |--------|------|--------|---------|
-| `GET` | `/api/privacy/me/export` | Any authenticated user | Download your own data |
-| `DELETE` | `/api/privacy/me` | Any authenticated user | Erase your own data |
-| `GET` | `/api/privacy/players/{id}/export` | `ADMIN_USER` | Action a request on someone's behalf |
-| `DELETE` | `/api/privacy/players/{id}` | `ADMIN_USER` | Erase someone else's data |
+| `GET` | `/api/privacy/me/export` | Any authenticated user | Download your own data — platform tier plus one section per group |
+| `DELETE` | `/api/privacy/me/groups/{groupId}` | Any authenticated user | **Leave one group.** Anonymises your player there, ends the membership, scrubs that group's audit trail. Everything else untouched |
+| `DELETE` | `/api/privacy/me` | Any authenticated user | Erase your account from the platform. `409` while you belong to more than one group |
+| `GET` | `/api/privacy/players/{id}/export` | `ADMIN_USER` | Action a request on someone's behalf — that group's section only, no platform tier |
+| `DELETE` | `/api/privacy/players/{id}` | `ADMIN_USER` | Remove someone from **this group** and anonymise them. Does not touch their account |
 
 The `/me` endpoints take their subject from the authenticated principal, never from a request
 parameter — there is nothing a caller can change to read or erase another person's record. The
@@ -89,9 +135,23 @@ and that person has the same rights with no way to exercise them; they are `ADMI
 
 ## The export
 
-One JSON document containing: the account, the player profile, every match appearance, every goal
-scored or assisted, the full rating history, and every availability response including the free-text
-notes the subject wrote.
+**Two tiers since 5a-3.** The document is a platform section — the account and its registered
+devices, which the operator controls — followed by one section per group the person belongs to.
+Each group section carries that group's name, the roles held there, and the player profile,
+matches, goals, rating history, availability, votes, badges and ledger *as that group holds them*,
+resolved under that group's tenant.
+
+A flat document was truthful only while a person could belong to one group. It cannot say which
+group a goal was scored in, and merging two groups' records would describe a career the person
+never had.
+
+The admin-actioned export (`/players/{id}/export`) carries **one group section and no platform
+tier** — see the controller split above.
+
+
+One JSON document containing: the account, the player profile, the groups the subject belongs to
+with their per-group grants, every match appearance, every goal scored or assisted, the full rating
+history, and every availability response including the free-text notes the subject wrote.
 
 Two deliberate constraints:
 
@@ -164,10 +224,15 @@ the same way the league table does.
 ### Two guards
 
 - **An erased record cannot be erased again** — `409 Conflict`.
-- **An `ADMIN_USER` cannot erase their own account** — `403 Forbidden`. Not because administrators
-  lack the right, but because the request would irreversibly delete the credentials that administer
-  the deployment, potentially the last set, from a self-service endpoint. Another administrator can
-  action it via `DELETE /api/privacy/players/{id}`.
+- **The last administrator of a group cannot leave it** — `403 Forbidden`. Narrowed in 5a-3 from
+  "an ADMIN cannot erase their own account", which meant "do not lock everybody out" when there was
+  one deployment. The concern per group is sharper: only an administrator can grant roles, so a
+  group at zero administrators cannot appoint one and needs operator intervention. Leaving is fine
+  while somebody else can administer the group.
+- **An account belonging to several groups cannot be erased from the platform** — `409 Conflict`,
+  listing the groups. Leave each one first; the last one offers platform erasure as the natural
+  final step. Somebody leaving their Tuesday five-a-side has not asked to vanish from two others,
+  and the endpoint cannot tell which they meant.
 
 ### What erasure does not reach
 
@@ -228,4 +293,6 @@ incomplete:
 2. `PrivacyService` — a section in the export, and a step in `erase(...)`.
 3. `PrivacyServiceTest` — a case proving both.
 
-Phase 2's `push_subscriptions` was the last one; see the section above for how it was handled.
+Phase 5's `memberships`/`membership_roles` were the most recent; like `user_roles` before them they
+cascade with the `users` row, which is why the erasure table below does not list them. Phase 2's
+`push_subscriptions` is the fullest worked example — see the section above for how it was handled.

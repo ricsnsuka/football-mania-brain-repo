@@ -1,6 +1,6 @@
 # Database Migration History
 
-Complete as of **V28**, verified against `src/main/resources/db/migration/` on 2026-08-02.
+Complete as of **V31**, verified against `src/main/resources/db/migration/` on 2026-08-02.
 
 This supersedes the table in [backend/architecture/ARCHITECTURE.md](../backend/architecture/ARCHITECTURE.md),
 which stops at V13.
@@ -39,6 +39,9 @@ editable — correct it with a new one.
 | V26 | `V26__rescope_unique_constraints.sql` | Per-tenant uniques: one player per account **per group**, season names per group, and one current season per group |
 | V27 | `V27__app_settings_tenant_pk.sql` | `app_settings` PK → `(tenant_id, setting_key)`. Absence of a row still means "on the default", so a new group needs zero seeded rows — V16's design paying off |
 | V28 | `V28__platform_admins.sql` | `platform_admins` — the operator grant, flat and separate from the role model, because every founder will hold group `ADMIN`. Ships **empty**: no backfill and no "promote the first admin", since a migration that silently grants platform-wide powers is the opposite of a dark launch. [Plan](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) §9 |
+| V29 | `V29__drop_user_roles.sql` | **`DROP TABLE user_roles`** — the contract half of V23's expand/contract, written once the soak had actually started rather than at the V28 the plan pencilled in. **The point of no return:** pre-V22 code resolves authorities from `users.roles` → `user_roles`, so past here a rollback to before V22 means restoring a backup, not redeploying an old jar. No data is lost — V23 copied every row and the dual-write kept them level; the migration carries the `EXCEPT` query to prove it before running. [Plan](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) |
+| V30 | `V30__group_invites.sql` | `group_invites` — server-issued, single-use, expiring tokens, **not** shareable role-bearing URLs, which would be credentials with no revocation and no audit. The grants belong to the invite rather than its author, so an ADMIN may mint a MANAGER invite and a stolen token grants exactly what it says, once. Completes the guest arc GUEST-PLAYERS-PLAN §2 deferred: guest plays → manager promotes → invite → person registers and accepts → links to the player row. [Plan](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
+| V31 | `V31__group_creation_codes.sql` | `group_creation_codes` — founding a group needs a single-use operator-issued code. Registration stays open and free; a *group* is what the code buys. Open self-serve was rejected: with no billing, no metering and no abuse controls it would open an unbounded free-rider window in the very release that makes the product visible, and a code keeps the flip reversible with no deploy. **The table ships empty.** When billing lands these become promo/trial codes rather than dead weight. [Plan](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
 
 ---
 
@@ -47,6 +50,12 @@ editable — correct it with a new one.
 **The whole chain through V28 is applied in production as of 2026-08-02.** V22–V28 — the entire
 Phase 5a schema and the platform grant — went out as one release, dark. The note below records the
 state before that.
+
+**V29–V31 are merged and not deployed.** They are the 5a-4 rung: the `user_roles` drop plus
+invites and creation codes. **V29 is the one to plan the release around** — it is the point past
+which a rollback to before V22 needs a backup restore rather than an old jar, and the soak rule
+below is what gates it. V31 ships `group_creation_codes` empty, so shipping this chain does not
+make anything self-serve: the endpoint existing is not the flip, a code existing is.
 
 **The chain through V21 was applied as of 2026-08-01** — the guest-players
 feature was observed live the day V20/V21 merged, which means V17–V19 (including V18's column
@@ -67,9 +76,10 @@ Two things survive it:
 
 | # | Concern | Plan |
 |---|---------|------|
-| V29 | Drop `user_roles` — the contract half of V23 | [TENANCY-ENFORCEMENT-PLAN](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) |
-| V30 | `group_invites` | [GROUP-ONBOARDING-PLAN](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
-| V31+ | `org_subscriptions` + entitlements | [GROUP-BILLING-PLAN](../backend/plans/GROUP-BILLING-PLAN.md), design-only — **on hold** |
+| V32+ | `org_subscriptions` + entitlements | [GROUP-BILLING-PLAN](../backend/plans/GROUP-BILLING-PLAN.md), design-only — **on hold** |
+
+*V29 and V30 were reserved here and are now written (above). V31 went to
+`group_creation_codes` rather than to billing, which is why the billing reservation moved to V32+.*
 
 **The `user_roles` drop moved from V28 to V29 — proposed by the implementer 2026-08-02,
 ✅ confirmed by the owner the same day.** The enforcement plan pencilled it in at V28 on the

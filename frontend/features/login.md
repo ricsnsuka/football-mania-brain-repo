@@ -39,27 +39,41 @@ A **Register** link on the login page opens a modal for creating a new account (
 POST /api/auth/login   (public — no JWT required)
 
 Request:  { "identifier": "johndoe", "password": "secret" }
-Response: { "token": "...", "userId": 1, "username": "johndoe",
-            "email": "...", "role": "a member with no roles", "forcePasswordChange": false }
+Response: { "token": "...", "userId": 1, "username": "johndoe", "email": "...",
+            "role": null, "roles": [], "forcePasswordChange": false }
 ```
+
+`roles` is the field the client reads; `role` is the deprecated pre-V18 single name, still emitted
+for one release because the two repositories deploy separately. `useLogin` takes
+`data.roles ?? rolesFromLegacy(data.role)` so either ordering of those deploys works, and
+`loginResponseSchema` marks both optional for the same reason. An empty `roles` is a normal
+account, not an error.
 
 ---
 
 ## Registration
 
 ```
-POST /api/users   (skipAuth: true)
+POST /api/users/register   (public — skipAuth: true)
 
-Request:  { "username", "email", "password", "firstName", "lastName", "role" }
+Request:  { "username", "email", "password", "firstName"?, "lastName"? }
 Response: UserDTO (201)
 ```
 
-The register modal (`RegisterModal`) collects all `UserCreateDTO` fields with client-side Zod validation:
-- `firstName`, `lastName` — required
+> **Not `POST /api/users`.** That is a different, admin-only endpoint taking `UserCreateDTO`,
+> which *does* carry `roles`. The public registration endpoint is `/api/users/register` and its
+> payload (`UserRegisterDTO`) has no `roles` field at all — the account is always created with no
+> grants, whatever the caller sends, because self-service role selection would be a
+> privilege-escalation route. An administrator grants roles afterwards via
+> `PATCH /api/users/{id}/role`.
+
+The register modal (`RegisterModal`) collects the `UserRegisterDTO` fields with client-side Zod validation:
+- `firstName`, `lastName` — optional
 - `username` — 3–50 characters
 - `email` — valid email format
 - `password` — minimum 8 characters; `confirmPassword` matches (client-only, not sent)
-- `role` — select: `a member with no roles` (default) | `MANAGER` | `ADMIN`
+
+There is no role control in the modal, by design.
 
 On success a `success` toast is shown via `addNotification`. On `409 Conflict`, an inline error reports duplicate username/email.
 
@@ -67,7 +81,17 @@ On success a `success` toast is shown via `addNotification`. On `409 Conflict`, 
 
 ## Auth State
 
-Token is stored **in Zustand memory only** — never written to `localStorage`, `sessionStorage`, or cookies. It is lost on page refresh and the user must re-login.
+Token and user are persisted to **`sessionStorage`** (locale and theme go to `localStorage` — two
+genuinely different lifetimes from one `persist()` call). The session therefore **survives a page
+refresh** and is scoped to the tab: closing it ends the session, and `clearAuth()` removes all
+three auth keys.
+
+Never `localStorage` and never a cookie: `localStorage` would outlive the tab on a shared machine,
+and a cookie would be sent on every request, which is what the bearer-token scheme exists to avoid.
+
+> ⚠️ This section previously claimed the token was held in memory only and lost on refresh. That
+> stopped being true when persistence was added; it is recorded here because "memory-only" is
+> exactly the sort of claim a security review would rely on without re-reading the store.
 
 ```ts
 // Read auth state anywhere
