@@ -95,7 +95,7 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 | [backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md) | Last touched 2026-05-27 — predates kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | Rewrite against current behaviour |
 | ~~[backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md)~~ | Header read "DRAFT — not implemented"; it shipped in `828db3b` | ✅ **Resolved.** Corrected here on import, and the stale backend copy went with the documentation split — there is one copy now, and it is this one |
 | [backend/plans/ORCHESTRATOR_SESSION.md](backend/plans/ORCHESTRATOR_SESSION.md) | Last entry 2026-07-28, though `orchestrator.agent.md` still mandates an entry per session | Resume it, or retire the convention deliberately |
-| Postman collection (not imported) | Last updated 2026-07-10: 60 requests against 84 controller mappings. Missing entirely: Payments (9), Push (5), Admin settings/system (5), Privacy (4), MOTM (2), rankings, leaderboards, badges, and now the three platform-operator endpoints. Its changelog still describes a 37-request collection | Regenerate; roughly 31 endpoints of work. Every request also needs an optional `X-Group-Id` |
+| ~~Postman collection~~ | Was 60 requests against a 103-operation API, and — the deeper find — **gitignored the whole time**, so every copy lived on one person's disk and none could be diffed | ✅ **Resolved 2026-08-02.** Now *generated* from the running app's `/v3/api-docs` by `postman/generate-collection.mjs`, committed to the repo (103 requests, 17 folders, `X-Group-Id` per the tenancy contract), and regeneration is one command. The hand-maintenance workflow in `postman-engineer.agent.md` is marked historical |
 | ~~[frontend/INDEX.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/INDEX.md)~~ | Omitted seven of its own files | ✅ **Resolved** by the documentation split — the feature docs it failed to link now live here, and what is left there is a pointer plus the seven guides |
 | frontend — missing files | No `features/payments.md`, though `a3efac0` shipped the whole "what you owe" UI; and nothing for guest players or payment delegation (`722335c`) | Write them. Every other frontend feature has a file. ✅ The group dimension is now covered by [frontend/features/groups.md](frontend/features/groups.md) |
 | **this repo — no tenancy feature doc** | [architecture/multi-tenancy.md](architecture/multi-tenancy.md) and the plans carry the design, but `backend/features/` has nothing on organizations, memberships or per-membership roles, while nine older features each have a file | Write `backend/features/TENANCY.md`. It is the one thing a new session most needs and currently has to reconstruct from four plans |
@@ -129,7 +129,8 @@ reason this repo exists.
    a product one rather than a schema one: **issuing the first creation code.**
 4. ~~Backfill the changelog~~ ✅ done 2026-08-02 — fifteen sections written from the commit
    messages and cut as `[1.1.0]`. Keep fixing the rest of the drift table above.
-5. Regenerate the Postman collection — now with `X-Group-Id`.
+5. ~~Regenerate the Postman collection.~~ ✅ Done 2026-08-02 — and made a derived artefact, so this
+   line cannot come back: `node postman/generate-collection.mjs` against a running app.
 6. Add the locale key-parity test, and a controller test asserting `totalCostCents` serialises.
 7. Then 5a-3 (privacy fork), or Phase 3's last item — AI match reports. 5a-4 is the visibility flip
    and is owner-gated; billing is on hold.
