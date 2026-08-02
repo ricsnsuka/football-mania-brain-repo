@@ -6,19 +6,19 @@ nobody trusts is worse than none.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `master`, and `v1.0.0` rebased onto it | `v1.0.0` |
-| Head | `013562c` — *Repoint the links the docs move left dangling* (`master` at `714924a`) | `286d6b7` — *Rewire this repo's agents to the brain repo too* |
+| Head | `4e1856e` — *Stop registration writing a membership it has no tenant for* | `e934124` — *Test the login redirect guard…* |
 | Version | `1.1.0` — **deployed 2026-08-02** | `1.1.0` — matched to the backend |
 | Working tree | clean | clean |
-| Tests | 1000 unit across 194 suites + integrationTest green in CI | 485 unit + 20 visual regression |
-| Latest migration | `V31__group_creation_codes.sql` — **merged, not deployed** | — |
-| Deployed through | `V28` (2026-08-02) | — |
+| Tests | 1000 unit across 194 suites + integrationTest green in CI | 509 unit + 32 visual regression |
+| Latest migration | `V31__group_creation_codes.sql` | — |
+| Deployed through | **`V31`** (2026-08-02) | — |
 
-✅ **Phase 5a is live.** V22–V28 were applied in production on 2026-08-02, and both repos are on
-`1.1.0`. The deployment is dark by design: one organization, an optional header, no user-visible
-change.
+✅ **All of Phase 5a is live.** V22–V31 were applied in production on 2026-08-02, and both repos
+are on `1.1.0`. The schema deployment is dark by design — one organization, an optional header, no
+user-visible change — and it is now complete rather than partial.
 
-**This starts the soak clock.** `user_roles` is still frozen and still load-bearing — see hazard 3.
-V29 drops it, and the rule is one release of soak, not one deployment event.
+**`user_roles` is gone.** That table was the thing that made a rollback to pre-V22 code
+survivable; V29 dropped it. See hazard 3 for what that changes about recovery.
 
 ---
 
@@ -33,7 +33,7 @@ See [product/roadmap.md](product/roadmap.md) for the plan itself.
 | **2** — Web Push | ✅ done, delivery observed end to end against a real push service |
 | **3** — the "steal from Capo" set | 🟡 balance-at-a-glance, waitlist, leaderboards/rankings, MOTM voting and badges all shipped in both repos. **Remaining: AI match reports** |
 | **4** — Capacitor + app stores | ⬜ not started, deliberately gated on real usage data |
-| **5** — multi-tenancy + billing | 🟡 **two rungs live, 5a-4 authorised.** 5a-1 (schema, V22–V27) and 5a-2 (enforcement + V28) both deployed 2026-08-02. Running **dark** — one organization, an optional header, no behaviour change. 5a-3 privacy fork ✅ built 2026-08-02, which unblocked 5a-4. ✅ **5a-4 onboarding is built too** — `V29`–`V31`, group creation behind an operator-issued code, invites, and the last step of the guest arc. All of 5a is now written; `V29`–`V31` are **merged and not deployed**. ✅ **The 5a-4 owner gate was lifted on 2026-08-02** — the roadmap's "real engagement signal from push" precondition is explicitly waived. **Issuing creation codes is still not authorised**: that is the visibility flip itself and stays a separate, deliberate act, and `group_creation_codes` ships empty. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
+| **5** — multi-tenancy + billing | 🟢 **5a is complete and entirely live.** All four rungs deployed 2026-08-02: schema (`V22`–`V27`), enforcement (`V28`), the privacy fork, and onboarding (`V29`–`V31`) — group creation behind an operator-issued code, invites, and the last step of the guest arc. Running **dark**: one organization, an optional header, no behaviour change yet. Both onboarding UIs exist too — `/join/{token}` and the picker for members, invite links for group `ADMIN`, creation codes for the platform operator. **Issuing a creation code is still the flip, and is still a separate deliberate act**: the endpoint and the screen exist, `group_creation_codes` is empty, and nothing is self-serve until a code is issued. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
 
 Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
 system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee
@@ -59,20 +59,19 @@ real PostgreSQL container in CI before it went anywhere near production — `int
 being opt-in in time to matter. Two hazards in a row have now been closed by the same discipline,
 and hazard 1's lesson is the reason this one was cheap.
 
-**3. `user_roles` must survive until the deployed chain has been live for a release.**
-⚠️ **The most live hazard on this page, as of the 2026-08-02 deploy.** *(Owner-confirmed
-2026-08-02.)* V23 froze it as the expand half of an expand/contract; auth reads `membership_roles`
-and the role-update endpoint dual-writes both. The drop is **V29**, not the V28 the enforcement
-plan pencilled in, and it **must not be run early**. The soak began with the 2026-08-02 deploy and
-ends when the *next* release ships — one release of running code, not one deployment event. Until
-then that table is the only thing that makes a rollback to pre-V22 code survivable, and a rollback
-is exactly what you need if the tenancy chain turns out to have a problem nobody has hit yet.
+**3. ~~`user_roles` must survive until the deployed chain has been live for a release.~~ Closed
+2026-08-02 — by the drop happening.** V23 froze that table as the expand half of an
+expand/contract, and it was the only thing making a rollback to pre-V22 code survivable. **V29
+dropped it in production on 2026-08-02**, so that is no longer a hazard to manage; it is a fact
+about recovery.
 
-**V29 is now written and merged** — the hazard has moved from "do not write it" to "do not deploy
-it early". Deploying `V29`–`V31` is the act that ends the way back: past V29 a rollback to before
-V22 means restoring a backup, not redeploying an old jar, because pre-V22 code reads authorities
-from a table that no longer exists and every account returns with no grants. Verify first with the
-`EXCEPT` query in the migration's own header; zero rows means the copy is complete.
+⚠️ **What replaces it: rolling back past V22 now means restoring a backup, not redeploying an old
+jar.** Pre-V22 releases resolve authorities from `users.roles` → `user_roles`. That table is gone,
+so every account would come back with no grants at all, locking every administrator out of their
+own group. Anything back to the current release is fine — `membership_roles` has been the source of
+truth since V23. This is the normal, intended end state of an expand/contract rather than a
+mistake, and it is written here because the next person reaching for a rollback deserves to know
+which kinds still work.
 
 **4. A stale JVM will lie to you.** On 2026-07-31 a bug was reported where a match plan's pitch
 cost saved correctly, notified players with the right amount, and still read "not set" in the UI.
@@ -125,9 +124,9 @@ reason this repo exists.
    *write*, since recalculation rewrites ratings. Both fixed in the same change. Each check was
    verified to fail when its defect is reintroduced, because a guard that passes for the wrong
    reason is worse than none.
-3. ~~**Decide when V22–V28 deploy.**~~ ✅ Deployed 2026-08-02, dark and clean. The live question is
-   now **when `V29`–`V31` deploy**: the soak ends with the next release, and that release is the
-   point of no return described in hazard 3. Take a backup, run the `EXCEPT` check, then ship.
+3. ~~**Decide when V22–V31 deploy.**~~ ✅ All deployed 2026-08-02. The whole Phase 5a chain is in
+   production and the rollback boundary has moved — see hazard 3. The next deployment decision is
+   a product one rather than a schema one: **issuing the first creation code.**
 4. ~~Backfill the changelog~~ ✅ done 2026-08-02 — fifteen sections written from the commit
    messages and cut as `[1.1.0]`. Keep fixing the rest of the drift table above.
 5. Regenerate the Postman collection — now with `X-Group-Id`.

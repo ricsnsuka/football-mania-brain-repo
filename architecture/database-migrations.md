@@ -47,15 +47,24 @@ editable — correct it with a new one.
 
 ## Deployment state
 
-**The whole chain through V28 is applied in production as of 2026-08-02.** V22–V28 — the entire
-Phase 5a schema and the platform grant — went out as one release, dark. The note below records the
-state before that.
+**The whole chain through V31 is applied in production as of 2026-08-02** — every migration in the
+table above. V22–V28, the Phase 5a schema and the platform grant, went out as one release, dark;
+V29–V31 followed the same day. The notes below record the state at each step, newest first.
 
-**V29–V31 are merged and not deployed.** They are the 5a-4 rung: the `user_roles` drop plus
-invites and creation codes. **V29 is the one to plan the release around** — it is the point past
-which a rollback to before V22 needs a backup restore rather than an old jar, and the soak rule
-below is what gates it. V31 ships `group_creation_codes` empty, so shipping this chain does not
-make anything self-serve: the endpoint existing is not the flip, a code existing is.
+**V29–V31 were applied on the same day.** The 5a-4 rung — the `user_roles` drop plus invites and
+creation codes — is in production, which means **the whole chain through V31 is live** and Phase 5a
+is complete rather than partial.
+
+**The rollback boundary moved with it.** Past V29 there is no `user_roles`, so a pre-V22 release
+would resolve no authorities at all and lock every administrator out of their own group. Rolling
+back to before V22 now means restoring a backup; anything back to the current release is fine,
+because `membership_roles` has been the source of truth since V23. Intended end state of an
+expand/contract, written down because the next person reaching for a rollback deserves to know
+which kinds still work.
+
+V31 shipped `group_creation_codes` **empty**, and it stays empty until an operator issues one.
+Deploying this chain did not make anything self-serve: the endpoint existing is not the flip, a
+code existing is.
 
 **The chain through V21 was applied as of 2026-08-01** — the guest-players
 feature was observed live the day V20/V21 merged, which means V17–V19 (including V18's column
@@ -81,15 +90,14 @@ Two things survive it:
 *V29 and V30 were reserved here and are now written (above). V31 went to
 `group_creation_codes` rather than to billing, which is why the billing reservation moved to V32+.*
 
-**The `user_roles` drop moved from V28 to V29 — proposed by the implementer 2026-08-02,
-✅ confirmed by the owner the same day.** The enforcement plan pencilled it in at V28 on the
-assumption the soak would have elapsed. It has not started: V22–V27 are merged but not deployed, so
-dropping the table now would remove the way back from a rollback to pre-V22 code. V28 became the
-platform-admin grant instead; the drop keeps its place in the sequence with a later number.
+**Why the `user_roles` drop is V29 and not V28 — a decision, now history.** The enforcement plan
+pencilled the drop in at V28 on the assumption the soak would have elapsed by then. It had not:
+V22–V27 were merged and undeployed at the time, so dropping the table would have removed the way
+back from a rollback to pre-V22 code. V28 became the platform-admin grant instead and the drop took
+a later number. Proposed by the implementer 2026-08-02 and confirmed by the owner the same day.
 
-**Do not run V29 until V22–V27 have been live for a release.** This is now a ratified decision
-rather than one session's judgement, so a later session that finds V29 unwritten should not read
-that as an oversight to correct.
+**Both are now deployed** (2026-08-02), so this section records why the numbering is what it is,
+not a constraint still to be observed.
 
 V22–V28 ship as **one release** (the deploy is the migration) behind a DB-backup gate and a green
 `integrationTest` — now wired into CI, and green: `TenantIsolationIT` and `TenancySchemaIT` both

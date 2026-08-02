@@ -57,10 +57,10 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [ROLE-MODEL-MIGRATION-PLAN](backend/plans/ROLE-MODEL-MIGRATION-PLAN.md) | ✅ complete, both repos |
 | [PAYMENT-DELEGATION-PLAN](backend/plans/PAYMENT-DELEGATION-PLAN.md) | ✅ shipped, both repos — V20, live 2026-08-01 |
 | [GUEST-PLAYERS-PLAN](backend/plans/GUEST-PLAYERS-PLAN.md) | ✅ shipped, both repos — V21, live 2026-08-01. §12b: day-one removal bug, fixed same day. ⚠️ `GuestIsolationIT` never run |
-| [TENANCY-SCHEMA-PLAN](backend/plans/TENANCY-SCHEMA-PLAN.md) | ✅ shipped 2026-08-01 — Phase 5a-1: organizations, memberships, `tenant_id` everywhere (V22–V27). Merged, **not deployed** |
-| [TENANCY-ENFORCEMENT-PLAN](backend/plans/TENANCY-ENFORCEMENT-PLAN.md) | ✅ built 2026-08-02 — 5a-2: `X-Group-Id`, predicates + asserts, tenant cache keys, async payloads, SSE ownership, platform grant (V28). §15 records the departures |
-| [TENANT-PRIVACY-PLAN](backend/plans/TENANT-PRIVACY-PLAN.md) | 📝 DRAFT — 5a-3: leave-group vs erase-platform, controller/processor split. Gates onboarding |
-| [GROUP-ONBOARDING-PLAN](backend/plans/GROUP-ONBOARDING-PLAN.md) | 📝 DRAFT — 5a-4: creation codes, invites, picker/switcher. **The visibility flip**; owner gate |
+| [TENANCY-SCHEMA-PLAN](backend/plans/TENANCY-SCHEMA-PLAN.md) | ✅ shipped — Phase 5a-1: organizations, memberships, `tenant_id` everywhere (V22–V27). **Live 2026-08-02** |
+| [TENANCY-ENFORCEMENT-PLAN](backend/plans/TENANCY-ENFORCEMENT-PLAN.md) | ✅ shipped — 5a-2: `X-Group-Id`, predicates + asserts, tenant cache keys, async payloads, SSE ownership, platform grant (V28), `user_roles` dropped (V29). **Live 2026-08-02**. §15 records the departures |
+| [TENANT-PRIVACY-PLAN](backend/plans/TENANT-PRIVACY-PLAN.md) | ✅ shipped — 5a-3: leave-group vs erase-platform, two-tier export, controller/processor split. **Live 2026-08-02** |
+| [GROUP-ONBOARDING-PLAN](backend/plans/GROUP-ONBOARDING-PLAN.md) | ✅ shipped — 5a-4: creation codes, invites, picker/switcher, join page (V30–V31). **Live 2026-08-02**. ⚠️ **The visibility flip is not the deploy** — no code has been issued, so nothing is self-serve yet |
 | [GROUP-BILLING-PLAN](backend/plans/GROUP-BILLING-PLAN.md) | ⛔ **ON HOLD (owner decision, 2026-08-01)** — design reference only, **do not implement** until the owner lifts the hold |
 | [MATCH-FEE-LEDGER-PLAN](backend/plans/MATCH-FEE-LEDGER-PLAN.md) | ✅ shipped — §14 covers a future payment integration |
 | [PLAYER-LINK-ME-PLAN](backend/plans/PLAYER-LINK-ME-PLAN.md) | ✅ shipped |

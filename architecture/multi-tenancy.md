@@ -72,12 +72,14 @@ unmodified.**
 whole tier has now executed against a real PostgreSQL container, which is what made rungs 1 and 2
 provable rather than merely written.
 
-**Rungs 1 and 2 are live as of 2026-08-02**, deployed together as one dark release. The chain met
-real data and applied cleanly.
+**Every rung is live as of 2026-08-02.** Rungs 1 and 2 went out together as one dark release and
+applied cleanly against real data; the privacy fork and onboarding (`V29`–`V31`) followed the same
+day, so the whole chain through V31 is in production.
 
-**What that does not yet permit is V29.** The soak began with this deploy and ends when the next
-release ships — one release of running code, not one deployment event. `user_roles` stays frozen
-until then; see STATUS.md hazard 3. The next Phase 5 rung is 5a-3.
+**`user_roles` is dropped.** It was frozen from V23 as the expand half of an expand/contract, and
+V29 removed it — which closes the rollback path to anything before V22, since that would now need a
+backup restore rather than an old jar. See STATUS.md hazard 3. What is left of Phase 5 is 5b
+billing, on hold by owner decision.
 
 ## What deliberately did not change
 
