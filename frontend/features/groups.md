@@ -29,16 +29,34 @@ is.**
 
 ---
 
+## The shell these screens share
+
+`/groups`, its children and `/join` sit outside the `(app)` route group because that layout's
+Navbar shows the **active group's** name — the thing these screens exist because you lack. They
+are not bare, though: `OnboardingShell` gives them the same `.navbar`/`.app-main`/footer chrome
+with the *platform's* name in the brand slot, the way login carries it, plus a sign-out button.
+The sign-out is load-bearing — a groupless user is pinned to these screens by the group gate, and
+without it, signing in with the wrong account left no way out short of clearing storage by hand.
+
+(They first shipped with no layout at all — no navbar, no footer, one toggle reading "I have a
+creation code" as the only offer. The owner hit it on first login and said so; 2026-08-02, fixed
+the same day.)
+
 ## `/groups` — the picker
 
-`AuthGuard`'s third gate sends anybody with no active group here, and it sits outside the `(app)`
-route group because that layout renders the Navbar, which shows the name of the group they do not
-have yet.
+`AuthGuard`'s third gate sends anybody with no active group here.
 
-Three states, one screen: several memberships means pick one; none means wait for an invite or
-redeem a code; exactly one never arrives here at all, because `resolveActiveGroup` selects it
-silently. That last case is why onboarding was not a breaking change — every account that predates
-it holds exactly one membership and sees none of this.
+Three states, one screen: several memberships means pick one; none means choose one of the two
+ways in; exactly one never arrives here at all, because `resolveActiveGroup` selects it silently.
+That last case is why onboarding was not a breaking change — every account that predates it holds
+exactly one membership and sees none of this.
+
+The two ways in are first-class choices, each on its own route so each can explain itself:
+
+| Choice | Route | What it asks for |
+|---|---|---|
+| **Join a group** | `/groups/join` | The invite — pasted link, path, or bare code. `extractInviteToken` takes all three; a URL that is *not* an invite link is refused with a message rather than sent to the server as a "token". Submitting routes to `/join/<token>`, where the server judges it |
+| **Create a group** | `/groups/new` | Group name + the operator's creation code, with the gate explained in the hint. The code requirement is the product's anti-abuse gate, owner-ratified and reconfirmed 2026-08-02 |
 
 It re-reads the membership list on mount rather than trusting login's snapshot. The two ways that
 list goes stale — being invited into a group, being removed from one — both happen while somebody
