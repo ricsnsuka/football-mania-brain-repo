@@ -72,9 +72,10 @@ unmodified.**
 whole tier has now executed against a real PostgreSQL container, which is what made rungs 1 and 2
 provable rather than merely written.
 
-**The gap that replaces it: rungs 1 and 2 are merged, not deployed.** Production is on V21. V22–V28
-have met a container's empty schema, never two years of real rows — see STATUS.md hazard 2 — and
-`user_roles` cannot be dropped (V29) until they have been live for a release.
+**The gap that replaces it: rungs 1 and 2 are both in `master` as of 2026-08-02, and neither is
+deployed.** Production is on V21. V22–V28 have met a container's empty schema and never the real
+one — see STATUS.md hazard 2 — and `user_roles` cannot be dropped (V29) until they have been live
+for a release. The next Phase 5 action is that deploy, not rung 3.
 
 ## What deliberately did not change
 

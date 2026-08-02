@@ -1,8 +1,9 @@
 # Tenancy Enforcement (Runtime Isolation) — Technical Specification
 
 **Date:** 2026-08-01
-**Status:** ✅ **BUILT 2026-08-02** — Phase 5a-2, all six steps of §13. Ships dark; not yet
-deployed. See §15 for what was decided differently from this spec and what was deliberately left
+**Status:** ✅ **MERGED 2026-08-02** — Phase 5a-2, all six steps of §13, in `master` via PR #141.
+Ships dark; **not yet deployed**. See §15 for what was decided differently from this spec and what
+was deliberately left
 **Priority:** HIGH
 **Estimated Effort:** L (≈4–5 days backend; no user-visible frontend)
 **Depends on:** `TENANCY-SCHEMA-PLAN.md` — enforces a boundary that must already exist in the schema. **Build that first.**

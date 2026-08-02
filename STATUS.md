@@ -5,16 +5,21 @@ nobody trusts is worse than none.
 
 | | Backend | Frontend |
 |---|---|---|
-| Branch | `master`, plus `claude/handoff-continuation-axeqfs` carrying Phase 5a-2 | `v1.0.0` |
-| Head | `1a028e7` — *Tenancy enforcement (Phase 5a-2)*, unmerged | `f42575c` — *Fix roster row overlap on mobile…* |
+| Branch | `master` | `v1.0.0` |
+| Head | `a2e5e82` — *Merge #141: tenancy enforcement (Phase 5a-2)* | `f42575c` — *Fix roster row overlap on mobile…* |
 | Working tree | clean | clean |
-| Tests | 958 unit + integrationTest **now green in CI** | 470 unit + 20 visual regression |
-| Latest migration | `V28__platform_admins.sql` — **written, not deployed**; production is on V21 |  — |
+| Tests | 958 unit + integrationTest green in CI | 470 unit + 20 visual regression |
+| Latest migration | `V28__platform_admins.sql` — in `master`, **not deployed**; production is on V21 | — |
 
-⚠️ **Deployed ≠ merged, and this is the gap to watch.** Production runs V21. V22–V28 exist in
-code, have run against a real PostgreSQL container in CI, and have never touched the production
-database. Everything below marked "shipped" for Phase 5 means *merged or ready to merge*, not
+⚠️ **Merged ≠ deployed, and this is now the only gap.** As of 2026-08-02 the whole Phase 5a
+schema-and-enforcement chain is in `master` — V22 through V28, plus the code that enforces it. It
+has run against a PostgreSQL container in CI and has **never touched the production database**,
+which still stands at V21. Everything below marked "shipped" for Phase 5 means *in master*, not
 *live*.
+
+**The next action on Phase 5 is a deploy**, not more code: one release, behind a database backup.
+The chain is dark end to end — nothing user-visible changes, and the observable difference is seven
+rows in `flyway_schema_history`. It is also what starts the soak clock V29 depends on.
 
 ---
 
@@ -29,7 +34,7 @@ See [product/roadmap.md](product/roadmap.md) for the plan itself.
 | **2** — Web Push | ✅ done, delivery observed end to end against a real push service |
 | **3** — the "steal from Capo" set | 🟡 balance-at-a-glance, waitlist, leaderboards/rankings, MOTM voting and badges all shipped in both repos. **Remaining: AI match reports** |
 | **4** — Capacitor + app stores | ⬜ not started, deliberately gated on real usage data |
-| **5** — multi-tenancy + billing | 🟡 **two rungs built.** 5a-1 (schema, V22–V27) merged 2026-08-01; 5a-2 (enforcement) built 2026-08-02 on `claude/handoff-continuation-axeqfs`. Both ship **dark** — one organization, an optional header, no behaviour change. Remaining: 5a-3 privacy fork, 5a-4 onboarding (**the visibility flip**, owner-gated). ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
+| **5** — multi-tenancy + billing | 🟡 **two rungs merged, neither deployed.** 5a-1 (schema, V22–V27) 2026-08-01; 5a-2 (enforcement + V28) 2026-08-02, [PR #141](https://github.com/ricsnsuka/FootMania-Back/pull/141). Both ship **dark** — one organization, an optional header, no behaviour change. Remaining: 5a-3 privacy fork, 5a-4 onboarding (**the visibility flip**, owner-gated). ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
 
 Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
 system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee
