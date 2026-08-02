@@ -211,9 +211,10 @@ founder bootstrap and season seed, rename, `/api/me/memberships`, invite issue/l
 preview/accept, login payload, `guests.max.per.inviter`, invites in the GDPR export and erasure,
 contracts, `GroupOnboardingIT`.
 
-**Frontend — the choke points and the picker** (`FootMania-Simple-Front#7`): auth types, per-group
-role resolution, the safety pair, `X-Group-Id` injection, AuthGuard gate 3, `/groups`, the Navbar
-switcher, i18n ×3.
+**Frontend — done bar the visual baselines** (`FootMania-Simple-Front#7`, `#8`): auth types,
+per-group role resolution, the safety pair, `X-Group-Id` injection, AuthGuard gate 3, `/groups`,
+the Navbar switcher, `/join/{token}`, invite management, the per-group leave list, the
+SystemSettings platform/group split, "Members of {group}", i18n ×3.
 
 ### Departures worth knowing about
 
@@ -224,10 +225,29 @@ switcher, i18n ×3.
 | §3 | The creation code is "one column" | Its own table, V31 | It needs issuer, expiry, redemption and the group it produced — the operator's ledger of who was allowed a group |
 | §5 | — | `TenantResolver` gains tenant-agnostic paths | Not anticipated: the picker cannot sit behind the `400` that demands the header, and neither can founding or redemption |
 
+### The branding sweep was smaller than §6 assumed
+
+§6 budgeted "~10 strings" split between the platform name and `{{groupName}}` interpolation.
+`appName` has **exactly one** runtime usage — the Navbar brand slot, which became the group's name.
+Every other "Football Mania" is genuinely the platform's: login, manifest, metadata, the install
+hint, the privacy policy. Interpolating a group name into "Someone from outside the group" would
+be worse prose, not better.
+
+Naming the group helps where an act is *scoped* to one — the picker, the leave list, the invite
+section, the members-page title — and those four do it. Recorded so a later session does not go
+looking for eight missing interpolations.
+
 ### Outstanding on this rung
 
-- Invite management UI, and 5a-3's deferred **per-group leave list** (needs the members endpoint).
-- SystemSettings' platform/group split; UsersPage → "Members of {group}".
-- Branding sweep (`appName` → platform vs `{{groupName}}`).
-- The coordinated e2e/visual commit — 20 baselines, `win32`.
-- **Step 7: issuing the first creation code. Not authorised.**
+- The coordinated **e2e/visual commit** — 20 baselines, `win32`, and therefore not reproducible
+  from a Linux session. It is the one item here that needs the owner's machine.
+- **Step 7: issuing the first creation code. Not authorised**, and until it happens
+  `group_creation_codes` is empty and no second group can exist.
+
+### A defect this rung's tests found in the previous one
+
+`useAppStore((s) => s.user?.memberships ?? [])` builds a new array per call, and zustand compares
+snapshots by reference — an infinite render loop that only fires once `user` is null. It survived
+`#7` and surfaced the moment a `#8` test erased an account with the component still mounted. Worth
+remembering as a shape rather than an incident: **a selector that constructs its fallback is a
+render loop waiting for the field to be absent.**
