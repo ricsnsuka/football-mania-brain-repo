@@ -1,6 +1,6 @@
 # Multi-Tenancy — How the Two Repos Meet
 
-**Date:** 2026-08-01 · **Status:** DRAFT — companion to the Phase 5 plan chain
+**Date:** 2026-08-01 · **Updated:** 2026-08-02 · **Status:** rungs 1–2 built, 3–5 specced
 (`backend/plans/TENANCY-SCHEMA-PLAN.md` → `TENANCY-ENFORCEMENT-PLAN.md` →
 `TENANT-PRIVACY-PLAN.md` → `GROUP-ONBOARDING-PLAN.md` → `GROUP-BILLING-PLAN.md`).
 This doc owns what crosses the repo boundary; each plan owns its own internals; API contracts
@@ -62,15 +62,19 @@ unmodified.**
 
 | Rung | Plan | Visible? | Acceptance |
 |---|---|---|---|
-| 1 | TENANCY-SCHEMA (V22–V27, org #1 backfill) | Dark | Suite unmodified; constraints proven in `TenancySchemaIT` |
-| 2 | TENANCY-ENFORCEMENT (header, filters, asserts, cache keys, V28) | Dark (single-membership fallback) | Suite unmodified **+ `TenantIsolationIT`** — two seeded orgs invisible to each other at every layer, numerically for the rating/fee aggregates |
+| 1 | TENANCY-SCHEMA (V22–V27, org #1 backfill) | Dark | ✅ 2026-08-01. Suite unmodified; `TenancySchemaIT` green in CI |
+| 2 | TENANCY-ENFORCEMENT (header, predicates, asserts, cache keys, async payloads, SSE, V28 platform grant) | Dark (single-membership fallback) | ✅ 2026-08-02. Suite unmodified **+ `TenantIsolationIT`** green — two seeded orgs invisible to each other at every layer, numerically for the rating and fee aggregates. Enforcement plan §15 records the departures, chiefly explicit predicates instead of a Hibernate filter |
 | 3 | TENANT-PRIVACY (leave-group / erase-platform fork) | Dark (fork degenerates at one org) | Real-persistence byte-comparison tests |
 | 4 | GROUP-ONBOARDING (codes, invites, picker) | **The flip** | Owner sign-off; first creation codes issued |
 | 5 | GROUP-BILLING (Stripe) | ⛔ **ON HOLD (owner)** | **Do not schedule or implement** — the owner lifts the hold explicitly or it stays |
 
-Standing pre-work, before rung 1: **`integrationTest` wired into CI** (the entire safety story
-lives in that tier, and `GuestIsolationIT` — the template for `TenantIsolationIT` — has never
-been executed anywhere); the stale USERS.md/login.md registration-drift cleanup.
+~~Standing pre-work, before rung 1: `integrationTest` wired into CI.~~ ✅ Done 2026-08-01; the
+whole tier has now executed against a real PostgreSQL container, which is what made rungs 1 and 2
+provable rather than merely written.
+
+**The gap that replaces it: rungs 1 and 2 are merged, not deployed.** Production is on V21. V22–V28
+have met a container's empty schema, never two years of real rows — see STATUS.md hazard 2 — and
+`user_roles` cannot be dropped (V29) until they have been live for a release.
 
 ## What deliberately did not change
 
