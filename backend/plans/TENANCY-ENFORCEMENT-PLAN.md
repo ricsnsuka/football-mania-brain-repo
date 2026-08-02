@@ -269,6 +269,35 @@ operations assert an ACTIVE membership rather than using `TenantGuard`, which on
    `findAll(pageable)`.** A guard that reasons about which methods exist and who calls them finds
    what a search for a literal string cannot, and it keeps finding it after everyone has stopped
    looking.
+1a. **The guard's own blind spot: `findById`.** ⚠️ **Found 2026-08-02 by Phase 5a-4's
+   integration test, and it was worse than what the guard caught.** One group's administrator
+   could read *and write* another group's players by id.
+
+   This rung wrote `TenantGuard` for exactly this case — a predicate on a list query is easy to
+   see, `findById(id)` looks complete on its own and answers with whatever row carries that id.
+   It was then applied at some call sites and not others, and the ones it missed were the shared
+   private helpers most endpoints load through: `PlayerService.findOrThrow` (read, rename,
+   deactivate, delete, promote), `MatchService.findMatchOrThrow`,
+   `MatchPlanService.findPlanOrThrow`, every id-keyed load in `MatchFeeService`, plus
+   `MvpVoteService`, three entry points in `CalculationService`, `DraftSessionService`'s plan
+   load, `amendPlayerStat`, and the caller-supplied `seasonId` on both match-creation paths.
+
+   Reads leaked outright. Most writes would have been refused by V25's composite FKs — the
+   layer's value, demonstrated — but as a `500` rather than the `404` BR-E2 asks for, and one
+   that fires *after* the row has been located.
+
+   **Why `RepositoryScopingGuardTest` could not see it.** It covers declared listing methods and
+   inherited whole-table calls. `findById` is inherited but is not a whole-table read, so a
+   listing check has nothing to say about it. The generalisation of §12's lesson is therefore
+   narrower than it looked: *a structural check finds what a grep cannot, but only within the
+   shape it reasons about.* The thing that found this was an integration test with two real
+   groups in it, asserting reads and writes on an id the caller does not own — and that is now
+   the standing case (`GroupOnboardingIT.apiBornGroupsAreIsolated`).
+
+   Fixed in the 5a-4 backend PR: the assert lives in the shared load path rather than at each
+   call site. Deliberately still unguarded, each with its reason in place — the SSE subscriber
+   path (BR-E6 derives its own tenant), re-reads of a row the same transaction just saved, and
+   internal async completion paths whose ids come from rows already loaded under a bound tenant.
 2. **`PlatformService` is the one deliberately unscoped service.** It says so in its own javadoc;
    the allowlist above must name it, or the guard will fight it every release.
 3. **The group-scoped cache evict walks Caffeine's keyspace** to find this tenant's prefix — linear
