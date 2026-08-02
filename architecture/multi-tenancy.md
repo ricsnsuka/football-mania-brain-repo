@@ -72,10 +72,12 @@ unmodified.**
 whole tier has now executed against a real PostgreSQL container, which is what made rungs 1 and 2
 provable rather than merely written.
 
-**The gap that replaces it: rungs 1 and 2 are both in `master` as of 2026-08-02, and neither is
-deployed.** Production is on V21. V22–V28 have met a container's empty schema and never the real
-one — see STATUS.md hazard 2 — and `user_roles` cannot be dropped (V29) until they have been live
-for a release. The next Phase 5 action is that deploy, not rung 3.
+**Rungs 1 and 2 are live as of 2026-08-02**, deployed together as one dark release. The chain met
+real data and applied cleanly.
+
+**What that does not yet permit is V29.** The soak began with this deploy and ends when the next
+release ships — one release of running code, not one deployment event. `user_roles` stays frozen
+until then; see STATUS.md hazard 3. The next Phase 5 rung is 5a-3.
 
 ## What deliberately did not change
 

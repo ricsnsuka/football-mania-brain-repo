@@ -44,7 +44,11 @@ editable — correct it with a new one.
 
 ## Deployment state
 
-**The whole chain through V21 is applied in production as of 2026-08-01** — the guest-players
+**The whole chain through V28 is applied in production as of 2026-08-02.** V22–V28 — the entire
+Phase 5a schema and the platform grant — went out as one release, dark. The note below records the
+state before that.
+
+**The chain through V21 was applied as of 2026-08-01** — the guest-players
 feature was observed live the day V20/V21 merged, which means V17–V19 (including V18's column
 drop) went through cleanly too. The long-standing "never run against a real database" hazard is
 closed; STATUS.md records it as resolved.
