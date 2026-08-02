@@ -1,6 +1,6 @@
 # Database Migration History
 
-Complete as of **V21**, verified against `src/main/resources/db/migration/` on 2026-08-01.
+Complete as of **V28**, verified against `src/main/resources/db/migration/` on 2026-08-02.
 
 This supersedes the table in [backend/architecture/ARCHITECTURE.md](../backend/architecture/ARCHITECTURE.md),
 which stops at V13.
@@ -32,6 +32,13 @@ editable — correct it with a new one.
 | V19 | `V19__match_fee_ledger.sql` | `match_plans.total_cost_cents` (`NULL` = not recorded, `0` = the match was free), plus append-only `player_charges` and `player_payments`. Balance is derived as `SUM(payments) − SUM(charges)`; there is no allocation table. **No backfill** — inventing figures for past matches would produce debts nobody agreed to |
 | V20 | `V20__payment_delegation.sql` | `payment_delegations` — a standing debtor → payer mapping recording **who the organiser chases**, plus `player_payments.paid_by_player_id` for who physically handed money over. No charge or payment moves: `uq_player_charges_plan` forbids a second charge on the payer for the same plan, charge amounts are frozen at creation, and the per-player breakdown is the requirement. Ended, never deleted (with one carve-out: the delegations of a hard-deleted never-played guest are deleted with them — ending one would leave a row referencing a removed player, which is exactly how guest removal first broke in production); one active payer per debtor via a partial unique index. [Plan](../backend/plans/PAYMENT-DELEGATION-PLAN.md) |
 | V21 | `V21__guest_players.sql` | `players.is_guest` (state, cleared on promotion) + `players.invited_by_player_id` (provenance, kept) + `chk_guest_has_no_account`, which fixes the ordering promote → register → link. `DEFAULT FALSE` means no backfill: every existing player is a member by definition. [Plan](../backend/plans/GUEST-PLAYERS-PLAN.md) |
+| V22 | `V22__create_organizations.sql` | `organizations`, and the row that turns "the whole players table" into organization #1. Name is a deliberate placeholder — the founder renames it at onboarding. [Plan](../backend/plans/TENANCY-SCHEMA-PLAN.md) |
+| V23 | `V23__create_memberships_backfill_org1.sql` | `memberships` + `membership_roles`; every account joins org #1 with its V18 roles copied across. **`user_roles` is frozen from here** (expand/contract): auth reads the membership, the role-update endpoint dual-writes both, and the drop waits for a release of soak |
+| V24 | `V24__add_tenant_id_everywhere.sql` | `tenant_id BIGINT NOT NULL` (backfilled `1`) + FK + index on all 15 owned tables. `users`, `push_subscriptions` and `notification_mutes` stay platform-level — an account and its devices belong to a person, not a group |
+| V25 | `V25__composite_tenant_fks.sql` | ~29 child FKs recreated as `(tenant_id, parent_id)`, making a cross-tenant reference unrepresentable at the SQL layer rather than merely unwritten by the application |
+| V26 | `V26__rescope_unique_constraints.sql` | Per-tenant uniques: one player per account **per group**, season names per group, and one current season per group |
+| V27 | `V27__app_settings_tenant_pk.sql` | `app_settings` PK → `(tenant_id, setting_key)`. Absence of a row still means "on the default", so a new group needs zero seeded rows — V16's design paying off |
+| V28 | `V28__platform_admins.sql` | `platform_admins` — the operator grant, flat and separate from the role model, because every founder will hold group `ADMIN`. Ships **empty**: no backfill and no "promote the first admin", since a migration that silently grants platform-wide powers is the opposite of a dark launch. [Plan](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) §9 |
 
 ---
 
@@ -44,28 +51,36 @@ closed; STATUS.md records it as resolved.
 
 Two things survive it:
 
-- `GuestIsolationIT` and the rest of the integration suite remain **opt-in and still unexecuted**
-  in any environment — the schema applied, but the isolation assertions it makes have never run.
+- ~~`GuestIsolationIT` and the rest of the integration suite remain opt-in and still unexecuted.~~
+  **Resolved 2026-08-02.** `integrationTest` runs on every pull request and the whole tier —
+  `GuestIsolationIT`, `TenancySchemaIT`, `TenantIsolationIT`, `MigrationSchemaValidationIT` — has
+  now executed against a real PostgreSQL container. It is still not part of `check`, so a local
+  `./gradlew build` proves nothing about the constraints; CI is the gate.
 - The day-one production defect in guest removal (see the guest plan §12b) was a flush-ordering
   bug no mocked test could see. Real-persistence coverage for delete paths is now the house rule.
 
-### Reserved — Phase 5, specced not written
+### Reserved — specced not written
 
 | # | Concern | Plan |
 |---|---------|------|
-| V22 | `organizations` + org #1 seed | [TENANCY-SCHEMA-PLAN](../backend/plans/TENANCY-SCHEMA-PLAN.md) |
-| V23 | `memberships`/`membership_roles` + backfill; `user_roles` frozen | same |
-| V24 | `tenant_id` on every owned table, backfilled `= 1`, NOT NULL | same |
-| V25 | Composite `(tenant_id, id)` FKs — cross-tenant references unrepresentable | same |
-| V26 | Unique re-scoping: player↔user per group, season names, **one current season per group** | same |
-| V27 | `app_settings` PK → `(tenant_id, setting_key)` | same |
-| V28 | Drop `user_roles` (after one release of soak — expand/contract) | [TENANCY-ENFORCEMENT-PLAN](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) |
-| V29 | `group_invites` | [GROUP-ONBOARDING-PLAN](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
-| V30+ | `org_subscriptions` + entitlements | [GROUP-BILLING-PLAN](../backend/plans/GROUP-BILLING-PLAN.md), design-only |
+| V29 | Drop `user_roles` — the contract half of V23 | [TENANCY-ENFORCEMENT-PLAN](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) |
+| V30 | `group_invites` | [GROUP-ONBOARDING-PLAN](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
+| V31+ | `org_subscriptions` + entitlements | [GROUP-BILLING-PLAN](../backend/plans/GROUP-BILLING-PLAN.md), design-only — **on hold** |
 
-V22–V27 ship as **one release** (the deploy is the migration) behind a DB-backup gate and a green
-`integrationTest` — which must be wired into CI first; the constraint work in this chain is
-invisible to the H2 unit tier.
+**The `user_roles` drop moved from V28 to V29 — proposed by the implementer 2026-08-02,
+✅ confirmed by the owner the same day.** The enforcement plan pencilled it in at V28 on the
+assumption the soak would have elapsed. It has not started: V22–V27 are merged but not deployed, so
+dropping the table now would remove the way back from a rollback to pre-V22 code. V28 became the
+platform-admin grant instead; the drop keeps its place in the sequence with a later number.
+
+**Do not run V29 until V22–V27 have been live for a release.** This is now a ratified decision
+rather than one session's judgement, so a later session that finds V29 unwritten should not read
+that as an oversight to correct.
+
+V22–V28 ship as **one release** (the deploy is the migration) behind a DB-backup gate and a green
+`integrationTest` — now wired into CI, and green: `TenantIsolationIT` and `TenancySchemaIT` both
+executed for the first time on 2026-08-02. The constraint work in this chain is invisible to the
+H2 unit tier, so that tier passing means nothing here.
 
 The pre-flight for the next migration is unchanged:
 
@@ -74,7 +89,9 @@ The pre-flight for the next migration is unchanged:
                              # with ddl-auto: validate to catch entity/migration drift
 ```
 
-It is deliberately **not** wired into `check`, so it only runs when asked. It requires Docker.
+It is deliberately **not** wired into `check`, so it only runs when asked locally. It requires
+Docker. CI runs it on every pull request, which is what made the first execution happen at all —
+worth remembering the next time something is "opt-in for now".
 
 ## Conventions
 

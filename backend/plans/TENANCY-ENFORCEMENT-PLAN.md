@@ -1,7 +1,9 @@
 # Tenancy Enforcement (Runtime Isolation) — Technical Specification
 
 **Date:** 2026-08-01
-**Status:** DRAFT (2026-08-01) — Phase 5a-2, nothing built
+**Status:** ✅ **MERGED 2026-08-02** — Phase 5a-2, all six steps of §13, in `master` via PR #141.
+Ships dark; **not yet deployed**. See §15 for what was decided differently from this spec and what
+was deliberately left
 **Priority:** HIGH
 **Estimated Effort:** L (≈4–5 days backend; no user-visible frontend)
 **Depends on:** `TENANCY-SCHEMA-PLAN.md` — enforces a boundary that must already exist in the schema. **Build that first.**
@@ -189,3 +191,79 @@ first piece of mandatory new infrastructure.
 - [ ] **Deliberate API posture change:** id-keyed endpoints that once answered 200/403 across
       what will become tenant lines answer 404. Unobservable at one tenant; the contract doc
       states it from day one.
+
+---
+
+## 15. What was built, and where it departs from the above
+
+**Written 2026-08-02, after the fact.** The spec above is left as it was written; this section is
+the honest diff. Steps 1–3 landed in `a9a513a`/`05d05aa`/`9c9a231`, steps 4–6 in `1a028e7`.
+
+### Departures
+
+**Explicit predicates instead of a Hibernate `@Filter` (§4).** The filter needs either a new AOP
+dependency with reordered transaction advice, or Hibernate 6's `@TenantId` — which takes
+insert-time stamping away from the `@PrePersist` listener the schema rung had just built. Every
+whole-table read named in §6 now carries a `tenantId` parameter instead. The layered posture the
+section argued for is intact and arguably stronger: predicates, `assertOwned`, stamping, composite
+FKs — and unlike a filter, a predicate covers the codebase's one native query, which §4 named as
+the reason not to trust a filter alone.
+
+The cost is honest: a predicate can be forgotten where a filter is ambient. §12's optional grep/
+ArchUnit regression guard is therefore **no longer optional**, and is the top follow-up.
+
+**`TenantContext.currentTenant()` throws when unbound.** Not in the spec. A query against
+`tenant_id = null` matches nothing and reads as "no data" rather than as the bug it is. It broke
+393 tests on first run; every one was a genuine unbound path.
+
+**V28 is the platform-admin table, not `DROP TABLE user_roles` (§13 step 5).** The drop is the
+contract half of V23's expand/contract and is due after a release of soak. V22–V27 are merged but
+**not deployed**, so the soak has not started — dropping now would remove the way back from a
+rollback. The drop becomes V29.
+
+This was the single largest deviation from §13, and it was raised for exactly that reason rather
+than made quietly. **The owner confirmed it on 2026-08-02**, so §13 step 5 should now be read as
+superseded: the drop is V29, gated on V22–V27 having been live for a release, and a session that
+finds it unwritten is looking at a decision rather than a gap.
+
+**The SSE path needed a resolver exemption (§3).** §3 said the SSE endpoints take no client tenant
+and derive it from the resource, which is what they do. What it did not anticipate: the resolver
+sits in the filter chain and would have answered `400` to a multi-group caller *before* the handler
+could derive anything. `TenantResolver` therefore recognises the one path and leaves it unbound
+rather than refusing. A header sent on that path anyway is still verified.
+
+**Bulk id loads were scoped uniformly.** §6 named `findById`-style loads. `findAllById` — eight
+sites taking ids from requests and from already-owned parents alike — was not named, and is the
+same hole with a collection in it. All eight became `findAllByIdInAndTenantId`, including the ones
+whose ids provably come from a row the caller owns, because "these ids came from somewhere safe"
+stops being true the moment somebody adds a caller.
+
+**`listUsers` scoping needed a join, not a column (§6).** `AppUser` is platform-level by design, so
+there is no `tenant_id` to filter on. The listing joins `memberships`, and the id-keyed user
+operations assert an ACTIVE membership rather than using `TenantGuard`, which only understands
+`TenantOwned`.
+
+### Deliberately not done
+
+- **`DELETE /api/users/{id}` still deactivates the account**, not the membership. Under several
+  groups that is more than one group's admin should decide — but narrowing it is the erasure fork
+  `TENANT-PRIVACY-PLAN.md` owns. This rung only stops an admin reaching an account that was never
+  theirs.
+- **`scrubCreatedBy` stays global.** It runs while the account itself is being deleted, so a
+  username-wide scrub is coherent; half-scoping it would be worse than either alternative. 5a-3's
+  fork is where it gets decided properly.
+- **Keycloak scaffolding not removed.** §10 flagged it as cleanup; it stayed out of a change this
+  wide.
+- **`@CacheEvict(allEntries = true)` is still a cross-tenant flush** at ~15 sites, as §7 accepted
+  for 5a. The *admin-triggered* evict is now scoped, because that one is reachable by a customer.
+
+### Follow-ups this rung created
+
+1. **The regression guard is now load-bearing** (§12) — a CI rule that no repository method gains a
+   whole-table read without a tenant predicate, outside a named allowlist (login lookup, scheduler
+   sweeps, `PlatformService`).
+2. **`PlatformService` is the one deliberately unscoped service.** It says so in its own javadoc;
+   the allowlist above must name it, or the guard will fight it every release.
+3. **The group-scoped cache evict walks Caffeine's keyspace** to find this tenant's prefix — linear
+   in cache size, fine at these sizes, and the named trigger for the Redis escape hatch in §7 if
+   group counts ever make it measurable.

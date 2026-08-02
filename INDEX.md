@@ -17,7 +17,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [product/roadmap](product/roadmap.md) | The five-phase improvement and mobile roadmap |
 | [product/feature-status](product/feature-status.md) | Every feature × backend × frontend × docs |
 | [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
-| [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V21 history + deployment state |
+| [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V28 history + deployment state |
 | [architecture/multi-tenancy](architecture/multi-tenancy.md) | Phase 5 cross-repo contract: tenant resolution, cache/key rules, the rollout ladder |
 
 ---
@@ -57,8 +57,8 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [ROLE-MODEL-MIGRATION-PLAN](backend/plans/ROLE-MODEL-MIGRATION-PLAN.md) | ✅ complete, both repos |
 | [PAYMENT-DELEGATION-PLAN](backend/plans/PAYMENT-DELEGATION-PLAN.md) | ✅ shipped, both repos — V20, live 2026-08-01 |
 | [GUEST-PLAYERS-PLAN](backend/plans/GUEST-PLAYERS-PLAN.md) | ✅ shipped, both repos — V21, live 2026-08-01. §12b: day-one removal bug, fixed same day. ⚠️ `GuestIsolationIT` never run |
-| [TENANCY-SCHEMA-PLAN](backend/plans/TENANCY-SCHEMA-PLAN.md) | 📝 DRAFT — Phase 5a-1: organizations, memberships, tenant_id everywhere (V22–V27). Ships dark |
-| [TENANCY-ENFORCEMENT-PLAN](backend/plans/TENANCY-ENFORCEMENT-PLAN.md) | 📝 DRAFT — 5a-2: X-Group-Id, filters + asserts, tenant cache keys, `TenantIsolationIT`. Ships dark |
+| [TENANCY-SCHEMA-PLAN](backend/plans/TENANCY-SCHEMA-PLAN.md) | ✅ shipped 2026-08-01 — Phase 5a-1: organizations, memberships, `tenant_id` everywhere (V22–V27). Merged, **not deployed** |
+| [TENANCY-ENFORCEMENT-PLAN](backend/plans/TENANCY-ENFORCEMENT-PLAN.md) | ✅ built 2026-08-02 — 5a-2: `X-Group-Id`, predicates + asserts, tenant cache keys, async payloads, SSE ownership, platform grant (V28). §15 records the departures |
 | [TENANT-PRIVACY-PLAN](backend/plans/TENANT-PRIVACY-PLAN.md) | 📝 DRAFT — 5a-3: leave-group vs erase-platform, controller/processor split. Gates onboarding |
 | [GROUP-ONBOARDING-PLAN](backend/plans/GROUP-ONBOARDING-PLAN.md) | 📝 DRAFT — 5a-4: creation codes, invites, picker/switcher. **The visibility flip**; owner gate |
 | [GROUP-BILLING-PLAN](backend/plans/GROUP-BILLING-PLAN.md) | ⛔ **ON HOLD (owner decision, 2026-08-01)** — design reference only, **do not implement** until the owner lifts the hold |
@@ -99,7 +99,7 @@ These stayed with their code because they change in the same commit as it does. 
 
 | Document | Lives in |
 |---|---|
-| [API_REFERENCE](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/API_REFERENCE.md) and the 14 per-surface contracts ⚠️ | [backend `docs/api/`](https://github.com/ricsnsuka/FootMania-Back/tree/master/docs/api) — *reference is missing Push and Payments sections* |
+| [API_REFERENCE](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/API_REFERENCE.md) and the 15 per-surface contracts ⚠️ | [backend `docs/api/`](https://github.com/ricsnsuka/FootMania-Back/tree/master/docs/api) — *reference is missing Push and Payments sections; `TENANCY-API-CONTRACT` is the newest* |
 | [FRONTEND_ENDPOINT_CHANGES](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/frontend/FRONTEND_ENDPOINT_CHANGES.md) · [draft SSE guide](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) | [backend `docs/frontend/`](https://github.com/ricsnsuka/FootMania-Back/tree/master/docs/frontend) |
 | [Heroku deployment](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/deployment/HEROKU_DEPLOYMENT_GUIDE.md) | backend `docs/deployment/` |
 | [Backend CHANGELOG](https://github.com/ricsnsuka/FootMania-Back/blob/master/CHANGELOG.md) ⚠️ | backend root — **twelve commits behind** |

@@ -1,7 +1,9 @@
 # Organizations & Memberships (Tenancy Schema) — Technical Specification
 
 **Date:** 2026-08-01
-**Status:** DRAFT (2026-08-01) — Phase 5a-1, nothing built
+**Status:** ✅ **SHIPPED 2026-08-01** — Phase 5a-1, merged in `77c3ca8`. V22–V27 applied by
+`integrationTest` in CI; **not yet deployed to production.** The 939-test unit suite passed with
+only mechanical fixture changes, which was the dark-launch acceptance criterion
 **Priority:** HIGH — every Phase 5 deliverable stacks on this
 **Estimated Effort:** L (≈3–4 days backend; no frontend beyond keeping tests green)
 **Depends on:** `GUEST-PLAYERS-PLAN.md` *(shipped — this spec honours its membership promise, §4)*
