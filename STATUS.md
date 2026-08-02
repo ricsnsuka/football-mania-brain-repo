@@ -6,20 +6,18 @@ nobody trusts is worse than none.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `master` | `v1.0.0` |
-| Head | `a2e5e82` — *Merge #141: tenancy enforcement (Phase 5a-2)* | `f42575c` — *Fix roster row overlap on mobile…* |
+| Head | `7b9fe59` — *Merge #142: bump to 1.1.0* | `f42575c` — *Fix roster row overlap on mobile…* |
+| Version | `1.1.0` — **deployed 2026-08-02** | `1.1.0` — matched to the backend |
 | Working tree | clean | clean |
 | Tests | 958 unit + integrationTest green in CI | 470 unit + 20 visual regression |
-| Latest migration | `V28__platform_admins.sql` — in `master`, **not deployed**; production is on V21 | — |
+| Latest migration | `V28__platform_admins.sql` — **applied in production 2026-08-02** | — |
 
-⚠️ **Merged ≠ deployed, and this is now the only gap.** As of 2026-08-02 the whole Phase 5a
-schema-and-enforcement chain is in `master` — V22 through V28, plus the code that enforces it. It
-has run against a PostgreSQL container in CI and has **never touched the production database**,
-which still stands at V21. Everything below marked "shipped" for Phase 5 means *in master*, not
-*live*.
+✅ **Phase 5a is live.** V22–V28 were applied in production on 2026-08-02, and both repos are on
+`1.1.0`. The deployment is dark by design: one organization, an optional header, no user-visible
+change.
 
-**The next action on Phase 5 is a deploy**, not more code: one release, behind a database backup.
-The chain is dark end to end — nothing user-visible changes, and the observable difference is seven
-rows in `flyway_schema_history`. It is also what starts the soak clock V29 depends on.
+**This starts the soak clock.** `user_roles` is still frozen and still load-bearing — see hazard 3.
+V29 drops it, and the rule is one release of soak, not one deployment event.
 
 ---
 
@@ -34,7 +32,7 @@ See [product/roadmap.md](product/roadmap.md) for the plan itself.
 | **2** — Web Push | ✅ done, delivery observed end to end against a real push service |
 | **3** — the "steal from Capo" set | 🟡 balance-at-a-glance, waitlist, leaderboards/rankings, MOTM voting and badges all shipped in both repos. **Remaining: AI match reports** |
 | **4** — Capacitor + app stores | ⬜ not started, deliberately gated on real usage data |
-| **5** — multi-tenancy + billing | 🟡 **two rungs merged, neither deployed.** 5a-1 (schema, V22–V27) 2026-08-01; 5a-2 (enforcement + V28) 2026-08-02, [PR #141](https://github.com/ricsnsuka/FootMania-Back/pull/141). Both ship **dark** — one organization, an optional header, no behaviour change. Remaining: 5a-3 privacy fork, 5a-4 onboarding (**the visibility flip**, owner-gated). ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
+| **5** — multi-tenancy + billing | 🟡 **two rungs live.** 5a-1 (schema, V22–V27) and 5a-2 (enforcement + V28) both deployed 2026-08-02. Running **dark** — one organization, an optional header, no behaviour change. Remaining: 5a-3 privacy fork, 5a-4 onboarding (**the visibility flip**, owner-gated). ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
 
 Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
 system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee
@@ -54,18 +52,20 @@ use of the guest feature immediately surfaced a defect the mocked suite could no
 removal failed at Hibernate flush — see the guest plan's "what actually happened"). Run the real
 chain, and prefer real-persistence tests for anything that deletes.
 
-**2. V22–V28 have never run against the production database.** The successor to hazard 1, and the
-reason that one is worth remembering rather than deleting. The chain is green in CI against a
-PostgreSQL container — which is genuinely more than V17–V19 ever got before their deploy — but CI
-seeds an empty schema and production has two years of rows. V24's `NOT NULL` backfill and V25's ~29
-recreated composite FKs are where a real dataset differs from a fresh one. Take the backup, run it
-behind the gate, and expect V25 to be the slow one.
+**2. ~~V22–V28 have never run against the production database.~~ Resolved 2026-08-02.** The whole
+chain applied cleanly. What is worth keeping from it: unlike V17–V19, this chain had run against a
+real PostgreSQL container in CI before it went anywhere near production — `integrationTest` stopped
+being opt-in in time to matter. Two hazards in a row have now been closed by the same discipline,
+and hazard 1's lesson is the reason this one was cheap.
 
-**3. `user_roles` must survive until V22–V27 have been live for a release.** *(Owner-confirmed
+**3. `user_roles` must survive until the deployed chain has been live for a release.**
+⚠️ **The most live hazard on this page, as of the 2026-08-02 deploy.** *(Owner-confirmed
 2026-08-02.)* V23 froze it as the expand half of an expand/contract; auth reads `membership_roles`
 and the role-update endpoint dual-writes both. The drop is **V29**, not the V28 the enforcement
-plan pencilled in, and it **must not be run early** — while V22–V27 are undeployed, that table is
-the only thing that makes a rollback to pre-V22 code survivable.
+plan pencilled in, and it **must not be run early**. The soak began with the 2026-08-02 deploy and
+ends when the *next* release ships — one release of running code, not one deployment event. Until
+then that table is the only thing that makes a rollback to pre-V22 code survivable, and a rollback
+is exactly what you need if the tenancy chain turns out to have a problem nobody has hit yet.
 
 **4. A stale JVM will lie to you.** On 2026-07-31 a bug was reported where a match plan's pitch
 cost saved correctly, notified players with the right amount, and still read "not set" in the UI.
@@ -84,7 +84,6 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 
 | Where | Problem | Correction |
 |---|---|---|
-| [backend/CHANGELOG.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/CHANGELOG.md) | `[Unreleased]` stops at 2026-07-29. Twelve commits missing: leaderboards/rankings, MOTM, badges, competition rules, admin settings/system, match-count perf, kickoff + lifecycle, composable roles, NPE/security-CI, self-edit + past plans, fee ledger, pitch cost | Backfill from the commit messages, which are unusually descriptive |
 | [backend/architecture/ARCHITECTURE.md](backend/architecture/ARCHITECTURE.md) | Migration table stops at **V13** of 19 | Superseded by [architecture/database-migrations.md](architecture/database-migrations.md) — reconcile or point at it |
 | [backend/api/API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/API_REFERENCE.md) | No Push section, no Payments/match-fee section; `totalCostCents` on `MatchPlanDTO` documented nowhere | Contracts exist standalone ([PUSH](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/PUSH-API-CONTRACT.md), [PAYMENTS](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/PAYMENTS-API-CONTRACT.md)); the reference needs the sections and the field |
 | [backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md) | Last touched 2026-05-27 — predates kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | Rewrite against current behaviour |
@@ -117,7 +116,8 @@ reason this repo exists.
    `PlatformService`") is what keeps that trade honest. See the enforcement plan §15.
 3. **Decide when V22–V28 deploy.** They are the gate on everything else in Phase 5, they have never
    met a real dataset, and `user_roles` cannot be dropped until they have been live for a release.
-4. Backfill the changelog and fix the drift table above.
+4. ~~Backfill the changelog~~ ✅ done 2026-08-02 — fifteen sections written from the commit
+   messages and cut as `[1.1.0]`. Keep fixing the rest of the drift table above.
 5. Regenerate the Postman collection — now with `X-Group-Id`.
 6. Add the locale key-parity test, and a controller test asserting `totalCostCents` serialises.
 7. Then 5a-3 (privacy fork), or Phase 3's last item — AI match reports. 5a-4 is the visibility flip
