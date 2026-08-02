@@ -73,13 +73,23 @@ truth since V23. This is the normal, intended end state of an expand/contract ra
 mistake, and it is written here because the next person reaching for a rollback deserves to know
 which kinds still work.
 
-**4. A stale JVM will lie to you.** On 2026-07-31 a bug was reported where a match plan's pitch
-cost saved correctly, notified players with the right amount, and still read "not set" in the UI.
-The code was correct in all three layers. The Spring Boot process had been started *before* the
-class was recompiled, so it was still serving the previous `MatchPlanDTO` — the running app's own
-`/v3/api-docs` schema was missing the field. If a field is definitely in the DTO and definitely
-absent from the response, check the process start time against the class file's mtime before
-looking anywhere else.
+**4. A stale process will lie to you — and it has, three ways now.** On 2026-07-31 a match plan's
+pitch cost saved correctly, notified players with the right amount, and still read "not set" in
+the UI: the local JVM predated the recompile and was serving the previous `MatchPlanDTO`. On
+2026-08-02 the same shape fired twice more — Turbopack's dev server served pre-change CSS (new
+markup, old stylesheet: "the tabs have no CSS"), and then, seriously, **the production dyno**: the
+`X-Group-Id` CORS fix was merged on `master` but the running build predated it, while Netlify was
+auto-deploying every frontend push — so production ran a frontend whose every authenticated
+request failed preflight, and each screen showed its empty state ("the competition rules section
+is empty"). When code is verifiably right and behaviour is wrong, **establish what build the
+process is actually running before debugging the code** — process start time vs file mtime
+locally, deployed commit vs branch tip in production.
+
+**5. Pushing the frontend's `v1.0.0` IS a production deploy.** Netlify's production site tracks
+that branch and builds every push; the backend is a **manual** Heroku deploy from `master`, and
+the running dyno can lag `master` by hours. Merged is not deployed. Any frontend change that
+depends on backend behaviour ships backend-first — *deployed* first, not merged first. This is how
+the 2026-08-02 partial outage happened.
 
 ---
 
