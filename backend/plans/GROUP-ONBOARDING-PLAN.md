@@ -1,12 +1,15 @@
 # Group Onboarding (Signup, Invites, Picker) — Technical Specification
 
 **Date:** 2026-08-01
-**Status:** DRAFT (2026-08-01) — Phase 5a-4, nothing built. **This is the visibility flip.**
+**Status:** IN PROGRESS (2026-08-02) — backend built, frontend part-built. **This is the
+visibility flip, and it has NOT been flipped:** no creation code has been issued, and until one is
+`group_creation_codes` is empty and no second group can exist.
 **Owner sign-off:** ✅ **given 2026-08-02.** The gate below is lifted and the engagement-signal
 precondition is explicitly waived. Building this rung is authorised; **issuing creation codes is
 not** — that is the flip itself and remains a separate, deliberate act (§13 step 7).
 **Migration numbering:** `group_invites` is **V30**, not the V29 this spec was written with —
-V29 became `drop_user_roles` when the platform grant took V28.
+V29 became `drop_user_roles` when the platform grant took V28. Creation codes needed a table of
+their own and took **V31**; §3 did not anticipate one, having described the code as "one column".
 **Priority:** HIGH
 **Estimated Effort:** L (≈3 days backend, ≈4–5 days frontend)
 **Depends on:** `TENANT-PRIVACY-PLAN.md` — a **hard gate**: the first moment a second membership exists, the old erase path destroys cross-group data. Also transitively on enforcement + schema.
@@ -198,3 +201,33 @@ hint) vs `{{groupName}}` interpolation (~10 strings) — ×3 locales, spliced no
 - [ ] **Deliberate change:** `users`/user-management semantics move from deployment-wide to
       per-group; platform operations concentrate behind the platform-admin grant. Stated in the
       contract, invisible until a second group exists.
+
+---
+
+## 12. Built, and where it departs from the above (2026-08-02)
+
+**Backend — done** (`FootMania-Back#146`): V30 invites, V31 creation codes, founding with the
+founder bootstrap and season seed, rename, `/api/me/memberships`, invite issue/list/revoke/
+preview/accept, login payload, `guests.max.per.inviter`, invites in the GDPR export and erasure,
+contracts, `GroupOnboardingIT`.
+
+**Frontend — the choke points and the picker** (`FootMania-Simple-Front#7`): auth types, per-group
+role resolution, the safety pair, `X-Group-Id` injection, AuthGuard gate 3, `/groups`, the Navbar
+switcher, i18n ×3.
+
+### Departures worth knowing about
+
+| §  | Spec said | Built | Why |
+|----|-----------|-------|-----|
+| §6 | A `groupKey(...)` factory threaded through every query key | A `queryKeyHashFn` namespacing the whole cache by the active group | Same property, stronger guarantee: a factory has to be remembered, and a hook written later with a hand-rolled key would silently share an entry across groups. Hashing cannot be forgotten. Filter matching is unaffected — it compares the key arrays, not the hash |
+| §6 | Platform-global keys are named exceptions | They are namespaced too | An exception list has to be kept correct forever and its failure mode is one group's data surviving into another. The cost is one refetch of three cheap queries per switch |
+| §3 | The creation code is "one column" | Its own table, V31 | It needs issuer, expiry, redemption and the group it produced — the operator's ledger of who was allowed a group |
+| §5 | — | `TenantResolver` gains tenant-agnostic paths | Not anticipated: the picker cannot sit behind the `400` that demands the header, and neither can founding or redemption |
+
+### Outstanding on this rung
+
+- Invite management UI, and 5a-3's deferred **per-group leave list** (needs the members endpoint).
+- SystemSettings' platform/group split; UsersPage → "Members of {group}".
+- Branding sweep (`appName` → platform vs `{{groupName}}`).
+- The coordinated e2e/visual commit — 20 baselines, `win32`.
+- **Step 7: issuing the first creation code. Not authorised.**
