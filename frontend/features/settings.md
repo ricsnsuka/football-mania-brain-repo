@@ -1,30 +1,39 @@
 # Settings Feature
 
-`/settings` — everything about you, and for an admin, about the system.
+`/settings` — three tabs, one per scope: you, the group you are acting in, and the platform.
 
 > **Before this, there was no settings page and no profile page.** Notification and privacy settings
 > rendered at the bottom of the dashboard, theme and language were widgets in the footer, rating
 > recalculation sat on the Matches page for admins, and both role dashboards carried a "My Profile"
 > card pointing at `/profile` with `disabled` on it. Four places, none of them an account page.
 
-## Sections, in order
+## Tabs and sections (owner-requested split, 2026-08-02)
 
-| # | Section | Who | Component |
-|---|---------|-----|-----------|
-| 1 | Profile | All | `ProfileSettings` |
-| 2 | Your player | All | `LinkedPlayerSettings` |
-| 3 | Appearance | All | `AppearanceSettings` |
-| 4 | Notifications | All | `NotificationSettings` |
-| 5 | System | `ADMIN` | `SystemSettings` |
-| 6 | Your data | All | `PrivacySettings` |
+| Tab | Section | Who | Component |
+|-----|---------|-----|-----------|
+| **My account** (default) | Profile | All | `ProfileSettings` |
+| | Appearance | All | `AppearanceSettings` |
+| | Notifications | All | `NotificationSettings` |
+| | Your data | All | `PrivacySettings` |
+| **{group name}** | Your player | All | `LinkedPlayerSettings` |
+| | System | `ADMIN` | `SystemSettings` |
+| **Platform** | Creation codes | operator only — the tab does not render otherwise | `PlatformSettings` |
 
-Ordered by how often something is wanted and how much damage it does. Profile first because it is
-why most people arrive; data export and account deletion last because they are irreversible and
-should be somewhere a person lands deliberately.
+The tabs are the scopes tenancy created. Account settings follow the person across groups
+(notifications are platform-level per the tenancy contract — a device belongs to a person, not a
+group). The group tab is **titled with the active group's name**, like the Navbar brand and the
+members page, so what "these settings" means changes legibly when you switch groups. Platform is
+gated on the operator grant alone, which group `ADMIN` deliberately does not imply.
 
-**Stacked, not tabbed.** Tabs would hide the destructive section behind a click, which sounds safer
-and is not: it makes it something you have to already know about, and the GDPR rights it carries are
-ones people are entitled to find.
+**The page was stacked before it was tabbed, and the stacking's reason survived the change.**
+Stacking existed so the destructive GDPR section could not hide behind a click nobody knows to
+make. The tabs keep that property by construction: privacy lives on the **default** tab and
+renders last on it, so the landing view still ends at the person's data rights. The unit test that
+guarded "privacy is last" now guards exactly that.
+
+Tab markup and CSS mirror the match modal's tabs — the one established tab pattern in the app.
+Sections were already lazy-loaded; tabs compound it, since a section on an unvisited tab is never
+mounted at all.
 
 ## Profile
 
