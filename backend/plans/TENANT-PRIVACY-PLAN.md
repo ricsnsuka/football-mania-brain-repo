@@ -1,7 +1,11 @@
 # Tenant Privacy (Erasure Fork & Controller Split) — Technical Specification
 
 **Date:** 2026-08-01
-**Status:** DRAFT (2026-08-01) — Phase 5a-3, nothing built
+**Status:** ✅ **BUILT 2026-08-02** — Phase 5a-3, all five steps of §9. Ships dark; **this
+unblocks `GROUP-ONBOARDING-PLAN.md`**. Two departures from this spec, both deliberate: the
+membership row is *deleted* rather than tombstoned (a tombstone retains the datum being erased and
+would need a migration), and the per-group leave *list* in the UI waits for 5a-4's picker, which is
+the endpoint that can enumerate memberships — the service call and copy are in place
 **Priority:** HIGH — gates onboarding: the current erase path destroys cross-group data the moment two memberships exist
 **Estimated Effort:** M (≈2 days backend, ≈½ day frontend)
 **Depends on:** `TENANCY-ENFORCEMENT-PLAN.md` — a tenant-scoped erasure needs tenant scoping to exist. **Build that first.**
