@@ -81,6 +81,32 @@ V29 removed it — which closes the rollback path to anything before V22, since 
 backup restore rather than an old jar. See STATUS.md hazard 3. What is left of Phase 5 is 5b
 billing, on hold by owner decision.
 
+## Bootstrapping the first platform operator
+
+**There is no endpoint for this, on purpose, so it is a database act.** `platform_admins` ships
+empty (V28 — a migration that silently grants platform-wide power is the opposite of a dark
+launch), and `PlatformAdminRepository` is read-only: nothing in the API can create the first
+operator, because such an endpoint would be reachable before any operator existed to guard it. A
+deployment that predates tenancy therefore has no operator until its owner grants one by hand:
+
+```sql
+-- heroku pg:psql -a footmania   (or psql into whichever database)
+SELECT id, username FROM users WHERE username = '<the account>';
+INSERT INTO platform_admins (user_id, granted_by) VALUES (<id>, 'owner-bootstrap YYYY-MM-DD');
+```
+
+The grant takes effect immediately for API calls (the guard reads the table per request); the
+frontend shows the Platform surfaces after the next **login**, because `platformAdmin` rides the
+login response.
+
+**The recommended shape is an operator-only account**: register a fresh account (registration
+creates no membership), grant it, and keep it out of every group. Operating the deployment is a
+different job from playing in a group — the reason the grant is flat and separate from group
+`ADMIN` — and an account that can issue creation codes but appears on no roster is the cleanest
+expression of that. The frontend supports it: a group-less operator gets a **Platform settings**
+card on the picker leading to `/platform` (frontend `d0b7686`); an operator who is also a member
+has the same controls as the Settings → Platform tab.
+
 ## What deliberately did not change
 
 No Redis (ADR-003's CacheConfig-only swap remains the named escape hatch if cross-tenant

@@ -141,6 +141,13 @@ The section is hidden for everybody else and the endpoints refuse them regardles
 control is a usability decision and never a security one. A redeemed code cannot be withdrawn: the
 group it produced still exists, and the row is the only record of who authorised it.
 
+**An operator-only account has its own door.** The recommended shape for the grant is an account
+in no group at all, and the group gate would strand such an account on the picker — so the picker
+shows operators a third card, **Platform settings**, leading to `/platform`: the same
+`PlatformSettings` component in the onboarding shell. Bootstrapping the first operator is a
+database act by design; the SQL is in
+[architecture/multi-tenancy.md](../../architecture/multi-tenancy.md#bootstrapping-the-first-platform-operator).
+
 ---
 
 ## What is not here
