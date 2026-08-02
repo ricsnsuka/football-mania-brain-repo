@@ -218,8 +218,12 @@ ArchUnit regression guard is therefore **no longer optional**, and is the top fo
 **V28 is the platform-admin table, not `DROP TABLE user_roles` (§13 step 5).** The drop is the
 contract half of V23's expand/contract and is due after a release of soak. V22–V27 are merged but
 **not deployed**, so the soak has not started — dropping now would remove the way back from a
-rollback. The drop becomes V29. This is the single largest deviation from §13 and it is
-deliberate.
+rollback. The drop becomes V29.
+
+This was the single largest deviation from §13, and it was raised for exactly that reason rather
+than made quietly. **The owner confirmed it on 2026-08-02**, so §13 step 5 should now be read as
+superseded: the drop is V29, gated on V22–V27 having been live for a release, and a session that
+finds it unwritten is looking at a decision rather than a gap.
 
 **The SSE path needed a resolver exemption (§3).** §3 said the SSE endpoints take no client tenant
 and derive it from the resource, which is what they do. What it did not anticipate: the resolver

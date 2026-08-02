@@ -56,10 +56,11 @@ seeds an empty schema and production has two years of rows. V24's `NOT NULL` bac
 recreated composite FKs are where a real dataset differs from a fresh one. Take the backup, run it
 behind the gate, and expect V25 to be the slow one.
 
-**3. `user_roles` must survive until V22–V27 have been live for a release.** V23 froze it as the
-expand half of an expand/contract; auth reads `membership_roles` and the role-update endpoint
-dual-writes both. The drop is V29 and **must not be run early** — while V22–V27 are undeployed, that
-table is the only thing that makes a rollback to pre-V22 code survivable.
+**3. `user_roles` must survive until V22–V27 have been live for a release.** *(Owner-confirmed
+2026-08-02.)* V23 froze it as the expand half of an expand/contract; auth reads `membership_roles`
+and the role-update endpoint dual-writes both. The drop is **V29**, not the V28 the enforcement
+plan pencilled in, and it **must not be run early** — while V22–V27 are undeployed, that table is
+the only thing that makes a rollback to pre-V22 code survivable.
 
 **4. A stale JVM will lie to you.** On 2026-07-31 a bug was reported where a match plan's pitch
 cost saved correctly, notified players with the right amount, and still read "not set" in the UI.

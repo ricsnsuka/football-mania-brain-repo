@@ -67,11 +67,15 @@ Two things survive it:
 | V30 | `group_invites` | [GROUP-ONBOARDING-PLAN](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
 | V31+ | `org_subscriptions` + entitlements | [GROUP-BILLING-PLAN](../backend/plans/GROUP-BILLING-PLAN.md), design-only — **on hold** |
 
-**The `user_roles` drop moved from V28 to V29, and that is a decision rather than a slip.** The
-plan pencilled it in at V28 on the assumption the soak would have elapsed. It has not started:
-V22–V27 are merged but not deployed, so dropping the table now would remove the way back from a
-rollback to pre-V22 code. V28 became the platform-admin grant instead; the drop keeps its place in
-the sequence with a later number. **Do not run it until V22–V27 have been live for a release.**
+**The `user_roles` drop moved from V28 to V29 — proposed by the implementer 2026-08-02,
+✅ confirmed by the owner the same day.** The enforcement plan pencilled it in at V28 on the
+assumption the soak would have elapsed. It has not started: V22–V27 are merged but not deployed, so
+dropping the table now would remove the way back from a rollback to pre-V22 code. V28 became the
+platform-admin grant instead; the drop keeps its place in the sequence with a later number.
+
+**Do not run V29 until V22–V27 have been live for a release.** This is now a ratified decision
+rather than one session's judgement, so a later session that finds V29 unwritten should not read
+that as an oversight to correct.
 
 V22–V28 ship as **one release** (the deploy is the migration) behind a DB-backup gate and a green
 `integrationTest` — now wired into CI, and green: `TenantIsolationIT` and `TenancySchemaIT` both
