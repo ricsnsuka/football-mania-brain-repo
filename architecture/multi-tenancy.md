@@ -64,8 +64,8 @@ unmodified.**
 |---|---|---|---|
 | 1 | TENANCY-SCHEMA (V22–V27, org #1 backfill) | Dark | ✅ 2026-08-01. Suite unmodified; `TenancySchemaIT` green in CI |
 | 2 | TENANCY-ENFORCEMENT (header, predicates, asserts, cache keys, async payloads, SSE, V28 platform grant) | Dark (single-membership fallback) | ✅ 2026-08-02. Suite unmodified **+ `TenantIsolationIT`** green — two seeded orgs invisible to each other at every layer, numerically for the rating and fee aggregates. Enforcement plan §15 records the departures, chiefly explicit predicates instead of a Hibernate filter |
-| 3 | TENANT-PRIVACY (leave-group / erase-platform fork) | Dark (fork degenerates at one org) | Real-persistence byte-comparison tests |
-| 4 | GROUP-ONBOARDING (codes, invites, picker) | **The flip** | Owner sign-off; first creation codes issued |
+| 3 | TENANT-PRIVACY (leave-group / erase-platform fork) | Dark (fork degenerates at one org) | ✅ built 2026-08-02. `TenantPrivacyIT` byte-compares the untouched group, per BR-P1 |
+| 4 | GROUP-ONBOARDING (codes, invites, picker) | **The flip** | ✅ owner sign-off given 2026-08-02 — build authorised. The flip itself is still gated on the first creation codes being issued, which is a separate act |
 | 5 | GROUP-BILLING (Stripe) | ⛔ **ON HOLD (owner)** | **Do not schedule or implement** — the owner lifts the hold explicitly or it stays |
 
 ~~Standing pre-work, before rung 1: `integrationTest` wired into CI.~~ ✅ Done 2026-08-01; the

@@ -32,7 +32,7 @@ See [product/roadmap.md](product/roadmap.md) for the plan itself.
 | **2** — Web Push | ✅ done, delivery observed end to end against a real push service |
 | **3** — the "steal from Capo" set | 🟡 balance-at-a-glance, waitlist, leaderboards/rankings, MOTM voting and badges all shipped in both repos. **Remaining: AI match reports** |
 | **4** — Capacitor + app stores | ⬜ not started, deliberately gated on real usage data |
-| **5** — multi-tenancy + billing | 🟡 **two rungs live.** 5a-1 (schema, V22–V27) and 5a-2 (enforcement + V28) both deployed 2026-08-02. Running **dark** — one organization, an optional header, no behaviour change. Remaining: 5a-3 privacy fork, 5a-4 onboarding (**the visibility flip**, owner-gated). ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
+| **5** — multi-tenancy + billing | 🟡 **two rungs live, 5a-4 authorised.** 5a-1 (schema, V22–V27) and 5a-2 (enforcement + V28) both deployed 2026-08-02. Running **dark** — one organization, an optional header, no behaviour change. 5a-3 privacy fork ✅ built 2026-08-02, which unblocks 5a-4. Remaining: 5a-4 onboarding. ✅ **The 5a-4 owner gate was lifted on 2026-08-02** — the roadmap's "real engagement signal from push" precondition is explicitly waived, and building the rung is authorised. **Issuing creation codes is not**: that is the visibility flip itself and stays a separate, deliberate act. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
 
 Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
 system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee
@@ -109,11 +109,14 @@ reason this repo exists.
    pull request; `GuestIsolationIT`, `TenancySchemaIT` and `TenantIsolationIT` have all now
    executed. Worth naming as a win: `TenantIsolationIT` was written specifically so a leak would
    change a *number*, and it could only prove that once something ran it.
-2. **Add the repository-predicate regression guard.** Phase 5a-2 chose explicit tenant predicates
-   over a Hibernate filter, which is deterministic and covers the native query — but a predicate
-   can be forgotten where a filter is ambient. A grep/ArchUnit CI rule ("no whole-table read
-   without a tenant predicate, outside a named allowlist: login lookup, scheduler sweeps,
-   `PlatformService`") is what keeps that trade honest. See the enforcement plan §15.
+2. ~~Add the repository-predicate regression guard.~~ ✅ done 2026-08-02 —
+   `RepositoryScopingGuardTest`, three checks in the unit tier. **It found two live cross-tenant
+   defects the 5a-2 sweep had missed**, both inherited `JpaRepository` methods the sweep's grep
+   could not see: `GET /api/players` with no `active` filter returned every group's roster, and the
+   admin bulk recalculation could be pointed at another group's match ids — a cross-tenant
+   *write*, since recalculation rewrites ratings. Both fixed in the same change. Each check was
+   verified to fail when its defect is reintroduced, because a guard that passes for the wrong
+   reason is worse than none.
 3. **Decide when V22–V28 deploy.** They are the gate on everything else in Phase 5, they have never
    met a real dataset, and `user_roles` cannot be dropped until they have been live for a release.
 4. ~~Backfill the changelog~~ ✅ done 2026-08-02 — fifteen sections written from the commit

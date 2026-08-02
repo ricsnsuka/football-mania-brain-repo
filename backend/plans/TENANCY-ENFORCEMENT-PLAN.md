@@ -259,9 +259,16 @@ operations assert an ACTIVE membership rather than using `TenantGuard`, which on
 
 ### Follow-ups this rung created
 
-1. **The regression guard is now load-bearing** (§12) — a CI rule that no repository method gains a
-   whole-table read without a tenant predicate, outside a named allowlist (login lookup, scheduler
-   sweeps, `PlatformService`).
+1. ~~**The regression guard is now load-bearing** (§12).~~ ✅ **Built 2026-08-02**, and it earned
+   its place immediately: it found two cross-tenant defects this very rung had missed. Both were
+   inherited `JpaRepository` methods — `findAll(pageable)` behind the unfiltered player listing,
+   and `findAllById` on the admin recalculation's id list — which is precisely the blind spot a
+   sweep by grep has and a structural check does not. The second was a cross-tenant *write*.
+
+   The lesson generalises past tenancy: **the sweep searched for `findAll()` and missed
+   `findAll(pageable)`.** A guard that reasons about which methods exist and who calls them finds
+   what a search for a literal string cannot, and it keeps finding it after everyone has stopped
+   looking.
 2. **`PlatformService` is the one deliberately unscoped service.** It says so in its own javadoc;
    the allowlist above must name it, or the guard will fight it every release.
 3. **The group-scoped cache evict walks Caffeine's keyspace** to find this tenant's prefix — linear
