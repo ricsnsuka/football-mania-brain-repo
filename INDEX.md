@@ -88,7 +88,9 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [pwa](frontend/features/pwa.md) | Installability, service worker, offline |
 | [privacy](frontend/features/privacy.md) | Export, deletion, public policy page |
 | [language-switcher](frontend/features/language-switcher.md) · [theme](frontend/features/theme.md) | Locale and light/dark |
+| [groups](frontend/features/groups.md) | Joining, founding, switching — and the two people who hand out access |
 | *payments* ⚠️ | **Missing.** The ledger UI shipped in `a3efac0` with no feature doc |
+| *guests · payment-delegation* ⚠️ | **Missing.** Both shipped in the UI in `722335c` |
 
 ---
 
