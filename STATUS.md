@@ -7,7 +7,7 @@ nobody trusts is worse than none.
 |---|---|---|
 | Branch | `master` | `v1.0.0` |
 | Head | `7b9fe59` — *Merge #142: bump to 1.1.0* | `f42575c` — *Fix roster row overlap on mobile…* |
-| Version | `1.1.0` — bumped 2026-08-02 for the Phase 5a release; **the changelog is not cut** | — |
+| Version | `1.1.0` — cut 2026-08-02 for the Phase 5a release, changelog written | — |
 | Working tree | clean | clean |
 | Tests | 958 unit + integrationTest green in CI | 470 unit + 20 visual regression |
 | Latest migration | `V28__platform_admins.sql` — in `master`, **not deployed**; production is on V21 | — |
@@ -86,7 +86,6 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 
 | Where | Problem | Correction |
 |---|---|---|
-| [backend/CHANGELOG.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/CHANGELOG.md) | **Now blocking a release, not just untidy.** `build.gradle` says `1.1.0`; `[Unreleased]` stops at 2026-07-29. Twelve commits missing: leaderboards/rankings, MOTM, badges, competition rules, admin settings/system, match-count perf, kickoff + lifecycle, composable roles, NPE/security-CI, self-edit + past plans, fee ledger, pitch cost — and the whole Phase 5a chain | Backfill from the commit messages, which are unusually descriptive, **then cut a real `[1.1.0]`**. The section is currently labelled "will be released as 1.1.0" with a warning rather than promoted, so an incomplete record does not become the permanent one |
 | [backend/architecture/ARCHITECTURE.md](backend/architecture/ARCHITECTURE.md) | Migration table stops at **V13** of 19 | Superseded by [architecture/database-migrations.md](architecture/database-migrations.md) — reconcile or point at it |
 | [backend/api/API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/API_REFERENCE.md) | No Push section, no Payments/match-fee section; `totalCostCents` on `MatchPlanDTO` documented nowhere | Contracts exist standalone ([PUSH](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/PUSH-API-CONTRACT.md), [PAYMENTS](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/PAYMENTS-API-CONTRACT.md)); the reference needs the sections and the field |
 | [backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md) | Last touched 2026-05-27 — predates kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | Rewrite against current behaviour |
@@ -119,7 +118,8 @@ reason this repo exists.
    `PlatformService`") is what keeps that trade honest. See the enforcement plan §15.
 3. **Decide when V22–V28 deploy.** They are the gate on everything else in Phase 5, they have never
    met a real dataset, and `user_roles` cannot be dropped until they have been live for a release.
-4. Backfill the changelog and fix the drift table above.
+4. ~~Backfill the changelog~~ ✅ done 2026-08-02 — fifteen sections written from the commit
+   messages and cut as `[1.1.0]`. Keep fixing the rest of the drift table above.
 5. Regenerate the Postman collection — now with `X-Group-Id`.
 6. Add the locale key-parity test, and a controller test asserting `totalCostCents` serialises.
 7. Then 5a-3 (privacy fork), or Phase 3's last item — AI match reports. 5a-4 is the visibility flip
