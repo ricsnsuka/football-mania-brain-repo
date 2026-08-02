@@ -2,6 +2,11 @@
 
 **Date:** 2026-08-01
 **Status:** DRAFT (2026-08-01) — Phase 5a-4, nothing built. **This is the visibility flip.**
+**Owner sign-off:** ✅ **given 2026-08-02.** The gate below is lifted and the engagement-signal
+precondition is explicitly waived. Building this rung is authorised; **issuing creation codes is
+not** — that is the flip itself and remains a separate, deliberate act (§13 step 7).
+**Migration numbering:** `group_invites` is **V30**, not the V29 this spec was written with —
+V29 became `drop_user_roles` when the platform grant took V28.
 **Priority:** HIGH
 **Estimated Effort:** L (≈3 days backend, ≈4–5 days frontend)
 **Depends on:** `TENANT-PRIVACY-PLAN.md` — a **hard gate**: the first moment a second membership exists, the old erase path destroys cross-group data. Also transitively on enforcement + schema.
@@ -34,7 +39,7 @@ membership to make cheap).
 | In | Out |
 |----|-----|
 | Create-group flow (creation-code-gated) + founder bootstrap | Open self-serve creation (billing-era decision — codes become promo/trial codes) |
-| `group_invites` (V29): links to join a group | Guest self-serve accounts beyond the existing promote→register→link path |
+| `group_invites` (V30): links to join a group | Guest self-serve accounts beyond the existing promote→register→link path |
 | Group picker (AuthGuard gate 3) + Navbar switcher | Billing wall (AuthGuard gate 4, `GROUP-BILLING-PLAN.md`) |
 | `X-Group-Id` injection; group-prefixed query keys; cache erase on switch | Subdomains / path routing (owner decision: picker) |
 | Membership management UI (UsersPage → members of this group) | `isCore` tiering (**still** deliberately untouched) |
@@ -61,7 +66,7 @@ same rename treatment: first login by an org-#1 ADMIN after this ships is offere
 
 ## 4. Model decision: invites are server-issued single-purpose tokens — not shareable role-bearing URLs alone
 
-**Chosen (V29):**
+**Chosen (V30):**
 
 ```sql
 CREATE TABLE group_invites (
@@ -180,7 +185,7 @@ hint) vs `{{groupName}}` interpolation (~10 strings) — ×3 locales, spliced no
 ## 10. Order of work
 
 1. Backend: groups + creation codes + founder bootstrap + season seed; memberships endpoint; login payload.
-2. Backend: invites (V29) + guest-arc completion; `MAX_GUESTS_PER_INVITER` setting.
+2. Backend: invites (V30) + guest-arc completion; `MAX_GUESTS_PER_INVITER` setting.
 3. Contracts.
 4. Frontend: auth types + roles.ts + groupKey factory + setActiveGroup (the safety pair) + apiFetch header.
 5. Frontend: AuthGuard gate 3 + picker/onboarding + switcher + surface splits + branding ×3 locales.

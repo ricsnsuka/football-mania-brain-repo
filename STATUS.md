@@ -32,7 +32,7 @@ See [product/roadmap.md](product/roadmap.md) for the plan itself.
 | **2** — Web Push | ✅ done, delivery observed end to end against a real push service |
 | **3** — the "steal from Capo" set | 🟡 balance-at-a-glance, waitlist, leaderboards/rankings, MOTM voting and badges all shipped in both repos. **Remaining: AI match reports** |
 | **4** — Capacitor + app stores | ⬜ not started, deliberately gated on real usage data |
-| **5** — multi-tenancy + billing | 🟡 **two rungs live.** 5a-1 (schema, V22–V27) and 5a-2 (enforcement + V28) both deployed 2026-08-02. Running **dark** — one organization, an optional header, no behaviour change. Remaining: 5a-3 privacy fork, 5a-4 onboarding (**the visibility flip**, owner-gated). ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
+| **5** — multi-tenancy + billing | 🟡 **two rungs live, 5a-4 authorised.** 5a-1 (schema, V22–V27) and 5a-2 (enforcement + V28) both deployed 2026-08-02. Running **dark** — one organization, an optional header, no behaviour change. Remaining: 5a-3 privacy fork, then 5a-4 onboarding. ✅ **The 5a-4 owner gate was lifted on 2026-08-02** — the roadmap's "real engagement signal from push" precondition is explicitly waived, and building the rung is authorised. **Issuing creation codes is not**: that is the visibility flip itself and stays a separate, deliberate act. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
 
 Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
 system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee
