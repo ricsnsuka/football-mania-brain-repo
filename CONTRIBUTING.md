@@ -37,6 +37,10 @@ many links.
       if the schema moved
 - [ ] User-visible strings exist in **all three locales** — `en`, `pt`, `es`. A missing key falls
       back to the raw enum name and reaches production looking like `FEE_CHARGED`
+- [ ] Backend deployed *before* the frontend that depends on it, and confirmed running — see
+      [Deployment order](#deployment-order). Merged is not deployed
+- [ ] CHANGELOG entry says what actually happened — a release that shipped does not still read
+      "awaiting deployment"
 - [ ] [STATUS.md](STATUS.md) still accurate
 
 ## Branches and releases
@@ -72,6 +76,65 @@ rename and will fail silently:
 
 CI trigger lists are the third: a workflow still filtering on a branch that no longer exists does
 not fail, it stops running, and an unchecked pull request looks exactly like a passing one.
+
+### Naming a working branch
+
+Everything that is not `main` or `next` is temporary and named `type/what-it-does`, kebab-case:
+
+```
+feat/group-invite-expiry      fix/cors-x-group-id
+docs/changelog-1.1.0-shipped  chore/rename-branches-to-main-next
+refactor/tenant-resolver      test/guest-removal-flush
+```
+
+Types are `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `perf`. Delete the branch when its
+pull request merges — GitHub does it for you if you let it.
+
+**Name the branch after the change, not after who or what made it.** The repos accumulated
+`copilot/fix-jarfile-access-error`, `copilot/fix-jarfile-access-error-again`, and
+`claude/handoff-continuation-axeqfs`. The first two tell you a build broke twice and nothing about
+what was wrong; the third tells you nothing at all. Six months later the author is the least useful
+fact about a branch, and a generated suffix is worse than useless — it cannot be guessed, typed, or
+recognised. This applies to branches an agent opens too: the agent picks the name, so the agent
+follows the convention.
+
+**One branch, one reason to exist.** A branch that fixes CORS *and* reorganises docs cannot be
+reviewed as either, and cannot be reverted without taking the other with it.
+
+## Deployment order
+
+**The backend deploys first, and *deployed* means deployed — not merged.**
+
+The two repos fail asymmetrically, and that asymmetry is the whole reason this section exists:
+
+| | Trigger | Lag |
+|---|---|---|
+| Frontend | pushing `main` — Netlify builds every push | minutes, automatic |
+| Backend | somebody running `git push heroku main:master` | until somebody runs it |
+
+So for any change where the frontend depends on new backend behaviour:
+
+1. Merge the backend change and **deploy it** — `git push heroku main:master`.
+2. Confirm the running dyno actually has it. `heroku releases` and the deployed commit, not the
+   branch tip.
+3. Then merge the frontend, which deploys itself.
+
+**This is written down because the obvious order caused a partial outage on 2026-08-02.** The
+`X-Group-Id` CORS fix was merged on the backend and the frontend that needed it was pushed the same
+day. The frontend deployed itself in minutes; the backend sat merged and undeployed. Every
+authenticated request failed preflight, and because each screen degraded to its empty state rather
+than erroring, it did not look like an outage — it looked like missing data. It was found as "the
+competition rules section is empty".
+
+**Migrations tighten this further.** A backend deploy that carries schema changes cannot be rolled
+back by redeploying the previous jar once a contract step has dropped something — see hazard 3 in
+[STATUS.md](STATUS.md), where pre-`V22` code would come back with every account holding no grants
+at all. Deploy the backend on its own, confirm the chain applied, and only then ship the frontend
+that assumes it.
+
+**When the order genuinely cannot hold**, ship the frontend so it tolerates both shapes — feature
+detection or a graceful empty state that says so — rather than shipping something that assumes a
+backend that is not there yet.
 
 ## Structure
 
