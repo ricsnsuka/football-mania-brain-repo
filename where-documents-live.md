@@ -29,12 +29,12 @@ mechanism that produced the drift above.
 
 | Path | Why |
 |---|---|
-| [`docs/api/`](https://github.com/ricsnsuka/FootMania-Back/tree/master/docs/api) | The API contract — 14 per-surface contracts plus `API_REFERENCE.md`. Changing an endpoint, DTO or status code updates its contract in the same commit. **This is the rule that works; do not weaken it** |
-| [`docs/frontend/`](https://github.com/ricsnsuka/FootMania-Back/tree/master/docs/frontend) | The append-only endpoint changelog and the draft SSE guide. A backend change is what creates the entry |
-| [`docs/deployment/`](https://github.com/ricsnsuka/FootMania-Back/tree/master/docs/deployment) | Heroku guide — tied to `Procfile`, `system.properties`, `Dockerfile` |
-| [`CHANGELOG.md`](https://github.com/ricsnsuka/FootMania-Back/blob/master/CHANGELOG.md) | Release history for that artefact |
-| [`.github/copilot-instructions.md`](https://github.com/ricsnsuka/FootMania-Back/blob/master/.github/copilot-instructions.md) · [`.github/agents/`](https://github.com/ricsnsuka/FootMania-Back/tree/master/.github/agents) | Conventions and the 14 agent definitions — executable configuration, useless away from the code it drives |
-| [`README.md`](https://github.com/ricsnsuka/FootMania-Back/blob/master/README.md) | The repo's landing page |
+| [`docs/api/`](https://github.com/ricsnsuka/FootMania-Back/tree/main/docs/api) | The API contract — 14 per-surface contracts plus `API_REFERENCE.md`. Changing an endpoint, DTO or status code updates its contract in the same commit. **This is the rule that works; do not weaken it** |
+| [`docs/frontend/`](https://github.com/ricsnsuka/FootMania-Back/tree/main/docs/frontend) | The append-only endpoint changelog and the draft SSE guide. A backend change is what creates the entry |
+| [`docs/deployment/`](https://github.com/ricsnsuka/FootMania-Back/tree/main/docs/deployment) | Heroku guide — tied to `Procfile`, `system.properties`, `Dockerfile` |
+| [`CHANGELOG.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/CHANGELOG.md) | Release history for that artefact |
+| [`.github/copilot-instructions.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/.github/copilot-instructions.md) · [`.github/agents/`](https://github.com/ricsnsuka/FootMania-Back/tree/main/.github/agents) | Conventions and the 14 agent definitions — executable configuration, useless away from the code it drives |
+| [`README.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/README.md) | The repo's landing page |
 | `postman/` | A machine-readable artefact, versioned with the API it exercises |
 
 **Moved here:** architecture narrative (`backend/architecture/`), feature deep-dives
@@ -47,9 +47,9 @@ mechanism that produced the drift above.
 
 | Path | Why |
 |---|---|
-| [`docs/guides/`](https://github.com/ricsnsuka/FootMania-Simple-Front/tree/v1.0.0/docs/guides) | Getting started, component conventions, shared primitives, styling, i18n, testing, Netlify deployment — how to write and ship code *in that repo* |
-| [`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/AGENTS.md) · `CLAUDE.md` | "This is NOT the Next.js you know" — conventions, read before writing code |
-| [`README.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/README.md) | The repo's landing page |
+| [`docs/guides/`](https://github.com/ricsnsuka/FootMania-Simple-Front/tree/main/docs/guides) | Getting started, component conventions, shared primitives, styling, i18n, testing, Netlify deployment — how to write and ship code *in that repo* |
+| [`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/AGENTS.md) · `CLAUDE.md` | "This is NOT the Next.js you know" — conventions, read before writing code |
+| [`README.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/README.md) | The repo's landing page |
 
 **Moved here:** all feature documentation (`frontend/features/`) and the architecture overview
 (`frontend/architecture/`).

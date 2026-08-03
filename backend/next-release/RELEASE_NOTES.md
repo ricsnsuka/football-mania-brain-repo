@@ -444,5 +444,5 @@ historical match — the bulk endpoint's chronological replay fully reconciles a
 change. New finders: `MatchRepository.findCompletedOrdered`/`findCompletedBySeasonOrdered`,
 `PlayerStatRepository.findCompletedByPlayerIdChronological`. All tests green (CalculationService
 99%/90%, MatchService 99%/95%, MatchController 100% line). See
-[`docs/api/MATCH-RATING-RECALCULATION-API-CONTRACT.md`](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/MATCH-RATING-RECALCULATION-API-CONTRACT.md).
+[`docs/api/MATCH-RATING-RECALCULATION-API-CONTRACT.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-RATING-RECALCULATION-API-CONTRACT.md).
 

@@ -116,7 +116,7 @@ Reconnection is robust for every status:
 | `CANCELLED` | `CONNECTED` → `CANCELLED` → *complete* | closes immediately |
 | `CONVERTED` | `CONNECTED` → `CONVERTED` → *complete* | closes immediately |
 
-> 🆕 **Resume enhancement (2026-07-02, non-breaking):** Reconnecting to a session that reached a **terminal** state (`CANCELLED` / `CONVERTED`) while the client was disconnected now sends `CONNECTED` → the matching terminal event → and **closes the stream immediately**. Previously such a reconnect hung until the 5-minute timeout with no close signal. Clients gate auto-reconnect on `status ∈ {OPEN, COMPLETED}` and rely on the terminal event to close. See the [SSE Integration Guide](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) and the [Resume API Contract](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/DRAFT-SESSION-RESUME-API-CONTRACT.md) for the full frontend flow.
+> 🆕 **Resume enhancement (2026-07-02, non-breaking):** Reconnecting to a session that reached a **terminal** state (`CANCELLED` / `CONVERTED`) while the client was disconnected now sends `CONNECTED` → the matching terminal event → and **closes the stream immediately**. Previously such a reconnect hung until the 5-minute timeout with no close signal. Clients gate auto-reconnect on `status ∈ {OPEN, COMPLETED}` and rely on the terminal event to close. See the [SSE Integration Guide](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) and the [Resume API Contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/DRAFT-SESSION-RESUME-API-CONTRACT.md) for the full frontend flow.
 
 ---
 

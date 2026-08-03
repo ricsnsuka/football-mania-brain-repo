@@ -354,7 +354,7 @@ render produces raw keys instead. React found `footer.theme` where the server ha
 `Theme`. Users saw the same thing as a flash of untranslated keys on first paint.
 
 Fixed by bundling `en/common.json` rather than fetching it — see
-[the i18n guide](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/i18n.md#loading-strategy--en-is-bundled-the-rest-are-lazy), which
+[the i18n guide](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/guides/i18n.md#loading-strategy--en-is-bundled-the-rest-are-lazy), which
 also covers the `partialBundledLanguages` flag that keeps `pt`/`es` lazy.
 
 Worth recording how it was found, because the obvious approaches did not work: it does not

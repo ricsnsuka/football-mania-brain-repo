@@ -7,8 +7,8 @@ is the part with buttons.
 
 **Added:** 2026-08-02 — choke points in `fcc6c59`, the surfaces below in `4c5c012`, creation codes
 and the whole-page baselines in `18e4348`
-**Backend contracts:** [TENANCY](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/TENANCY-API-CONTRACT.md) ·
-[GROUP-INVITES](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/GROUP-INVITES-API-CONTRACT.md)
+**Backend contracts:** [TENANCY](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/TENANCY-API-CONTRACT.md) ·
+[GROUP-INVITES](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/GROUP-INVITES-API-CONTRACT.md)
 
 ---
 

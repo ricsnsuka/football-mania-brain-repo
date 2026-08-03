@@ -39,6 +39,40 @@ many links.
       back to the raw enum name and reaches production looking like `FEE_CHARGED`
 - [ ] [STATUS.md](STATUS.md) still accurate
 
+## Branches and releases
+
+Both code repos use the same two permanent branches, and nothing else is permanent.
+
+| Branch | Means |
+|---|---|
+| `main` | production. For the frontend, pushing it **is** a deploy |
+| `next` | integration. Every pull request bases here |
+| `vX.Y.Z` | a tag, not a branch — immutable, one per release |
+| `release/X.Y.x` | cut from a tag **only** when a shipped release needs a patch and `next` has moved on |
+
+**Releases are tags because branches were tried and failed.** The backend accumulated thirteen
+version branches — `v3.0.0` through `v4.1.0` — and not one of them held a commit that was not
+already in `master`. They were tags all along, with the added cost that every clone listed them
+forever. A branch nobody commits to after the release is a tag with worse ergonomics.
+
+**The version lives in `build.gradle` and `package.json`, never in a branch name.** A branch named
+for a version has to be renamed every release, and renaming touches the default branch, both CI
+trigger lists, every open pull request's base, and every clone. It also drifts: the branch called
+`v1.0.0` was shipping `1.1.0` for two months before it was renamed.
+
+**Renaming a branch is a deployment event, not bookkeeping.** Two things do not follow a GitHub
+rename and will fail silently:
+
+- **Netlify** deploys the frontend from a branch named in its site settings. Change that setting
+  *before* renaming the branch, or production deploys stop — or worse, resume from the wrong
+  branch. See hazard 5 in [STATUS.md](STATUS.md) for what that already cost once.
+- **Heroku** keeps its own `master` regardless. The backend deploy is `git push heroku main:master`;
+  pushing `main` alone creates a branch Heroku never builds and reports success having deployed
+  nothing.
+
+CI trigger lists are the third: a workflow still filtering on a branch that no longer exists does
+not fail, it stops running, and an unchecked pull request looks exactly like a passing one.
+
 ## Structure
 
 Curated documents live at the top level and in `product/` and `architecture/`. `backend/` and
