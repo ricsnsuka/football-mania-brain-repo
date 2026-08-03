@@ -1,6 +1,7 @@
 # Database Migration History
 
-Complete as of **V31**, verified against `src/main/resources/db/migration/` on 2026-08-02.
+Complete as of **V32**, verified against `src/main/resources/db/migration/` on 2026-08-03.
+**Production is applied through V31.** V32 is merged to `next` and **not deployed**.
 
 This supersedes the table in [backend/architecture/ARCHITECTURE.md](../backend/architecture/ARCHITECTURE.md),
 which stops at V13.
@@ -42,14 +43,22 @@ editable — correct it with a new one.
 | V29 | `V29__drop_user_roles.sql` | **`DROP TABLE user_roles`** — the contract half of V23's expand/contract, written once the soak had actually started rather than at the V28 the plan pencilled in. **The point of no return:** pre-V22 code resolves authorities from `users.roles` → `user_roles`, so past here a rollback to before V22 means restoring a backup, not redeploying an old jar. No data is lost — V23 copied every row and the dual-write kept them level; the migration carries the `EXCEPT` query to prove it before running. [Plan](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) |
 | V30 | `V30__group_invites.sql` | `group_invites` — server-issued, single-use, expiring tokens, **not** shareable role-bearing URLs, which would be credentials with no revocation and no audit. The grants belong to the invite rather than its author, so an ADMIN may mint a MANAGER invite and a stolen token grants exactly what it says, once. Completes the guest arc GUEST-PLAYERS-PLAN §2 deferred: guest plays → manager promotes → invite → person registers and accepts → links to the player row. [Plan](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
 | V31 | `V31__group_creation_codes.sql` | `group_creation_codes` — founding a group needs a single-use operator-issued code. Registration stays open and free; a *group* is what the code buys. Open self-serve was rejected: with no billing, no metering and no abuse controls it would open an unbounded free-rider window in the very release that makes the product visible, and a code keeps the flip reversible with no deploy. **The table ships empty.** When billing lands these become promo/trial codes rather than dead weight. [Plan](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
+| V32 ⏳ | `V32__membership_status_suspended.sql` | Widens `chk_memberships_status`, which V23 wrote as `IN ('ACTIVE')` because that was the only status then. **Fixes a group administrator being able to end a member's access to every group**: removing somebody was `DELETE /api/users/{id}`, which writes `users.is_active` — the flag governing login everywhere — while the guard said `ADMIN`, a per-membership grant since V23. `SUSPENDED` is the group-scoped answer: it writes one tenant's membership, so every other group and the account are bit-identical. Chosen over deleting the row because that is what the erasure fork already does, and it anonymises the `Player` with it — right for "erase me", far too much for "not this season". The constraint is **widened rather than dropped** so a typo stays a write-time violation instead of a membership that silently resolves nowhere. No data migration; every existing row is and stays `ACTIVE`. **Not deployed.** |
 
 ---
 
 ## Deployment state
 
+⏳ **V32 is merged and undeployed.** It rides on `next` with the fix that needs it, so until the
+next release the deployed schema still refuses `SUSPENDED` — the code that writes it would fail on
+the CHECK constraint, which is how the integration suite found the constraint in the first place.
+**Deploy the backend before the frontend that offers suspension**, per
+[CONTRIBUTING](../CONTRIBUTING.md#deployment-order).
+
 **The whole chain through V31 is applied in production as of 2026-08-02** — every migration in the
-table above. V22–V28, the Phase 5a schema and the platform grant, went out as one release, dark;
-V29–V31 followed the same day. The notes below record the state at each step, newest first.
+table above except V32. V22–V28, the Phase 5a schema and the platform grant, went out as one
+release, dark; V29–V31 followed the same day. The notes below record the state at each step,
+newest first.
 
 **V29–V31 were applied on the same day.** The 5a-4 rung — the `user_roles` drop plus invites and
 creation codes — is in production, which means **the whole chain through V31 is live** and Phase 5a

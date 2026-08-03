@@ -17,7 +17,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [product/roadmap](product/roadmap.md) | The five-phase improvement and mobile roadmap |
 | [product/feature-status](product/feature-status.md) | Every feature × backend × frontend × docs |
 | [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
-| [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V28 history + deployment state |
+| [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V32 history + deployment state |
 | [architecture/multi-tenancy](architecture/multi-tenancy.md) | Phase 5 cross-repo contract: tenant resolution, cache/key rules, the rollout ladder |
 
 ---
