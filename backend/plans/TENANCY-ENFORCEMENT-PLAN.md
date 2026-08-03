@@ -137,12 +137,12 @@ implicitly — unauditable, and simply absent for scheduler-originated work wher
 request context to capture. Explicit payload beats ambient magic; this is the same reasoning
 ADR-002 used for putting work after commit explicitly rather than hoping.
 
-## 9. Model decision: platform admin is a platform-level grant — not group ADMIN, not a special org
+## 9. Model decision: platform admin is a platform-level grant — not group GROUP_ADMIN, not a special org
 
 **Chosen:** a `platform_admins(user_id)` table (or boolean on `users` — implementer's choice,
 table recommended for auditability), checked by a `@PreAuthorize("@platformGuard.isOperator(...)")`
-style predicate. Surface this rung: global cache evict, org listing, platform health. **"ADMIN is
-not a superset" survives Phase 5**: group ADMIN administers a group — and *every founder will
+style predicate. Surface this rung: global cache evict, org listing, platform health. **"GROUP_ADMIN is
+not a superset" survives Phase 5**: group GROUP_ADMIN administers a group — and *every founder will
 hold it* — so it cannot carry operator powers; a membership in a magic "platform org" was
 rejected because it breaks the tenant invariants everywhere else.
 
@@ -163,7 +163,7 @@ first piece of mandatory new infrastructure.
 | BR-E2 | Cross-tenant anything → `404` | No existence oracle |
 | BR-E3 | Cache keys carry the tenant, same commit as the filter | The filter is worthless without it |
 | BR-E4 | Async work declares its tenant in the payload | No ambient inheritance |
-| BR-E5 | Platform grant ≠ group ADMIN | Flat, separate, auditable |
+| BR-E5 | Platform grant ≠ group GROUP_ADMIN | Flat, separate, auditable |
 | BR-E6 | SSE derives tenant from the resource, never the client | EventSource cannot send headers anyway |
 
 ## 12. Test plan

@@ -39,7 +39,7 @@ Caffeine rather than Redis.
 **1. REST + JWT.** The only routes that are not authenticated are login, health, version and the
 push public key. Roles are **composable** since V18 — a user holds a *set* of roles, so the person
 who runs the matches, the person who handles the money and the person who administers the system
-need not be the same. Do not treat `ADMIN` as a superset of the others; the frontend had that bug
+need not be the same. Do not treat `GROUP_ADMIN` as a superset of the others; the frontend had that bug
 and fixed it in `418256e`. Contract:
 [backend/api/ROLES-API-CONTRACT.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/ROLES-API-CONTRACT.md).
 

@@ -34,7 +34,7 @@ Three roles. Flat, independent, additive — **not a hierarchy**.
 |------|--------|
 | `ORGANIZER` | See all balances, record payments, set fees, void and waive charges |
 | `MANAGER` | Create plans and matches, manage the roster, generate teams, record results |
-| `ADMIN` | System settings, user administration, rating recalculation, GDPR actions, purge |
+| `GROUP_ADMIN` | System settings, user administration, rating recalculation, GDPR actions, purge |
 
 Everything else is derived from two things that are not roles:
 
@@ -60,8 +60,8 @@ with no linked player — exactly what an administrator is today.
 ### Why there is no hierarchy
 
 A player-organiser is not "below" a manager, so the roles cannot be ordered. Making them flat and
-independent removes the whole category of implication bugs ("does ADMIN imply MANAGER?"), at the
-cost of one thing that must be handled deliberately: **`ADMIN` does not imply `MANAGER`.** See §4.
+independent removes the whole category of implication bugs ("does GROUP_ADMIN imply MANAGER?"), at the
+cost of one thing that must be handled deliberately: **`GROUP_ADMIN` does not imply `MANAGER`.** See §4.
 
 ### `BASIC_USER` disappears
 
@@ -94,7 +94,7 @@ loses the ability to create a match the moment this deploys.**
 
 | Old | New |
 |-----|-----|
-| `ADMIN_USER` | `{ADMIN, MANAGER, ORGANIZER}` |
+| `ADMIN_USER` | `{GROUP_ADMIN, MANAGER, ORGANIZER}` |
 | `MASTER_USER` | `{MANAGER}` |
 | `BASIC_USER` | `{}` — no rows |
 
@@ -113,13 +113,13 @@ CREATE TABLE user_roles (
     user_id BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role    VARCHAR(20) NOT NULL,
     PRIMARY KEY (user_id, role),
-    CONSTRAINT user_roles_role_check CHECK (role IN ('ORGANIZER', 'MANAGER', 'ADMIN'))
+    CONSTRAINT user_roles_role_check CHECK (role IN ('ORGANIZER', 'MANAGER', 'GROUP_ADMIN'))
 );
 
 INSERT INTO user_roles (user_id, role)
 SELECT id, r.role
 FROM users
-CROSS JOIN LATERAL (VALUES ('ADMIN'), ('MANAGER'), ('ORGANIZER')) AS r(role)
+CROSS JOIN LATERAL (VALUES ('GROUP_ADMIN'), ('MANAGER'), ('ORGANIZER')) AS r(role)
 WHERE users.role = 'ADMIN_USER';
 
 INSERT INTO user_roles (user_id, role)
@@ -147,7 +147,7 @@ eventually trust it.
 > SELECT role, count(*) FROM user_roles GROUP BY role;     -- after
 > ```
 >
-> Expect `ADMIN`, `MANAGER` and `ORGANIZER` each ≥ the old `ADMIN_USER` count, and
+> Expect `GROUP_ADMIN`, `MANAGER` and `ORGANIZER` each ≥ the old `ADMIN_USER` count, and
 > `MANAGER` = `ADMIN_USER` + `MASTER_USER`.
 
 ---
@@ -155,7 +155,7 @@ eventually trust it.
 ## 6. Entity
 
 ```java
-public enum Role { ORGANIZER, MANAGER, ADMIN }
+public enum Role { ORGANIZER, MANAGER, GROUP_ADMIN }
 
 @ElementCollection(fetch = FetchType.EAGER)
 @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
@@ -192,8 +192,8 @@ var authorities = user.getRoles().stream()
 | Current | Becomes | Sites |
 |---------|---------|-------|
 | `hasRole('ADMIN_USER') or hasRole('MASTER_USER')` | `hasRole('MANAGER')` | 17 |
-| `hasRole('ADMIN_USER')` | `hasRole('ADMIN')` | 20 |
-| `hasRole('ADMIN_USER') or #id == authentication.principal.id` | `hasRole('ADMIN') or #id == …` | 3 |
+| `hasRole('ADMIN_USER')` | `hasRole('GROUP_ADMIN')` | 20 |
+| `hasRole('ADMIN_USER') or #id == authentication.principal.id` | `hasRole('GROUP_ADMIN') or #id == …` | 3 |
 | `isAuthenticated()` | unchanged | 26 |
 
 **66 sites in total, 40 of them changed** — the counts above are the measured inventory, not the
@@ -219,7 +219,7 @@ job.
 
 ---
 
-## 8. The ADMIN-cannot-be-a-player rule is removed
+## 8. The GROUP_ADMIN-cannot-be-a-player rule is removed
 
 > **Confirm this reading.** It reverses an invariant documented in three places. One line each to
 > restore if it is not what was wanted.
@@ -232,7 +232,7 @@ Deleted from all three enforcement sites:
 | `PlayerService:138` | Rejects linking on player **update** |
 | `PlayerService:201-206` | Rejects `linkMe` when the caller holds `ROLE_ADMIN_USER` |
 
-Reasoning: under composable roles `ADMIN` is a capability grant, not an identity, so "holds ADMIN"
+Reasoning: under composable roles `GROUP_ADMIN` is a capability grant, not an identity, so "holds GROUP_ADMIN"
 says nothing about whether the person kicks a ball. The rule reads as a separation-of-duties
 control but never functioned as one — managers already edit scoresheets, name the MVP *and* play,
 so the conflict of interest it appears to prevent has always been present one role down. Its only
@@ -245,7 +245,7 @@ which is the exact friction this change exists to remove.
 another administrator must action it. Unrelated to player linking, and it stays:
 
 ```java
-if (user.hasRole(Role.ADMIN)) { ... }
+if (user.hasRole(Role.GROUP_ADMIN)) { ... }
 ```
 
 A find-and-replace across `AppUser.Role.ADMIN_USER` will otherwise take a real safety control with
@@ -274,8 +274,8 @@ it. Four sites match; three are deleted and this one is rewritten.
 
 ```java
 public record AdminUserUpdateDTO(
-        Set<@Pattern(regexp = "ORGANIZER|MANAGER|ADMIN",
-                     message = "must be one of ORGANIZER, MANAGER, ADMIN") String> roles,
+        Set<@Pattern(regexp = "ORGANIZER|MANAGER|GROUP_ADMIN",
+                     message = "must be one of ORGANIZER, MANAGER, GROUP_ADMIN") String> roles,
         Boolean isActive
 ) {}
 ```
@@ -304,10 +304,10 @@ the frontend caught up.
 // Deprecated. Highest-precedence single role, for frontends predating composable roles.
 // Delete once the frontend ships `roles`.
 String role,          // "ADMIN_USER" | "MASTER_USER" | "BASIC_USER"
-Set<String> roles     // ["ADMIN", "MANAGER", "ORGANIZER"]
+Set<String> roles     // ["GROUP_ADMIN", "MANAGER", "ORGANIZER"]
 ```
 
-Precedence: `ADMIN` → `ADMIN_USER`, else `MANAGER` → `MASTER_USER`, else `BASIC_USER`. That maps
+Precedence: `GROUP_ADMIN` → `ADMIN_USER`, else `MANAGER` → `MASTER_USER`, else `BASIC_USER`. That maps
 exactly onto the old vocabulary, so an un-updated frontend behaves identically.
 
 **The tokens themselves need no handling at all.** `JwtAuthenticationFilter:43-44` puts only the
@@ -326,12 +326,12 @@ inflate that — the real work is concentrated:
 |------|--------|
 | `src/types/auth.ts` | `role: string` → `roles: string[]` |
 | `src/store/appStore.ts` | User shape |
-| `src/lib/roles.ts` *(new)* | `hasRole(user, 'ADMIN')` helper |
+| `src/lib/roles.ts` *(new)* | `hasRole(user, 'GROUP_ADMIN')` helper |
 | `src/components/auth/AuthGuard.tsx` | Accept a required-role set |
 | `src/features/users/EditUserModal.tsx` | Single `<select>` → checkbox group |
 | `src/features/users/UsersPage.tsx` | Render role chips; empty set as "Member" |
 
-Then every `user?.role === 'ADMIN_USER'` becomes `hasRole(user, 'ADMIN')`. **Introduce the helper
+Then every `user?.role === 'ADMIN_USER'` becomes `hasRole(user, 'GROUP_ADMIN')`. **Introduce the helper
 first** — sixty files each writing `user.roles.includes(...)` is how the check drifts.
 
 Sites that branch on role today: `Navbar`, `AccountMenu`, `SettingsPage`, `SystemSettings`,
@@ -354,12 +354,12 @@ the navbar contents change per role.
 | Area | Cases |
 |------|-------|
 | `UserDetailsServiceImpl` | Empty set → no authorities, still authenticated; three roles → three authorities |
-| Authorisation matrix | For each of `{}`, `{MANAGER}`, `{ORGANIZER}`, `{ADMIN}`, `{ADMIN,MANAGER}`: one endpoint per tier |
-| Regression guard | `{ADMIN}` alone is **rejected** by a manager endpoint — proves flatness is real and not accidentally re-implied |
-| Linking | An `ADMIN` user can now be linked to a player, and can `linkMe` |
-| Self-erasure | An `ADMIN` still cannot erase their own account |
+| Authorisation matrix | For each of `{}`, `{MANAGER}`, `{ORGANIZER}`, `{GROUP_ADMIN}`, `{GROUP_ADMIN,MANAGER}`: one endpoint per tier |
+| Regression guard | `{GROUP_ADMIN}` alone is **rejected** by a manager endpoint — proves flatness is real and not accidentally re-implied |
+| Linking | An `GROUP_ADMIN` user can now be linked to a player, and can `linkMe` |
+| Self-erasure | An `GROUP_ADMIN` still cannot erase their own account |
 | DTO validation | `roles: ["WIZARD"]` → 400 field error, not a parse failure |
-| Compatibility | `{ADMIN,MANAGER}` serialises `role: "ADMIN_USER"` |
+| Compatibility | `{GROUP_ADMIN,MANAGER}` serialises `role: "ADMIN_USER"` |
 
 > **CI invariant:** `build.gradle` asserts
 > `testControllers + testServices + testSecurity + testApplication == test`. New security tests
@@ -407,7 +407,7 @@ server checks.
 - [x] **`LoginResponseDTO.role`** — mitigated by the shim in §10; genuinely breaking once removed
 - [x] **`UserDTO.role`, `UserCreateDTO.role`, `AdminUserUpdateDTO.role`** — admin surfaces only
 - [x] **`users.role` column dropped** — no rollback but a database restore
-- [x] **ADMIN may now be linked to a player** — deliberate, §8
+- [x] **GROUP_ADMIN may now be linked to a player** — deliberate, §8
 
 Contract docs to update in the same commit, per repo convention: `player-API-CONTRACT.md`,
 `PLAYER-LINK-ME-API-CONTRACT.md`, `ADMIN-API-CONTRACT.md`, `PRIVACY-API-CONTRACT.md`,

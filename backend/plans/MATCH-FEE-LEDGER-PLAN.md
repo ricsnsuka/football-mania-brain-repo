@@ -281,7 +281,7 @@ is the manager — so setting the cost and triggering generation is open to both
 arrived** is only ever known to the person it was sent to, so every payment operation is
 `ORGANIZER` alone.
 
-Note that `ADMIN` appears nowhere. Under the flat role model it grants system administration, not
+Note that `GROUP_ADMIN` appears nowhere. Under the flat role model it grants system administration, not
 custody of the group's money — an administrator who also collects the fees holds `ORGANIZER` too,
 and says so.
 
@@ -323,7 +323,7 @@ rather than an empty ledger that would read as "you're square".
 |--------|---------|
 | `400` | `amountCents` ≤ 0, or `paidAt` in the future |
 | `404` | No such player |
-| `403` | Not ADMIN/MASTER |
+| `403` | Not GROUP_ADMIN/MASTER |
 
 ### Visibility
 
@@ -397,7 +397,7 @@ deliberately rather than inherit it.
 | `/payments` | New route. Own balance + history for everyone; `ORGANIZER` additionally sees the full balances table with record-payment and void actions |
 | Dashboard | A balance line in `AwaitingYou` when the caller owes something — this is exactly the "upcoming notices" the overview redesign was for |
 | `MatchPlanDetailModal` | Cost field and the resulting per-player charges, `ORGANIZER` or `MANAGER` |
-| Settings → System | Default match cost, alongside the existing admin settings (`ADMIN` — it is an `AppSetting`) |
+| Settings → System | Default match cost, alongside the existing admin settings (`GROUP_ADMIN` — it is an `AppSetting`) |
 | `docs/features/payments.md` | New |
 
 Money formatting goes through `Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR' })`
@@ -453,7 +453,7 @@ whole problem.
 | Balance | Sign convention; voided rows excluded; empty ledger is 0, not an error |
 | Ad-hoc | Two NULL-plan charges for one player both persist (BR-5) |
 | **Unlinked players** | A player with `user == null` is charged by generation; appears in `/payments/balances` with the right amount and `contactable: false`; charge generation does **not** throw when notifying them; linking afterwards exposes the pre-existing balance unchanged |
-| Security | A player without `ORGANIZER` cannot reach `/payments/balances` or another player's ledger — including a user holding `ADMIN` or `MANAGER`, which is what proves the roles are genuinely flat |
+| Security | A player without `ORGANIZER` cannot reach `/payments/balances` or another player's ledger — including a user holding `GROUP_ADMIN` or `MANAGER`, which is what proves the roles are genuinely flat |
 | Privacy | Export includes both tables; erasure leaves them |
 
 > **CI invariant:** `build.gradle` asserts

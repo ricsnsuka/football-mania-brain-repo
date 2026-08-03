@@ -31,8 +31,8 @@ A `<select>` rendered inside the pagination bar (`matches-page-size-select`) let
 |--------|-------|
 | View matches | All |
 | Create match | `MANAGER` |
-| Bulk recalculate ratings | `ADMIN` |
-| Single recalculate ratings | `ADMIN` |
+| Bulk recalculate ratings | `GROUP_ADMIN` |
+| Single recalculate ratings | `GROUP_ADMIN` |
 
 ## Match creation
 
@@ -50,7 +50,7 @@ match-type count enforced. `generationType` is omitted from the payload and the 
 
 ## Bulk rating recalculation (admin only)
 
-The `RecalculateMatchesPanel` is rendered inside `MatchesPage` for `ADMIN` only. It allows re-running the rating engine on completed matches.
+The `RecalculateMatchesPanel` is rendered inside `MatchesPage` for `GROUP_ADMIN` only. It allows re-running the rating engine on completed matches.
 
 ### Scope modes
 

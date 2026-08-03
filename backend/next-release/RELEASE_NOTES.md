@@ -54,7 +54,7 @@ Rating Model v2 introduced proportional normalization and stats-dependent ceilin
 - `src/main/java/pt/rics/demo/football/dto/ChangePasswordDTO.java`
 
 Full user authentication and management layer. Supports login via username or email,
-three access roles (ADMIN/MASTER/BASIC), paginated user listing, soft deletion,
+three access roles (GROUP_ADMIN/MASTER/BASIC), paginated user listing, soft deletion,
 and owner-scoped password change. 30 tests — all green.
 
 ---
@@ -88,7 +88,7 @@ Full Player management layer. Role-based access: reads open to all authenticated
 - `src/main/java/pt/rics/demo/football/model/Match.java`, `MatchTeam.java`, `PlayerStat.java`, `Goal.java`
 - `src/main/java/pt/rics/demo/football/dto/MatchDTO.java`, `MatchCreateDTO.java`, `MatchCompleteDTO.java`, `MatchUpdateDTO.java`, `MatchTeamDTO.java`, `MatchTeamCreateDTO.java`, `PlayerStatDTO.java`, `PlayerStatUpdateDTO.java`
 
-Full match lifecycle: create with manual teams, list/filter, complete with scores and per-player stats (goals, assists, own goals, MVP, rating), amend stats post-completion (ADMIN only), delete non-completed matches.  
+Full match lifecycle: create with manual teams, list/filter, complete with scores and per-player stats (goals, assists, own goals, MVP, rating), amend stats post-completion (GROUP_ADMIN only), delete non-completed matches.  
 V3 migration: adds `match_type`, `score_team_a/b`, `team_order` (unique per match), `own_goals`; drops `player_stats.notes` and `goals.penalty_caused_by`. V4 migration: optimistic locking version column on `matches`. 80 new tests (40 service + 40 controller) — all green.
 
 ---

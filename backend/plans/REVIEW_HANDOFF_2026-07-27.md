@@ -123,7 +123,7 @@ These target the bugs fixed above and did not exist before:
 - **M8 — PII exposure.** `GET /api/players` + `/api/players/{id}` return `email` + `phoneNumber`
   (from linked `AppUser`) to ANY authenticated user (`isAuthenticated()`). A `BASIC_USER` can harvest
   every member's contact info. Confirm whether this is intended; if not, gate those fields to
-  ADMIN/MASTER (or the player's own linked user) in `PlayerMapper`/`PlayerDTO`.
+  GROUP_ADMIN/MASTER (or the player's own linked user) in `PlayerMapper`/`PlayerDTO`.
 - **M9 — draft authZ.** `POST /api/draft-sessions/{id}/pick` is `isAuthenticated()` with no check
   that the caller is a captain/creator/participant, so any user can drive any open draft. Javadoc
   says "captains can be anyone", so this may be intended — confirm before locking down.

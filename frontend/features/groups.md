@@ -20,7 +20,7 @@ An account and a group are separate things. Registering gets you the first and n
 
 | Route in | Who starts it | Screen |
 |---|---|---|
-| An invite link | a group `ADMIN` | `/join/<token>` |
+| An invite link | a group `GROUP_ADMIN` | `/join/<token>` |
 | A creation code | the platform operator | `/groups`, "I have a creation code" |
 
 Both are deliberate acts by somebody who already has standing. There is no open self-serve path,
@@ -95,7 +95,7 @@ caller has no grant for in the group they just moved to, and landing on a permis
 worse answer than starting from home. The store erases the query cache on the way.
 
 **Roles are per group, and the UI already knew that.** `user.roles` is kept equal to the active
-membership's grants, so roughly thirty `hasRole(user, 'ADMIN')` call sites mean something narrower
+membership's grants, so roughly thirty `hasRole(user, 'GROUP_ADMIN')` call sites mean something narrower
 than they used to without one of them being touched — an administrator of the Tuesday lot acting in
 the Sunday league holds nothing there, and every one of those sites now says so.
 
@@ -103,7 +103,7 @@ the Sunday league holds nothing there, and every one of those sites now says so.
 
 ## Handing out access
 
-### Invites — Users page, group `ADMIN`
+### Invites — Users page, group `GROUP_ADMIN`
 
 They live there because that page answers "who is in this group", and bringing somebody new in is
 the same question in a different tense.
@@ -114,7 +114,7 @@ live tokens behind. Copy writes the whole `/join/<token>` link and confirms by c
 label for two seconds — a toast per copy is noise, and an administrator minting three invites in a
 row would collect three of them.
 
-The grants belong to the **invite**, not the inviter — an `ADMIN` may mint a `MANAGER` invite, and
+The grants belong to the **invite**, not the inviter — an `GROUP_ADMIN` may mint a `MANAGER` invite, and
 a stolen link grants exactly what it says, once. Ticking nothing sends `roles: []`, which the
 server reads as a plain member.
 
@@ -134,7 +134,7 @@ pointed at a group you are no longer in would 404 every request with nothing to 
 ### Creation codes — Settings, platform operator
 
 Behind `user.platformAdmin`, which is **a different grant, not a stronger one**. Every founder will
-hold group `ADMIN`; deciding that another group may exist is a different job with a different blast
+hold group `GROUP_ADMIN`; deciding that another group may exist is a different job with a different blast
 radius, so V28 gave it its own flat platform-level grant.
 
 The section is hidden for everybody else and the endpoints refuse them regardless — a hidden

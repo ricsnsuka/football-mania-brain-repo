@@ -304,7 +304,7 @@ All fields optional (safe PATCH — `null` = no change):
           isCompleted=true
           rating populated on all PlayerStat rows
 
-          ← PATCH /api/matches/{id}/teams/{teamId}/stats/{statId}  (ADMIN post-comp amendment)
+          ← PATCH /api/matches/{id}/teams/{teamId}/stats/{statId}  (GROUP_ADMIN post-comp amendment)
 ```
 
 ---
@@ -793,7 +793,7 @@ simultaneously, one will get `ObjectOptimisticLockingFailureException`, which
 | Completing an already-completed match   | 409    | Conflict / optimistic locking                              |
 | Deleting a completed match              | 409    | `Cannot delete a completed match`                          |
 | Amending stat: stat not in given team   | 404    | `PlayerStat with id {id} not found in team {teamId}`       |
-| Not ADMIN/MASTER for write endpoints    | 403    | Forbidden                                                  |
+| Not GROUP_ADMIN/MASTER for write endpoints    | 403    | Forbidden                                                  |
 | Recalculate: match not completed        | 409    | `Match id={id} is not completed`                           |
 | Bulk recalc: both `matchIds`+`seasonId` | 400    | `matchIds and seasonId are mutually exclusive — supply only one` |
 | Bulk recalc: `seasonId` not found       | 404    | `Season with id {id} not found`                            |

@@ -16,14 +16,14 @@
 | | Notifications | All | `NotificationSettings` |
 | | Your data | All | `PrivacySettings` |
 | **{group name}** | Your player | All | `LinkedPlayerSettings` |
-| | System | `ADMIN` | `SystemSettings` |
+| | System | `GROUP_ADMIN` | `SystemSettings` |
 | **Platform** | Creation codes | operator only — the tab does not render otherwise | `PlatformSettings` |
 
 The tabs are the scopes tenancy created. Account settings follow the person across groups
 (notifications are platform-level per the tenancy contract — a device belongs to a person, not a
 group). The group tab is **titled with the active group's name**, like the Navbar brand and the
 members page, so what "these settings" means changes legibly when you switch groups. Platform is
-gated on the operator grant alone, which group `ADMIN` deliberately does not imply.
+gated on the operator grant alone, which group `GROUP_ADMIN` deliberately does not imply.
 
 **The page was stacked before it was tabbed, and the stacking's reason survived the change.**
 Stacking existed so the destructive GDPR section could not hide behind a click nobody knows to
@@ -38,7 +38,7 @@ mounted at all.
 ## Profile
 
 Name, email and password. No new backend was needed — `PATCH /api/users/{id}` is authorised as
-`hasRole('ADMIN') or #id == authentication.principal.id`, so it works for every role without a
+`hasRole('GROUP_ADMIN') or #id == authentication.principal.id`, so it works for every role without a
 role check in the UI.
 
 **The user id comes from the session, never a form field.** One that could be edited would be an
@@ -78,7 +78,7 @@ reader should announce "2 of 3" rather than three unrelated controls.
 
 ## System (admin only)
 
-Guarded in the UI *and* by the API. The endpoints are `ADMIN` and would refuse anybody else, so
+Guarded in the UI *and* by the API. The endpoints are `GROUP_ADMIN` and would refuse anybody else, so
 the UI guard is about not rendering controls that cannot work — not about keeping a secret.
 `MANAGER` is refused too: master runs the squad, this is the system.
 

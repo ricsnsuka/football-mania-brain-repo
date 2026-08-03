@@ -83,7 +83,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [team-generation](frontend/features/team-generation.md) | Generation UI and balance-at-a-glance |
 | [rankings](frontend/features/rankings.md) | League table and category cards |
 | [motm-voting](frontend/features/motm-voting.md) · [badges](frontend/features/badges.md) | Crowd MOTM and achievements |
-| [roles](frontend/features/roles.md) | Composable roles in the UI — `ADMIN` is **not** a superset |
+| [roles](frontend/features/roles.md) | Composable roles in the UI — `GROUP_ADMIN` is **not** a superset |
 | [settings](frontend/features/settings.md) | The settings home |
 | [push-notifications](frontend/features/push-notifications.md) · [notifications](frontend/features/notifications.md) | Web Push, and the in-app toast widget |
 | [pwa](frontend/features/pwa.md) | Installability, service worker, offline |

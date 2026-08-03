@@ -12,7 +12,7 @@ stay in the backend repo's `docs/api/`, same commit as the code, as always.
 
 One database, one deployment, many **groups** (`organizations` in the schema, `tenant_id` on
 every owned row, composite FKs making cross-group references unrepresentable). **Accounts are
-platform-level; membership is per-group; roles are per-membership and stay flat** — ADMIN of one
+platform-level; membership is per-group; roles are per-membership and stay flat** — GROUP_ADMIN of one
 group says nothing about another group or the platform, whose operator holds a separate
 platform-admin grant. A guest remains what the guest feature promised: a player row with no
 membership row.
@@ -102,7 +102,7 @@ login response.
 **The recommended shape is an operator-only account**: register a fresh account (registration
 creates no membership), grant it, and keep it out of every group. Operating the deployment is a
 different job from playing in a group — the reason the grant is flat and separate from group
-`ADMIN` — and an account that can issue creation codes but appears on no roster is the cleanest
+`GROUP_ADMIN` — and an account that can issue creation codes but appears on no roster is the cleanest
 expression of that. The frontend supports it: a group-less operator gets a **Platform settings**
 card on the picker leading to `/platform` (frontend `d0b7686`); an operator who is also a member
 has the same controls as the Settings → Platform tab.

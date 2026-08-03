@@ -117,13 +117,13 @@ interface DraftSessionDTO {
 
 ---
 
-## Draft Sessions Admin (ADMIN only)
+## Draft Sessions Admin (GROUP_ADMIN only)
 
 A separate admin-only page at `/draft-sessions` that lists **all** draft sessions regardless of status, with controls to cancel or permanently delete them.
 
 ### Route
 
-`/draft-sessions` — guarded to `ADMIN` only (redirects non-admins to `/dashboard`).
+`/draft-sessions` — guarded to `GROUP_ADMIN` only (redirects non-admins to `/dashboard`).
 
 ### User Flow
 
@@ -139,9 +139,9 @@ A separate admin-only page at `/draft-sessions` that lists **all** draft session
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `GET` | `/api/draft-sessions/summary` | `ADMIN` | Lightweight list of all sessions |
-| `DELETE` | `/api/draft-sessions/{id}/purge` | `ADMIN` | Hard-delete a session |
-| `DELETE` | `/api/draft-sessions/{id}` | `ADMIN` / `MANAGER` | Soft-cancel (already existed) |
+| `GET` | `/api/draft-sessions/summary` | `GROUP_ADMIN` | Lightweight list of all sessions |
+| `DELETE` | `/api/draft-sessions/{id}/purge` | `GROUP_ADMIN` | Hard-delete a session |
+| `DELETE` | `/api/draft-sessions/{id}` | `GROUP_ADMIN` / `MANAGER` | Soft-cancel (already existed) |
 
 ### DraftSessionSummaryDTO
 
