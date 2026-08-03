@@ -9,7 +9,7 @@
 ## 1. Requirement Summary
 
 Introduce `POST /api/players/{id}/link-me` so that any authenticated non-admin user can
-self-link their own account to an existing player record, without requiring an ADMIN/MASTER
+self-link their own account to an existing player record, without requiring an GROUP_ADMIN/MASTER
 operator to perform the link on their behalf. This improves onboarding autonomy for
 `BASIC_USER` accounts.
 

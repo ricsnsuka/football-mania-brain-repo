@@ -10,8 +10,8 @@ nobody trusts is worse than none.
 | Running in production | `a7e13c1` — Heroku release **v47**, 2026-08-02 19:18 | `ac831ee` — Netlify, build ready |
 | `main` head | `2981bd3` — `a7e13c1` plus `.github/` and `CHANGELOG.md` only, so **runtime-identical** to production | `ac831ee` — identical to the deployed commit |
 | Working tree | clean | clean |
-| Tests | 1000 unit across 194 suites + integrationTest green in CI | 509 unit + 32 visual regression |
-| Latest migration | `V32__membership_status_suspended.sql` — on `next`, ⏳ **undeployed** | — |
+| Tests | 1014 unit + integrationTest green | 554 unit + 32 visual regression |
+| Latest migration | `V33__rename_admin_to_group_admin.sql` — on `next`, ⏳ **undeployed** (V32 too) | — |
 | Deployed through | **`V31`** (2026-08-02) | — |
 
 🔒 **1.1.0 is closed. New work goes to `next`.** `main` moves only when a release is cut, and when
@@ -46,7 +46,7 @@ See [product/roadmap.md](product/roadmap.md) for the plan itself.
 | **2** — Web Push | ✅ done, delivery observed end to end against a real push service |
 | **3** — the "steal from Capo" set | 🟡 balance-at-a-glance, waitlist, leaderboards/rankings, MOTM voting and badges all shipped in both repos. **Remaining: AI match reports** |
 | **4** — Capacitor + app stores | ⬜ not started, deliberately gated on real usage data |
-| **5** — multi-tenancy + billing | 🟢 **5a is complete and entirely live.** All four rungs deployed 2026-08-02: schema (`V22`–`V27`), enforcement (`V28`), the privacy fork, and onboarding (`V29`–`V31`) — group creation behind an operator-issued code, invites, and the last step of the guest arc. Running **dark**: one organization, an optional header, no behaviour change yet. Both onboarding UIs exist too — `/join/{token}` and the picker for members, invite links for group `ADMIN`, creation codes for the platform operator. **Issuing a creation code is still the flip, and is still a separate deliberate act**: the endpoint and the screen exist, `group_creation_codes` is empty, and nothing is self-serve until a code is issued. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
+| **5** — multi-tenancy + billing | 🟢 **5a is complete and entirely live.** All four rungs deployed 2026-08-02: schema (`V22`–`V27`), enforcement (`V28`), the privacy fork, and onboarding (`V29`–`V31`) — group creation behind an operator-issued code, invites, and the last step of the guest arc. Running **dark**: one organization, an optional header, no behaviour change yet. Both onboarding UIs exist too — `/join/{token}` and the picker for members, invite links for group `GROUP_ADMIN`, creation codes for the platform operator. **Issuing a creation code is still the flip, and is still a separate deliberate act**: the endpoint and the screen exist, `group_creation_codes` is empty, and nothing is self-serve until a code is issued. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
 
 Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
 system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee
@@ -116,6 +116,19 @@ javadoc on `findOrThrow` said `deleteUser` still deactivated the account and han
 5a-3, which shipped without it; a deferral recorded only in a comment is a deferral nobody is
 tracking. And **no test held one account in two groups**, so every tier passed. `TenantIsolationIT`
 holds one now.
+
+**The name was the root cause, and it has been fixed too (`V33`).** `ADMIN` became `GROUP_ADMIN`
+across both repos on 2026-08-03. The grant always meant "administrator *of one group*"; the name
+did not say so, and `hasRole('ADMIN')` guarding a platform-wide write read as correct to everyone
+who looked at it. The same guard reading `hasRole('GROUP_ADMIN')` looks wrong at a glance, which is
+the whole return on a migration.
+
+**There is deliberately no `PLATFORM_ADMIN` role**, and it is worth knowing why before somebody
+proposes one again: every value in the enum is granted *per membership*, so a platform-level
+constant would be grantable by any group administrator inside their own group — the same escalation
+this release closes, in a worse form. The platform grant stays flat and separate in
+`platform_admins`, behind `PlatformGuard`. `TENANCY-ENFORCEMENT-PLAN` §9 rejected the role form
+once already.
 
 **5. Pushing the frontend's `main` IS a production deploy.** Netlify's production site tracks
 that branch and builds every push; the backend is a **manual** `git push heroku main:master`, and

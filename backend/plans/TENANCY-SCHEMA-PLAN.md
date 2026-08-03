@@ -74,7 +74,7 @@ work without it; row-level tenancy works without any.
 ## 4. Model decision: membership as a first-class entity — not a `user_roles` PK extension
 
 **Chosen:** `memberships (id, tenant_id, user_id, status, created_at, UNIQUE(tenant_id, user_id))`
-plus `membership_roles (membership_id, role)`. A user's roles become **per-membership**: ADMIN of
+plus `membership_roles (membership_id, role)`. A user's roles become **per-membership**: GROUP_ADMIN of
 group A, plain member of group B. Roles stay flat and composable exactly as V18 left them — a
 membership *holds* a set of flat grants; nothing becomes a hierarchy.
 
@@ -165,7 +165,7 @@ CREATE TABLE membership_roles (
     membership_id BIGINT      NOT NULL REFERENCES memberships(id) ON DELETE CASCADE,
     role          VARCHAR(20) NOT NULL,
     PRIMARY KEY (membership_id, role),
-    CONSTRAINT membership_roles_role_check CHECK (role IN ('ORGANIZER','MANAGER','ADMIN'))
+    CONSTRAINT membership_roles_role_check CHECK (role IN ('ORGANIZER','MANAGER','GROUP_ADMIN'))
 );
 
 -- Every existing account joins org #1 — including zero-role accounts: they registered at this
@@ -270,7 +270,7 @@ membership-backed auth. V29 — group invites — belongs to onboarding.)*
 |---|------|-------|
 | BR-T1 | Every tenant-owned row carries `tenant_id`, NOT NULL, stamped at creation | Enforcement rung adds the `@PrePersist` stamp; this rung's code sets it explicitly |
 | BR-T2 | A reference between tenant-owned rows is composite `(tenant_id, id)` | Cross-tenant references unrepresentable — the DB is the last line of defence, and the first |
-| BR-T3 | Accounts are platform-level; membership is per-tenant; roles are per-membership and stay flat | `ADMIN` of one group says nothing about any other group, and nothing about the platform |
+| BR-T3 | Accounts are platform-level; membership is per-tenant; roles are per-membership and stay flat | `GROUP_ADMIN` of one group says nothing about any other group, and nothing about the platform |
 | BR-T4 | A guest is a player with no membership row | The V21 promise, now definitional. `chk_guest_has_no_account` unchanged |
 | BR-T5 | One player per account per group | `uq_players_tenant_user` |
 | BR-T6 | One current season per group | `ux_seasons_tenant_single_current` |

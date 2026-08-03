@@ -32,7 +32,7 @@ Closed M4, M11, M14, L1–L11 and D2–D6. See `CHANGELOG.md` batch 6 for the it
 **Classification:** Security hardening — Medium.
 
 ### M8 — contact details gated
-`email`/`phoneNumber` on the two `isAuthenticated()` player reads are now visible only to ADMIN/MASTER and to the player's own linked account; everyone else gets them nulled. Implemented as `PlayerPiiPolicy` applied in the controller.
+`email`/`phoneNumber` on the two `isAuthenticated()` player reads are now visible only to GROUP_ADMIN/MASTER and to the player's own linked account; everyone else gets them nulled. Implemented as `PlayerPiiPolicy` applied in the controller.
 
 **Cache trap avoided:** `PlayerService.getPlayer`/`listPlayers` are `@Cacheable` on keys that do not include the caller. Redacting inside those methods would have cached one caller's view and served it to the next — either leaking PII or hiding it from someone entitled to it. The cache therefore stores the full record and redaction happens per-request, after retrieval. The list endpoint is the real harvesting vector, so the page-wise path is covered by its own test.
 
@@ -172,7 +172,7 @@ Admin endpoints (and functionality) to recalculate match ratings per match and i
 `CalculationService.recalculateMatchRatings(matchId)` currently: EMA-blends `skillRating`, **increments** career aggregates (`totalGoals`/`totalAssists`/`totalMatchesPlayed`), updates streaks, and inserts `SkillRatingHistory`. It was designed to run **once** after completion (fired async by `MatchEventListener` on `MatchCompletedEvent`, AFTER_COMMIT). A manual re-run MUST be **idempotent** — no double-counting of aggregates, no duplicated history, no compounding EMA/streaks. Endpoints are **ADMIN_USER only**; only **completed** matches can be recalculated; bulk should report per-match success/failure.
 
 ## Execution Plan
-- **Stage 1 — `api-designer`:** Contract for `POST /api/matches/{id}/recalculate` (single) and a bulk endpoint (e.g. `POST /api/matches/recalculate`), ADMIN-only, response DTO(s), idempotency + partial-failure semantics.
+- **Stage 1 — `api-designer`:** Contract for `POST /api/matches/{id}/recalculate` (single) and a bulk endpoint (e.g. `POST /api/matches/recalculate`), GROUP_ADMIN-only, response DTO(s), idempotency + partial-failure semantics.
 - **Stage 2 — `dev-assistant`:** Implement idempotent recalculation + endpoints.
 - **Stage 3 — `phase3-compliance` ‖ `test-engineer`:** Review + tests.
 - **Stage 4 — `documentation-writer`:** Match API docs + feature/calculation docs.
@@ -264,7 +264,7 @@ Primary deliverable: make `/events` reconnection robust — on subscribe, if the
 **Classification:** New Feature — Medium complexity. 2 new admin-only endpoints, 1 new lightweight summary DTO, service methods (list-summary + hard delete). No DB schema change (uses existing `draft_sessions` table + `repository.delete`).
 
 ### Execution Plan
-- **Stage 1 — `api-designer`:** Design the two endpoint contracts + new `DraftSessionSummaryDTO`. Resolve path collisions with existing `GET /api/draft-sessions` (isAuthenticated) and `DELETE /{id}` (soft cancel, ADMIN/MASTER).
+- **Stage 1 — `api-designer`:** Design the two endpoint contracts + new `DraftSessionSummaryDTO`. Resolve path collisions with existing `GET /api/draft-sessions` (isAuthenticated) and `DELETE /{id}` (soft cancel, GROUP_ADMIN/MASTER).
 - **Stage 2 — `dev-assistant`:** Implement DTO, service methods, controller endpoints.
 - **Stage 3 — `phase3-compliance` ‖ `test-engineer`:** Architecture review + tests (parallel).
 - **Stage 4 — `documentation-writer`:** Update draft session feature + API docs.
@@ -356,7 +356,7 @@ Primary deliverable: make `/events` reconnection robust — on subscribe, if the
 **Prompt:** I need a new endpoint that exposes all available draft sessions.
 **Agents Run:** dev-assistant (inlined)
 **Outcome:** PARTIAL — implementation only; missing P5/P6/P8/postman stages
-**Notes:** Added `GET /api/draft-sessions` endpoint (ADMIN/MASTER only). Added `getAllDraftSessions()` to `DraftSessionService`. No new DTO or migration needed.
+**Notes:** Added `GET /api/draft-sessions` endpoint (GROUP_ADMIN/MASTER only). Added `getAllDraftSessions()` to `DraftSessionService`. No new DTO or migration needed.
 
 ---
 
@@ -873,7 +873,7 @@ IntelliJ IDEA Project SDK / Run Configuration JRE was set to Java 17 instead of 
 ## Session: 2026-06-30 — Admin Reactivate Inactive User
 **Pipeline:** Enforced minimum endpoint pipeline (endpoint-touching)
 **Prompt:** create an admin endpoint that allows to reactivate an inactive user
-**Classification:** New Feature — Simple. 1 new ADMIN-only endpoint (`PATCH /api/users/{id}/reactivate`), 1 new service method `reactivateUser()`, no DB change, no new DTO.
+**Classification:** New Feature — Simple. 1 new GROUP_ADMIN-only endpoint (`PATCH /api/users/{id}/reactivate`), 1 new service method `reactivateUser()`, no DB change, no new DTO.
 **Agents Run:** dev-assistant → phase3-compliance + test-engineer (parallel) → documentation-writer → postman-engineer
 **Outcome:** SUCCESS
 **Notes:** New endpoint `PATCH /api/users/{id}/reactivate` (ADMIN_USER only). Returns 200 + UserDTO with active=true. Guards: 404 if user not found, 409 if user already active. Compliance PASS. 9 new tests (~100% branch coverage). 4 docs updated. Postman collection: 48 → 49 requests.
@@ -883,7 +883,7 @@ IntelliJ IDEA Project SDK / Run Configuration JRE was set to Java 17 instead of 
 ## Session: 2026-06-30 — Admin Unlink Player from User
 **Pipeline:** Enforced minimum endpoint pipeline (endpoint-touching)
 **Prompt:** create an admin endpoint that allows a player to be unlinked from an user.
-**Classification:** New Feature — Simple/Medium. 1 new ADMIN-only endpoint, 1 new service method, no DB change, no new DTO.
+**Classification:** New Feature — Simple/Medium. 1 new GROUP_ADMIN-only endpoint, 1 new service method, no DB change, no new DTO.
 **Agents Run:** dev-assistant → phase3-compliance + test-engineer (parallel) → documentation-writer → postman-engineer
 **Outcome:** SUCCESS
 **Notes:** New endpoint `DELETE /api/players/{id}/user-link` (ADMIN_USER only). Returns 200 + PlayerDTO with user fields nulled. Guards: 404 if player not found, 409 if player has no linked user. Compliance PASS. 9 new tests (~100% branch coverage). 4 docs updated. Postman collection: 47 → 48 requests.

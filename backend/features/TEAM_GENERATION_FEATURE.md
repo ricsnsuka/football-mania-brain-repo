@@ -33,13 +33,13 @@ summary is stored in `generationNotes` for every non-MANUAL match.
 
 | Type | Status | Auth | Data Required | When to Use | Extra Params |
 |------|:------:|------|---------------|-------------|--------------|
-| `MANUAL` | ✅ Active | ADMIN / MASTER | None — caller provides IDs | Full control over team composition | None |
-| `BALANCED` | ✅ Active | ADMIN / MASTER | `skillRating` only | Default go-to for casual matches | None |
-| `RANDOM` | ✅ Active | ADMIN / MASTER | None | Fun/casual games where fairness is not the goal | None |
-| `SNAKE_DRAFT` | ✅ Active | ADMIN / MASTER | `skillRating` only | Transparent, explainable distribution players enjoy | None |
-| `FORM_BASED` | ✅ Active | ADMIN / MASTER | `skillRating` + match history | Regular groups playing weekly where recent form matters | `formWindow` (int, default 5) |
-| `STREAK_AWARE` | ⚠️ Pending | ADMIN / MASTER | `skillRating` + streak data | Preventing momentum clusters — not yet available | None |
-| `CAPTAIN_PICK` | ✅ Active | ADMIN / MASTER | `skillRating` | Social engagement, when captains are meaningful | `captainAId`, `captainBId` (Long, optional) |
+| `MANUAL` | ✅ Active | GROUP_ADMIN / MASTER | None — caller provides IDs | Full control over team composition | None |
+| `BALANCED` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` only | Default go-to for casual matches | None |
+| `RANDOM` | ✅ Active | GROUP_ADMIN / MASTER | None | Fun/casual games where fairness is not the goal | None |
+| `SNAKE_DRAFT` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` only | Transparent, explainable distribution players enjoy | None |
+| `FORM_BASED` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` + match history | Regular groups playing weekly where recent form matters | `formWindow` (int, default 5) |
+| `STREAK_AWARE` | ⚠️ Pending | GROUP_ADMIN / MASTER | `skillRating` + streak data | Preventing momentum clusters — not yet available | None |
+| `CAPTAIN_PICK` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` | Social engagement, when captains are meaningful | `captainAId`, `captainBId` (Long, optional) |
 
 > **MANUAL** is used via `POST /api/matches` directly (the caller provides `playerIds` per team).
 > All other types use the `POST /api/match-plans/{id}/generate` flow.
@@ -188,12 +188,12 @@ POST /api/match-plans/{id}/generate/confirm
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `GET` | `/api/draft-sessions` | Any authenticated | List all draft sessions |
-| `POST` | `/api/draft-sessions` | ADMIN / MASTER | Create a new draft session for a CONFIRMED match plan |
+| `POST` | `/api/draft-sessions` | GROUP_ADMIN / MASTER | Create a new draft session for a CONFIRMED match plan |
 | `GET` | `/api/draft-sessions/{id}` | Any authenticated | Get session state by ID |
 | `GET` | `/api/draft-sessions/{id}/events` | Any authenticated | Subscribe to real-time SSE events |
 | `POST` | `/api/draft-sessions/{id}/pick` | Any authenticated | Submit a pick for the current captain's turn |
-| `POST` | `/api/draft-sessions/{id}/confirm` | ADMIN / MASTER | Confirm completed draft → creates Match (201) |
-| `DELETE` | `/api/draft-sessions/{id}` | ADMIN / MASTER | Cancel an OPEN or COMPLETED session |
+| `POST` | `/api/draft-sessions/{id}/confirm` | GROUP_ADMIN / MASTER | Confirm completed draft → creates Match (201) |
+| `DELETE` | `/api/draft-sessions/{id}` | GROUP_ADMIN / MASTER | Cancel an OPEN or COMPLETED session |
 
 **Session States:** `OPEN` → `COMPLETED` → *(confirmed → Match created)*
 
@@ -654,7 +654,7 @@ Every generated `MatchDTO` (and `MatchPreviewDTO`) includes a `generationNotes` 
 | All players same `skillRating` | — | Any distribution is valid; BALANCED alternates starting with Team A |
 | Inactive player in confirmed pool | — | `MatchService` auto-activates the player; generation uses the full pool |
 | Duplicate player IDs in pool | 400 | Caught by MatchService at match creation, not at generation |
-| Not ADMIN/MASTER role | 403 | Forbidden — Bearer token present but insufficient authority |
+| Not GROUP_ADMIN/MASTER role | 403 | Forbidden — Bearer token present but insufficient authority |
 | No Bearer token | 401 | Unauthorized |
 
 ---

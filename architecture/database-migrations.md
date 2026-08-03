@@ -1,7 +1,7 @@
 # Database Migration History
 
-Complete as of **V32**, verified against `src/main/resources/db/migration/` on 2026-08-03.
-**Production is applied through V31.** V32 is merged to `next` and **not deployed**.
+Complete as of **V33**, verified against `src/main/resources/db/migration/` on 2026-08-03.
+**Production is applied through V31.** V32 and V33 are merged to `next` and **not deployed**.
 
 This supersedes the table in [backend/architecture/ARCHITECTURE.md](../backend/architecture/ARCHITECTURE.md),
 which stops at V13.
@@ -39,15 +39,27 @@ editable — correct it with a new one.
 | V25 | `V25__composite_tenant_fks.sql` | ~29 child FKs recreated as `(tenant_id, parent_id)`, making a cross-tenant reference unrepresentable at the SQL layer rather than merely unwritten by the application |
 | V26 | `V26__rescope_unique_constraints.sql` | Per-tenant uniques: one player per account **per group**, season names per group, and one current season per group |
 | V27 | `V27__app_settings_tenant_pk.sql` | `app_settings` PK → `(tenant_id, setting_key)`. Absence of a row still means "on the default", so a new group needs zero seeded rows — V16's design paying off |
-| V28 | `V28__platform_admins.sql` | `platform_admins` — the operator grant, flat and separate from the role model, because every founder will hold group `ADMIN`. Ships **empty**: no backfill and no "promote the first admin", since a migration that silently grants platform-wide powers is the opposite of a dark launch. [Plan](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) §9 |
+| V28 | `V28__platform_admins.sql` | `platform_admins` — the operator grant, flat and separate from the role model, because every founder will hold group `GROUP_ADMIN`. Ships **empty**: no backfill and no "promote the first admin", since a migration that silently grants platform-wide powers is the opposite of a dark launch. [Plan](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) §9 |
 | V29 | `V29__drop_user_roles.sql` | **`DROP TABLE user_roles`** — the contract half of V23's expand/contract, written once the soak had actually started rather than at the V28 the plan pencilled in. **The point of no return:** pre-V22 code resolves authorities from `users.roles` → `user_roles`, so past here a rollback to before V22 means restoring a backup, not redeploying an old jar. No data is lost — V23 copied every row and the dual-write kept them level; the migration carries the `EXCEPT` query to prove it before running. [Plan](../backend/plans/TENANCY-ENFORCEMENT-PLAN.md) |
-| V30 | `V30__group_invites.sql` | `group_invites` — server-issued, single-use, expiring tokens, **not** shareable role-bearing URLs, which would be credentials with no revocation and no audit. The grants belong to the invite rather than its author, so an ADMIN may mint a MANAGER invite and a stolen token grants exactly what it says, once. Completes the guest arc GUEST-PLAYERS-PLAN §2 deferred: guest plays → manager promotes → invite → person registers and accepts → links to the player row. [Plan](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
+| V30 | `V30__group_invites.sql` | `group_invites` — server-issued, single-use, expiring tokens, **not** shareable role-bearing URLs, which would be credentials with no revocation and no audit. The grants belong to the invite rather than its author, so an GROUP_ADMIN may mint a MANAGER invite and a stolen token grants exactly what it says, once. Completes the guest arc GUEST-PLAYERS-PLAN §2 deferred: guest plays → manager promotes → invite → person registers and accepts → links to the player row. [Plan](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
 | V31 | `V31__group_creation_codes.sql` | `group_creation_codes` — founding a group needs a single-use operator-issued code. Registration stays open and free; a *group* is what the code buys. Open self-serve was rejected: with no billing, no metering and no abuse controls it would open an unbounded free-rider window in the very release that makes the product visible, and a code keeps the flip reversible with no deploy. **The table ships empty.** When billing lands these become promo/trial codes rather than dead weight. [Plan](../backend/plans/GROUP-ONBOARDING-PLAN.md) |
-| V32 ⏳ | `V32__membership_status_suspended.sql` | Widens `chk_memberships_status`, which V23 wrote as `IN ('ACTIVE')` because that was the only status then. **Fixes a group administrator being able to end a member's access to every group**: removing somebody was `DELETE /api/users/{id}`, which writes `users.is_active` — the flag governing login everywhere — while the guard said `ADMIN`, a per-membership grant since V23. `SUSPENDED` is the group-scoped answer: it writes one tenant's membership, so every other group and the account are bit-identical. Chosen over deleting the row because that is what the erasure fork already does, and it anonymises the `Player` with it — right for "erase me", far too much for "not this season". The constraint is **widened rather than dropped** so a typo stays a write-time violation instead of a membership that silently resolves nowhere. No data migration; every existing row is and stays `ACTIVE`. **Not deployed.** |
+| V32 ⏳ | `V32__membership_status_suspended.sql` | Widens `chk_memberships_status`, which V23 wrote as `IN ('ACTIVE')` because that was the only status then. **Fixes a group administrator being able to end a member's access to every group**: removing somebody was `DELETE /api/users/{id}`, which writes `users.is_active` — the flag governing login everywhere — while the guard said `GROUP_ADMIN`, a per-membership grant since V23. `SUSPENDED` is the group-scoped answer: it writes one tenant's membership, so every other group and the account are bit-identical. Chosen over deleting the row because that is what the erasure fork already does, and it anonymises the `Player` with it — right for "erase me", far too much for "not this season". The constraint is **widened rather than dropped** so a typo stays a write-time violation instead of a membership that silently resolves nowhere. No data migration; every existing row is and stays `ACTIVE`. **Not deployed.** |
+| V33 ⏳ | `V33__rename_admin_to_group_admin.sql` | Renames the stored grant `ADMIN` → `GROUP_ADMIN`. **The name was the root cause of what V32 fixed**: roles have been per-membership since V23, so it always meant "administrator *of one group*", but `hasRole('ADMIN')` on an endpoint writing a platform-wide field read as correct to everyone who looked at it. A guard reading `hasRole('GROUP_ADMIN')` on that same write looks wrong at a glance. V23's CHECK constraint lists the permitted values, so it comes off before the `UPDATE` and back on after; the migration ends by asserting no row still holds `ADMIN`, because a survivor would resolve to **no authority at all** — an administrator silently demoted. **There is deliberately no `PLATFORM_ADMIN`**: every value here is granted per membership, so a platform-level constant would be grantable by any group administrator inside their own group. ⚠️ **Rollback boundary** — see below. **Not deployed.** |
 
 ---
 
 ## Deployment state
+
+⚠️ **V33 moves the rollback boundary again.** Past it the previous jar cannot parse `GROUP_ADMIN`
+— `Role.valueOf` throws for every membership carrying it, so authorities fail to resolve for
+exactly the accounts with the most to lose. Rolling the code back past V33 means running the
+inverse `UPDATE` first. Anything forward of it is fine. Same shape as V29's boundary, and recorded
+here for the same reason.
+
+**Live sessions survive V33**, which is worth knowing before anyone plans a maintenance window:
+authorities are re-derived from `membership_roles` on every request rather than read from the JWT's
+`roles` claim, so tokens issued before the rename keep working and nobody is logged out. The
+frontend's *stored* copy is the stale one, and it is migrated client-side on rehydrate.
 
 ⏳ **V32 is merged and undeployed.** It rides on `next` with the fix that needs it, so until the
 next release the deployed schema still refuses `SUSPENDED` — the code that writes it would fail on

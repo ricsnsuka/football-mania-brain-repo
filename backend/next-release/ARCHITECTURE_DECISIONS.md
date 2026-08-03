@@ -9,7 +9,7 @@
 ## ADR-001: Optimistic Locking on Match (`@Version`)
 
 ### Context
-Multiple ADMIN/MASTER users can submit `PATCH /api/matches/{id}/complete` for the same
+Multiple GROUP_ADMIN/MASTER users can submit `PATCH /api/matches/{id}/complete` for the same
 match at the same time. Without a concurrency guard, both requests pass the
 `isCompleted = false` check, and the second write silently overwrites the first,
 potentially corrupting score and stat data.

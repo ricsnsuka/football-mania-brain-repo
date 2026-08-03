@@ -90,7 +90,7 @@ solves.
 
 ## 6. The controller/processor split, written down
 
-- **Per group:** the group (via its ADMIN/ORGANIZER holders) is the **controller** of its
+- **Per group:** the group (via its GROUP_ADMIN/ORGANIZER holders) is the **controller** of its
   competition data — it decides who is on the roster, what gets recorded, when someone is erased.
   The platform operator is the **processor**, acting on the group's instructions through the
   product's features. This inverts today's single-deployment framing.

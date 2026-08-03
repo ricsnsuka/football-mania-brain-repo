@@ -58,7 +58,7 @@ privacy go wrong.
 
 | | Controller | Processor | What it covers |
 |---|---|---|---|
-| **A group's competition data** | the group, through whoever holds `ADMIN`/`ORGANIZER` in it | the platform operator | roster, matches, goals, ratings, availability, the fee ledger, badges, MOTM votes |
+| **A group's competition data** | the group, through whoever holds `GROUP_ADMIN`/`ORGANIZER` in it | the platform operator | roster, matches, goals, ratings, availability, the fee ledger, badges, MOTM votes |
 | **Account data** | the platform operator | — | credentials, email, push endpoints, notification preferences, memberships |
 | **Platform operations** | the platform operator | — | logs, backups |
 
@@ -225,7 +225,7 @@ the same way the league table does.
 
 - **An erased record cannot be erased again** — `409 Conflict`.
 - **The last administrator of a group cannot leave it** — `403 Forbidden`. Narrowed in 5a-3 from
-  "an ADMIN cannot erase their own account", which meant "do not lock everybody out" when there was
+  "an GROUP_ADMIN cannot erase their own account", which meant "do not lock everybody out" when there was
   one deployment. The concern per group is sharper: only an administrator can grant roles, so a
   group at zero administrators cannot appoint one and needs operator intervention. Leaving is fine
   while somebody else can administer the group.

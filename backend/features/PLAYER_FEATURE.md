@@ -383,7 +383,7 @@ The PostgreSQL JDBC driver was pinned to **42.7.11** during the security audit (
 - **Entity:** `Player.java` — JPA entity with Lombok `@Getter`/`@Setter`/`@NoArgsConstructor`
 - **Repository:** `PlayerRepository.java` — Spring Data JPA; includes `findAllByIsActive(boolean, Pageable)` for filtered listing
 - **Mapper:** `PlayerMapper.java` — MapStruct compile-time mapper; maps `Player` → `PlayerDTO` with `email` derived from linked user
-- **Service:** `PlayerService.java` — business logic, cache management, ADMIN guard, delete guard
+- **Service:** `PlayerService.java` — business logic, cache management, GROUP_ADMIN guard, delete guard
 - **Controller:** `PlayerController.java` — REST layer with `@PreAuthorize` for role-based access
 - **DTOs:** `PlayerDTO`, `PlayerCreateDTO`, `PlayerUpdateDTO`, `PlayerStatusDTO` — all Java Records
 
