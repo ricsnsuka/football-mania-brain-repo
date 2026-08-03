@@ -19,6 +19,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
 | [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V28 history + deployment state |
 | [architecture/multi-tenancy](architecture/multi-tenancy.md) | Phase 5 cross-repo contract: tenant resolution, cache/key rules, the rollout ladder |
+| [architecture/app-store-strategy](architecture/app-store-strategy.md) 📝 | Phase 4 draft: the Capacitor route, the four obstacles, and when *not* to start |
 
 ---
 
