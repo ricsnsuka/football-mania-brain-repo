@@ -47,7 +47,7 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Payment delegation (V20) | ✅ `d3b3339` | ✅ `722335c` | [PAYMENTS contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md) · [plan](../backend/plans/PAYMENT-DELEGATION-PLAN.md) · deployed 2026-08-01 |
 | Guest players (V21) | ✅ `d3b3339`, `2eac528` + fix `3159812` | ✅ `722335c` + fix `c041898` | [GUEST-PLAYERS contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/GUEST-PLAYERS-API-CONTRACT.md) · [plan](../backend/plans/GUEST-PLAYERS-PLAN.md) §12b — guest removal broke in production on day one, fixed same day · ⚠️ `GuestIsolationIT` still never executed |
 | Pitch cost on `MatchPlanDTO` | ✅ `e87d624` | ✅ `4f47bf5` | ⚠️ **documented nowhere** |
-| i18n — en / pt / es | — | ✅ | [FE i18n guide](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/i18n.md) · [language switcher](../frontend/features/language-switcher.md) |
+| i18n — en / pt / es | — | ✅ | [FE i18n guide](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/guides/i18n.md) · [language switcher](../frontend/features/language-switcher.md) |
 | Theme (light / dark) | — | ✅ | [FE theme](../frontend/features/theme.md) |
 
 ## Not started

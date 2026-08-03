@@ -47,9 +47,9 @@ mechanism that produced the drift above.
 
 | Path | Why |
 |---|---|
-| [`docs/guides/`](https://github.com/ricsnsuka/FootMania-Simple-Front/tree/v1.0.0/docs/guides) | Getting started, component conventions, shared primitives, styling, i18n, testing, Netlify deployment — how to write and ship code *in that repo* |
-| [`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/AGENTS.md) · `CLAUDE.md` | "This is NOT the Next.js you know" — conventions, read before writing code |
-| [`README.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/README.md) | The repo's landing page |
+| [`docs/guides/`](https://github.com/ricsnsuka/FootMania-Simple-Front/tree/main/docs/guides) | Getting started, component conventions, shared primitives, styling, i18n, testing, Netlify deployment — how to write and ship code *in that repo* |
+| [`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/AGENTS.md) · `CLAUDE.md` | "This is NOT the Next.js you know" — conventions, read before writing code |
+| [`README.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/README.md) | The repo's landing page |
 
 **Moved here:** all feature documentation (`frontend/features/`) and the architecture overview
 (`frontend/architecture/`).

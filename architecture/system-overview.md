@@ -96,7 +96,7 @@ ADR-004 the LLM vendor choice for the not-yet-built AI match reports.
 | | Where | Notes |
 |---|---|---|
 | Backend | Heroku (`footmania`) | [backend/deployment/HEROKU_DEPLOYMENT_GUIDE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/deployment/HEROKU_DEPLOYMENT_GUIDE.md) · Flyway runs on boot, so a deploy *is* a migration |
-| Frontend | Netlify | [frontend/guides/netlify-deployment.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/netlify-deployment.md) |
+| Frontend | Netlify | [frontend/guides/netlify-deployment.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/guides/netlify-deployment.md) |
 
 Because Flyway runs on startup, **deploying the backend applies every pending migration**. See
 [database-migrations.md](database-migrations.md) for what is currently pending and why V18 deserves

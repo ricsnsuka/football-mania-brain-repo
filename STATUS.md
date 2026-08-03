@@ -5,7 +5,7 @@ nobody trusts is worse than none.
 
 | | Backend | Frontend |
 |---|---|---|
-| Branch | `main` (production), `next` (integration) | `v1.0.0` — **rename to `main` still pending** |
+| Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
 | Head | `4e1856e` — *Stop registration writing a membership it has no tenant for* | `e934124` — *Test the login redirect guard…* |
 | Version | `1.1.0` — **deployed 2026-08-02** | `1.1.0` — matched to the backend |
 | Working tree | clean | clean |
@@ -85,9 +85,9 @@ is empty"). When code is verifiably right and behaviour is wrong, **establish wh
 process is actually running before debugging the code** — process start time vs file mtime
 locally, deployed commit vs branch tip in production.
 
-**5. Pushing the frontend's `v1.0.0` IS a production deploy.** Netlify's production site tracks
-that branch and builds every push; the backend is a **manual** Heroku deploy from `master`, and
-the running dyno can lag `master` by hours. Merged is not deployed. Any frontend change that
+**5. Pushing the frontend's `main` IS a production deploy.** Netlify's production site tracks
+that branch and builds every push; the backend is a **manual** `git push heroku main:master`, and
+the running dyno can lag `main` by hours. Merged is not deployed. Any frontend change that
 depends on backend behaviour ships backend-first — *deployed* first, not merged first. This is how
 the 2026-08-02 partial outage happened.
 
@@ -106,7 +106,7 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 | ~~[backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md)~~ | Header read "DRAFT — not implemented"; it shipped in `828db3b` | ✅ **Resolved.** Corrected here on import, and the stale backend copy went with the documentation split — there is one copy now, and it is this one |
 | [backend/plans/ORCHESTRATOR_SESSION.md](backend/plans/ORCHESTRATOR_SESSION.md) | Last entry 2026-07-28, though `orchestrator.agent.md` still mandates an entry per session | Resume it, or retire the convention deliberately |
 | ~~Postman collection~~ | Was 60 requests against a 103-operation API, and — the deeper find — **gitignored the whole time**, so every copy lived on one person's disk and none could be diffed | ✅ **Resolved 2026-08-02.** Now *generated* from the running app's `/v3/api-docs` by `postman/generate-collection.mjs`, committed to the repo (103 requests, 17 folders, `X-Group-Id` per the tenancy contract), and regeneration is one command. The hand-maintenance workflow in `postman-engineer.agent.md` is marked historical |
-| ~~[frontend/INDEX.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/INDEX.md)~~ | Omitted seven of its own files | ✅ **Resolved** by the documentation split — the feature docs it failed to link now live here, and what is left there is a pointer plus the seven guides |
+| ~~[frontend/INDEX.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/INDEX.md)~~ | Omitted seven of its own files | ✅ **Resolved** by the documentation split — the feature docs it failed to link now live here, and what is left there is a pointer plus the seven guides |
 | frontend — missing files | No `features/payments.md`, though `a3efac0` shipped the whole "what you owe" UI; and nothing for guest players or payment delegation (`722335c`) | Write them. Every other frontend feature has a file. ✅ The group dimension is now covered by [frontend/features/groups.md](frontend/features/groups.md) |
 | **this repo — no tenancy feature doc** | [architecture/multi-tenancy.md](architecture/multi-tenancy.md) and the plans carry the design, but `backend/features/` has nothing on organizations, memberships or per-membership roles, while nine older features each have a file | Write `backend/features/TENANCY.md`. It is the one thing a new session most needs and currently has to reconstruct from four plans |
 
