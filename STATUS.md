@@ -11,7 +11,7 @@ nobody trusts is worse than none.
 | `main` head | `2981bd3` — `a7e13c1` plus `.github/` and `CHANGELOG.md` only, so **runtime-identical** to production | `ac831ee` — identical to the deployed commit |
 | Working tree | clean | clean |
 | Tests | 1000 unit across 194 suites + integrationTest green in CI | 509 unit + 32 visual regression |
-| Latest migration | `V31__group_creation_codes.sql` | — |
+| Latest migration | `V32__membership_status_suspended.sql` — on `next`, ⏳ **undeployed** | — |
 | Deployed through | **`V31`** (2026-08-02) | — |
 
 🔒 **1.1.0 is closed. New work goes to `next`.** `main` moves only when a release is cut, and when
@@ -97,6 +97,25 @@ request failed preflight, and each screen showed its empty state ("the competiti
 is empty"). When code is verifiably right and behaviour is wrong, **establish what build the
 process is actually running before debugging the code** — process start time vs file mtime
 locally, deployed commit vs branch tip in production.
+
+**6. A group admin could lock a member out of every group — fixed on `next`, not yet deployed.**
+Removing somebody used `DELETE /api/users/{id}`, which writes `users.is_active`, the flag governing
+login *everywhere*, while its guard said `ADMIN` — a per-membership grant since V23. One group's
+administrator was therefore ending a person's access to groups they have nothing to do with, and
+that person could not log in to reach any of them. Reach was never the problem: `findOrThrow`
+already refused an account with no membership here, so this was one group's decision applied to
+every other group's people, not a data leak.
+
+Both account-level writes now require the platform operator grant, and the group-scoped answer is
+`PATCH /api/groups/members/{userId}/status`, which suspends a membership and leaves everything else
+bit-identical. ⏳ **Until the backend is deployed, production still has the old behaviour**, and
+until the frontend PR lands its Users screen 403s.
+
+Two things worth keeping from how this was found. The gap was **known and written down** — the
+javadoc on `findOrThrow` said `deleteUser` still deactivated the account and handed the narrowing to
+5a-3, which shipped without it; a deferral recorded only in a comment is a deferral nobody is
+tracking. And **no test held one account in two groups**, so every tier passed. `TenantIsolationIT`
+holds one now.
 
 **5. Pushing the frontend's `main` IS a production deploy.** Netlify's production site tracks
 that branch and builds every push; the backend is a **manual** `git push heroku main:master`, and
