@@ -17,7 +17,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [product/roadmap](product/roadmap.md) | The five-phase improvement and mobile roadmap |
 | [product/feature-status](product/feature-status.md) | Every feature × backend × frontend × docs |
 | [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
-| [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V32 history + deployment state |
+| [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V33 history + deployment state |
 | [architecture/multi-tenancy](architecture/multi-tenancy.md) | Phase 5 cross-repo contract: tenant resolution, cache/key rules, the rollout ladder |
 
 ---
@@ -62,6 +62,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [TENANT-PRIVACY-PLAN](backend/plans/TENANT-PRIVACY-PLAN.md) | ✅ shipped — 5a-3: leave-group vs erase-platform, two-tier export, controller/processor split. **Live 2026-08-02** |
 | [GROUP-ONBOARDING-PLAN](backend/plans/GROUP-ONBOARDING-PLAN.md) | ✅ shipped — 5a-4: creation codes, invites, picker/switcher, join page (V30–V31). **Live 2026-08-02**. ⚠️ **The visibility flip is not the deploy** — no code has been issued, so nothing is self-serve yet |
 | [GROUP-BILLING-PLAN](backend/plans/GROUP-BILLING-PLAN.md) | ⛔ **ON HOLD (owner decision, 2026-08-01)** — design reference only, **do not implement** until the owner lifts the hold |
+| [PLATFORM-CONSOLE-PLAN](backend/plans/PLATFORM-CONSOLE-PLAN.md) 📝 | DRAFT — operator monitoring. **Rung 0 is a rendering job**: the organization listing and platform counters already exist and have no screen |
 | [MATCH-FEE-LEDGER-PLAN](backend/plans/MATCH-FEE-LEDGER-PLAN.md) | ✅ shipped — §14 covers a future payment integration |
 | [PLAYER-LINK-ME-PLAN](backend/plans/PLAYER-LINK-ME-PLAN.md) | ✅ shipped |
 | [PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM](backend/plans/PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM.md) | 🟡 all done except AI match reports |
