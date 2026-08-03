@@ -188,7 +188,7 @@ the same list (§9).
 ## 8. API
 
 All paths under `/api`, in `PaymentController`. Money domain ⇒ **`ORGANIZER`**, consistent with
-every payment operation; `ADMIN` continues to appear nowhere in this controller.
+every payment operation; `GROUP_ADMIN` continues to appear nowhere in this controller.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
@@ -285,7 +285,7 @@ whoever answers for it. Whether a debtor should *see* "Bruno covers you" is a gr
 | Payments | `paid_by` persisted and exported; lump-sum flow is N rows each on its own debtor, sums preserved; `recordPayment` with unknown `paidByPlayerId` → 404 |
 | Balances | delegate fields present exactly on covered debtors; absent (not null) otherwise; sums unchanged by any delegation operation |
 | Unlinked/inactive | BR-D7 — unlinked debtor and unlinked payer both work end to end |
-| Security | non-`ORGANIZER` (including `ADMIN` and `MANAGER` holders) cannot touch either endpoint — proving the roles stay flat |
+| Security | non-`ORGANIZER` (including `GROUP_ADMIN` and `MANAGER` holders) cannot touch either endpoint — proving the roles stay flat |
 | Privacy | export includes delegations in both export paths; erasure scrubs actors, keeps rows |
 
 > **CI invariant:** `build.gradle` asserts

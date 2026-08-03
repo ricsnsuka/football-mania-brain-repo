@@ -464,10 +464,10 @@ graph TD
 | `POST /auth/login` | identity-service | ❌ None | — |
 | `POST /auth/register` | identity-service | ❌ None | — |
 | `GET /players/**` | player-service | ✅ Any authenticated | — |
-| `POST /players` | player-service | ✅ ADMIN or MASTER | — |
-| `DELETE /players/{id}` | player-service | ✅ ADMIN only | — |
+| `POST /players` | player-service | ✅ GROUP_ADMIN or MASTER | — |
+| `DELETE /players/{id}` | player-service | ✅ GROUP_ADMIN only | — |
 | `GET /matches/**` | match-service | ✅ Any authenticated | — |
-| `POST /matches` | match-service | ✅ ADMIN or MASTER | — |
+| `POST /matches` | match-service | ✅ GROUP_ADMIN or MASTER | — |
 | `GET /rankings/**` | analytics-service | ✅ Any authenticated | — |
 | `GET /leaderboards/**` | analytics-service | ✅ Any authenticated | — |
 | `GET /seasons/**` | season-service | ✅ Any authenticated | — |

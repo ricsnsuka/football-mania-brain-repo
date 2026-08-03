@@ -6,7 +6,7 @@ A user holds a **set** of capability grants, not one role. The set can be empty.
 |------|--------|
 | `ORGANIZER` | See all balances, record payments, set fees *(the fee ledger — backend not built yet)* |
 | `MANAGER` | Create plans and matches, manage the roster, generate teams, record results |
-| `ADMIN` | System settings, user accounts, rating recalculation, GDPR actions, purge |
+| `GROUP_ADMIN` | System settings, user accounts, rating recalculation, GDPR actions, purge |
 
 Two things that are **not** roles:
 
@@ -23,28 +23,28 @@ Holding nothing is the ordinary case for most of the group. It renders as **"Mem
 import { hasRole, hasAnyRole } from '@/lib/roles';
 
 const canCreate = hasRole(user, 'MANAGER');
-const canSeeRoster = hasAnyRole(user, ['MANAGER', 'ADMIN']);
+const canSeeRoster = hasAnyRole(user, ['MANAGER', 'GROUP_ADMIN']);
 ```
 
-Never write `user.roles.includes('ADMIN')` at a call site. Nineteen components branch on roles; each
+Never write `user.roles.includes('GROUP_ADMIN')` at a call site. Nineteen components branch on roles; each
 one reimplementing the null guard is how the check drifts out of agreement with the server.
 
 `hasRole` is safe on `null`, `undefined` and a missing `roles` array — all of which occur before
 hydration finishes.
 
-## `ADMIN` does not imply `MANAGER`
+## `GROUP_ADMIN` does not imply `MANAGER`
 
-The roles are **flat**. An account holding only `ADMIN` is refused every manager-gated control, on
+The roles are **flat**. An account holding only `GROUP_ADMIN` is refused every manager-gated control, on
 the client and on the server alike.
 
 This is invisible day to day, because V18's backfill granted every existing administrator
-`{ORGANIZER, MANAGER, ADMIN}` — so they hold both and everything works. It becomes visible the
-moment somebody is granted `ADMIN` alone. Gate on the role the endpoint actually checks:
+`{ORGANIZER, MANAGER, GROUP_ADMIN}` — so they hold both and everything works. It becomes visible the
+moment somebody is granted `GROUP_ADMIN` alone. Gate on the role the endpoint actually checks:
 
 ```ts
 // Wrong — the endpoint checks MANAGER, so this hides a control the user can actually use,
 // or shows one whose every request will 403.
-const canCreate = hasRole(user, 'ADMIN');
+const canCreate = hasRole(user, 'GROUP_ADMIN');
 
 // Right
 const canCreate = hasRole(user, 'MANAGER');
@@ -53,8 +53,8 @@ const canCreate = hasRole(user, 'MANAGER');
 `AuthGuard` takes one role or an array, and admits on **any** match:
 
 ```tsx
-<AuthGuard requiredRole="ADMIN">…</AuthGuard>
-<AuthGuard requiredRole={['MANAGER', 'ADMIN']}>…</AuthGuard>
+<AuthGuard requiredRole="GROUP_ADMIN">…</AuthGuard>
+<AuthGuard requiredRole={['MANAGER', 'GROUP_ADMIN']}>…</AuthGuard>
 ```
 
 ## Rendering roles

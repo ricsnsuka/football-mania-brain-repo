@@ -166,7 +166,7 @@ are enforced by the Spring Security proxy, not solely relying on filter-chain ru
 | Control | Status | Notes |
 |---|---|---|
 | Authorization on all endpoints | ✅ | `@PreAuthorize` on every controller method |
-| ADMIN-cannot-be-player rule at service level | ✅ | `PlayerService.createPlayer` + `updatePlayer` both check |
+| GROUP_ADMIN-cannot-be-player rule at service level | ✅ | `PlayerService.createPlayer` + `updatePlayer` both check |
 | Password not in `PlayerDTO` | ✅ | Only email (from linked user), never password/token |
 | `@Valid` on all `@RequestBody` parameters | ✅ | `PlayerCreateDTO`, `PlayerUpdateDTO`, `PlayerStatusDTO` |
 | Bean Validation on all DTO fields | ✅ | `@NotBlank`, `@NotNull`, `@Min`, `@Max`, `@Size` |

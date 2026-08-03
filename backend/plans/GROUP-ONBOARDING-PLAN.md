@@ -62,10 +62,10 @@ and the roadmap's engagement gate unmet — a code is one column and keeps the f
 (Owner confirmed this choice explicitly.)
 
 The founder flow: redeem code → name the group → the service creates the organization, an ACTIVE
-membership with **ADMIN + MANAGER + ORGANIZER** (the three flat grants — a founder wears every
+membership with **GROUP_ADMIN + MANAGER + ORGANIZER** (the three flat grants — a founder wears every
 hat until they delegate; still no hierarchy), and **seeds 'Season 1' as current** — replicating
 V1's seed, without which four season-resolving services 500. Org #1's placeholder name gets the
-same rename treatment: first login by an org-#1 ADMIN after this ships is offered the rename step.
+same rename treatment: first login by an org-#1 GROUP_ADMIN after this ships is offered the rename step.
 
 ## 4. Model decision: invites are server-issued single-purpose tokens — not shareable role-bearing URLs alone
 
@@ -85,7 +85,7 @@ CREATE TABLE group_invites (
 );
 ```
 
-`POST /api/groups/{id}/invites` (group ADMIN) → link like `/join/<token>`. Redeeming
+`POST /api/groups/{id}/invites` (group GROUP_ADMIN) → link like `/join/<token>`. Redeeming
 (`POST /api/invites/{token}/accept`, authenticated) creates the membership with the listed roles;
 single-use, expiring, revocable. An unauthenticated visitor hitting `/join/<token>` is walked
 through register-then-accept. **Rejected:** multi-use open links as the only mechanism —
@@ -103,9 +103,9 @@ untouched; the only new step is the last, and it is one row.
 | Method | Path | Auth |
 |---|---|---|
 | `POST` | `/api/groups` | authenticated + valid creation code |
-| `PATCH` | `/api/groups/{id}` (rename) | group ADMIN |
+| `PATCH` | `/api/groups/{id}` (rename) | group GROUP_ADMIN |
 | `GET` | `/api/me/memberships` | authenticated — the picker's data source |
-| `POST` | `/api/groups/{id}/invites` · `DELETE .../invites/{inviteId}` | group ADMIN |
+| `POST` | `/api/groups/{id}/invites` · `DELETE .../invites/{inviteId}` | group GROUP_ADMIN |
 | `GET` | `/api/invites/{token}` (preview: group name, roles) | public |
 | `POST` | `/api/invites/{token}/accept` | authenticated |
 | Login response | gains `memberships: [{groupId, groupName, roles}]` | additive; zod schema fails open, so old frontends survive |
@@ -160,7 +160,7 @@ hint) vs `{{groupName}}` interpolation (~10 strings) — ×3 locales, spliced no
 | # | Rule | Notes |
 |---|------|-------|
 | BR-O1 | A group exists only by creation code; the founder gets all three grants + a seeded current season | Four services assume a current season — seeding is load-bearing, tested |
-| BR-O2 | Invites are single-use, expiring, revocable; roles-on-join are the invite's, not the inviter's | An ADMIN can mint a MANAGER invite; a stolen token grants once, then never |
+| BR-O2 | Invites are single-use, expiring, revocable; roles-on-join are the invite's, not the inviter's | An GROUP_ADMIN can mint a MANAGER invite; a stolen token grants once, then never |
 | BR-O3 | Group switch = cache erase **and** group-prefixed keys | Belt and braces — the frontend inventory showed why each alone fails |
 | BR-O4 | With one membership, everything auto-selects and the UI shows no group chrome beyond the name | Existing users wake up in the same app |
 | BR-O5 | Guest promotion's final step is one membership row | The promise, kept end to end |
@@ -169,7 +169,7 @@ hint) vs `{{groupName}}` interpolation (~10 strings) — ×3 locales, spliced no
 
 | Area | Cases |
 |------|-------|
-| Backend | Create-group: code single-use/expired/invalid; founder grants; season seeded (then plan/match creation works immediately); rename ADMIN-only. Invites: accept creates membership+roles; reuse 409; expiry 410; revoke; cross-tenant invite admin → 404. Memberships list. Guest arc end-to-end: promote → register → accept invite → link |
+| Backend | Create-group: code single-use/expired/invalid; founder grants; season seeded (then plan/match creation works immediately); rename GROUP_ADMIN-only. Invites: accept creates membership+roles; reuse 409; expiry 410; revoke; cross-tenant invite admin → 404. Memberships list. Guest arc end-to-end: promote → register → accept invite → link |
 | `TenantIsolationIT` extension | Two *real* groups created through the API (not seeded) can't see each other — the whole enforcement suite re-run against API-born tenants |
 | Frontend unit | groupKey factory; setActiveGroup erases cache; roles resolve per active group; AuthGuard 0/1/n branches |
 | Frontend e2e (one coordinated commit) | `seedSession` fixture gains memberships+activeGroupId; switcher e2e asserts **no stale cross-group data after switch**; all 20 visual baselines regenerated (win32) — budgeted, not discovered |

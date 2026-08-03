@@ -10,7 +10,7 @@
 
 A **User** represents a person who can log in to the Football Management System. Users are
 the authentication layer of the application. They may optionally be linked to a **Player**
-profile, which is managed from the Player entity side — including accounts holding `ADMIN`,
+profile, which is managed from the Player entity side — including accounts holding `GROUP_ADMIN`,
 since V18 removed the rule that once forbade it.
 
 ---
@@ -20,15 +20,15 @@ since V18 removed the rule that once forbade it.
 - A user must have a unique **username** (3–50 chars) and a unique **email**.
 - A user can log in using **either** their username or their email address.
 - Passwords must be at least **8 characters** and are stored BCrypt-hashed.
-- There are three roles — `ORGANIZER`, `MANAGER`, `ADMIN` — and since V18 they are **flat and
-  independent**: a user holds a *set* of them, and `ADMIN` implies neither of the others.
+- There are three roles — `ORGANIZER`, `MANAGER`, `GROUP_ADMIN` — and since V18 they are **flat and
+  independent**: a user holds a *set* of them, and `GROUP_ADMIN` implies neither of the others.
 - An account may hold **no roles at all**. That is the normal state of a new account and the
   replacement for the old `BASIC_USER`: authenticated, and nothing more.
-- Any account may be linked to a player profile, `ADMIN` included.
+- Any account may be linked to a player profile, `GROUP_ADMIN` included.
 - **Registration is self-service** — `POST /api/users/register` is public and always creates an
   account with no roles. Callers cannot choose their own grants.
 - Since V23 the grants are held **per group**, on the membership rather than on the account:
-  holding `ADMIN` in one group says nothing about any other.
+  holding `GROUP_ADMIN` in one group says nothing about any other.
 - **Deactivation is soft** — setting `isActive = false` prevents login without deleting data.
 - On first login, `forcePasswordChange = true` signals the client to prompt a password change.
 - Only the account owner (or an admin) can change a password; current password must be verified.
@@ -41,12 +41,12 @@ since V18 removed the rule that once forbade it.
 
 | Role        | Capabilities                                                                     |
 |-------------|----------------------------------------------------------------------------------|
-| `ADMIN`     | System: settings, user administration, rating recalculation, GDPR actions, purge. |
+| `GROUP_ADMIN`     | System: settings, user administration, rating recalculation, GDPR actions, purge. |
 | `MANAGER`   | Matches: create plans and matches, manage the roster, generate teams, record results. |
 | `ORGANIZER` | Money: see all balances, record payments, set fees, void and waive charges.       |
 | *(none)*    | Authenticated, and nothing more.                                                  |
 
-> **A set, not a ladder.** Holding `ADMIN` grants system administration and says nothing about
+> **A set, not a ladder.** Holding `GROUP_ADMIN` grants system administration and says nothing about
 > whether the holder may manage matches — grant `MANAGER` as well if they should. There is
 > deliberately no `PLAYER` role: "is a player" is already a fact in the schema
 > (`players.user_id` is UNIQUE), and a role asserting the same thing would be a second source of
@@ -62,15 +62,15 @@ Base path: `/api/users` · Auth endpoints: `/api/auth`
 |--------|---------------------------------|------------------------------------|--------------------|
 | POST   | `/api/auth/login`               | Obtain JWT token                   | Public             |
 | POST   | `/api/users/register`        | Self-service registration — always creates an account with **no roles** | Public |
-| GET    | `/api/users`                 | List all users (paginated)         | `ADMIN`            |
+| GET    | `/api/users`                 | List all users (paginated)         | `GROUP_ADMIN`            |
 | GET    | `/api/users/me`              | Get own user profile               | Any authenticated  |
-| GET    | `/api/users/{id}`            | Get user by ID                     | `ADMIN` or own     |
-| POST   | `/api/users`                 | Create a new user (roles may be set) | `ADMIN`          |
-| PATCH  | `/api/users/{id}`            | Update profile (name, email)       | `ADMIN` or own     |
-| PATCH  | `/api/users/{id}/role`       | Update roles / active status       | `ADMIN`            |
-| ~~PATCH~~ | ~~`/api/users/{id}/reactivate`~~ | **Removed** — use `PATCH /{id}/role` with `{"isActive": true}` | `ADMIN` |
-| DELETE | `/api/users/{id}`            | Deactivate user (soft delete)      | `ADMIN`            |
-| POST   | `/api/users/{id}/change-password` | Change own password           | `ADMIN` or own     |
+| GET    | `/api/users/{id}`            | Get user by ID                     | `GROUP_ADMIN` or own     |
+| POST   | `/api/users`                 | Create a new user (roles may be set) | `GROUP_ADMIN`          |
+| PATCH  | `/api/users/{id}`            | Update profile (name, email)       | `GROUP_ADMIN` or own     |
+| PATCH  | `/api/users/{id}/role`       | Update roles / active status       | `GROUP_ADMIN`            |
+| ~~PATCH~~ | ~~`/api/users/{id}/reactivate`~~ | **Removed** — use `PATCH /{id}/role` with `{"isActive": true}` | `GROUP_ADMIN` |
+| DELETE | `/api/users/{id}`            | Deactivate user (soft delete)      | `GROUP_ADMIN`            |
+| POST   | `/api/users/{id}/change-password` | Change own password           | `GROUP_ADMIN` or own     |
 
 > `POST /api/users` and `POST /api/users/register` are **different endpoints with different
 > payloads**. The first is admin-only and accepts `roles`; the second is public and has no
@@ -114,7 +114,7 @@ Base path: `/api/users` · Auth endpoints: `/api/auth`
 | `forcePasswordChange` | boolean |                                         |
 | `createdAt`           | Instant | ISO-8601 UTC timestamp                  |
 
-### `UserCreateDTO` — POST /api/users (Request — ADMIN)
+### `UserCreateDTO` — POST /api/users (Request — GROUP_ADMIN)
 
 | Field       | Type   | Required | Constraints         |
 |-------------|--------|----------|---------------------|
@@ -123,7 +123,7 @@ Base path: `/api/users` · Auth endpoints: `/api/auth`
 | `password`  | String | ✅       | 8–100 chars         |
 | `firstName` | String | ❌       | max 100 chars       |
 | `lastName`  | String | ❌       | max 100 chars       |
-| `roles`     | String[] | ❌     | Any of `ORGANIZER` / `MANAGER` / `ADMIN`. Empty or absent creates an account that is authenticated and nothing more |
+| `roles`     | String[] | ❌     | Any of `ORGANIZER` / `MANAGER` / `GROUP_ADMIN`. Empty or absent creates an account that is authenticated and nothing more |
 
 ### `UserRegisterDTO` — POST /api/users/register (Request — public)
 
@@ -139,7 +139,7 @@ Base path: `/api/users` · Auth endpoints: `/api/auth`
 > caller sends, so a hand-rolled request cannot escalate. An administrator grants roles afterwards
 > via `PATCH /api/users/{id}/role`.
 
-### `UserUpdateDTO` — PATCH /api/users/{id} (Request — owner or ADMIN)
+### `UserUpdateDTO` — PATCH /api/users/{id} (Request — owner or GROUP_ADMIN)
 
 | Field       | Type   | Required | Constraints        | Notes           |
 |-------------|--------|----------|--------------------|-----------------|
@@ -147,11 +147,11 @@ Base path: `/api/users` · Auth endpoints: `/api/auth`
 | `lastName`  | String | ❌       | max 100 chars      | null = no change|
 | `email`     | String | ❌       | valid email format | null = no change|
 
-### `AdminUserUpdateDTO` — PATCH /api/users/{id}/role (Request — ADMIN only)
+### `AdminUserUpdateDTO` — PATCH /api/users/{id}/role (Request — GROUP_ADMIN only)
 
 | Field      | Type     | Required | Notes                                                        |
 |------------|----------|----------|--------------------------------------------------------------|
-| `roles`    | String[] | ❌       | `null` = no change. When supplied it **replaces** the grants wholesale — send the intended end state, not a delta. Any of `ORGANIZER` / `MANAGER` / `ADMIN` |
+| `roles`    | String[] | ❌       | `null` = no change. When supplied it **replaces** the grants wholesale — send the intended end state, not a delta. Any of `ORGANIZER` / `MANAGER` / `GROUP_ADMIN` |
 | `isActive` | Boolean  | ❌       | `null` = no change                                           |
 
 > There is no grant/revoke pair by design: sending the end state means two administrators editing
@@ -247,7 +247,7 @@ Content-Type: application/json
 ```
 
 *(This is an account with no grants — `roles` is empty and the deprecated `role` is `null`. An
-administrator who also runs match day would show `"roles": ["ADMIN", "MANAGER"]`.)*
+administrator who also runs match day would show `"roles": ["GROUP_ADMIN", "MANAGER"]`.)*
 
 ---
 
@@ -334,7 +334,7 @@ deactivation endpoint is `DELETE /api/users/{id}` (soft delete — sets `isActiv
 |--------|-------|
 | **Method** | `PATCH` |
 | **Path** | `/api/users/{id}/role` |
-| **Auth** | `ADMIN` only |
+| **Auth** | `GROUP_ADMIN` only |
 | **Request body** | `AdminUserUpdateDTO` — `{"isActive": true}` |
 | **Success response** | `200 OK` — `UserDTO` with `isActive: true` |
 
@@ -366,7 +366,7 @@ Content-Type: application/json
 
 | Status | Condition | Message |
 |--------|-----------|---------|
-| `403 Forbidden` | Caller does not hold `ADMIN` | Forbidden |
+| `403 Forbidden` | Caller does not hold `GROUP_ADMIN` | Forbidden |
 | `404 Not Found` | User ID does not exist | `User with id {id} not found` |
 | `409 Conflict` | User is already active | `User is already active` |
 
@@ -384,7 +384,7 @@ Content-Type: application/json
 | Inactive user login attempt        | 401    | User is inactive                           |
 | Duplicate username on create       | 409    | `Username already taken: {username}`       |
 | Duplicate email on create/update   | 409    | `Email already registered: {email}`        |
-| Unrecognised role in `roles`       | 400    | Field-level validation error — `must be one of ORGANIZER, MANAGER, ADMIN`. The constraint sits on the set's *elements*, so a bad value is reported against the field rather than reaching `UserService` as a parse failure |
+| Unrecognised role in `roles`       | 400    | Field-level validation error — `must be one of ORGANIZER, MANAGER, GROUP_ADMIN`. The constraint sits on the set's *elements*, so a bad value is reported against the field rather than reaching `UserService` as a parse failure |
 | Wrong current password on change   | 400    | `Current password is incorrect`            |
 | User not found                     | 404    | `User with id {id} not found`              |
 | Non-admin accessing admin endpoint | 403    | Forbidden                                  |

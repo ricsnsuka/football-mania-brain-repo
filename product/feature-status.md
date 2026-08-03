@@ -40,8 +40,8 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 
 | Feature | Backend | Frontend | Documentation |
 |---|---|---|---|
-| Runtime-configurable competition rules (V16) | ✅ `c4d6312` | ✅ | [ADMIN contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/ADMIN-API-CONTRACT.md) · [FE settings](../frontend/features/settings.md) |
-| Admin settings & system endpoints | ✅ `c7d3554` | ✅ `2b961a3` | [ADMIN contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/ADMIN-API-CONTRACT.md) |
+| Runtime-configurable competition rules (V16) | ✅ `c4d6312` | ✅ | [GROUP_ADMIN contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/ADMIN-API-CONTRACT.md) · [FE settings](../frontend/features/settings.md) |
+| Admin settings & system endpoints | ✅ `c7d3554` | ✅ `2b961a3` | [GROUP_ADMIN contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/ADMIN-API-CONTRACT.md) |
 | Composable roles (V18) | ✅ `d6b908f` | ✅ `418256e` | [ROLES contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/ROLES-API-CONTRACT.md) · [migration plan](../backend/plans/ROLE-MODEL-MIGRATION-PLAN.md) · [FE roles](../frontend/features/roles.md) |
 | Match fee ledger (V19) | ✅ `828db3b` | ✅ `a3efac0` | [PAYMENTS contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md) · [ledger plan](../backend/plans/MATCH-FEE-LEDGER-PLAN.md) · ⚠️ **no FE feature doc** |
 | Payment delegation (V20) | ✅ `d3b3339` | ✅ `722335c` | [PAYMENTS contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md) · [plan](../backend/plans/PAYMENT-DELEGATION-PLAN.md) · deployed 2026-08-01 |
