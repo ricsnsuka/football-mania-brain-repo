@@ -6,12 +6,25 @@ nobody trusts is worse than none.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| Head | `4e1856e` — *Stop registration writing a membership it has no tenant for* | `e934124` — *Test the login redirect guard…* |
-| Version | `1.1.0` — **deployed 2026-08-02** | `1.1.0` — matched to the backend |
+| Release | **`v1.1.0` — closed** | **`v1.1.0` — closed** |
+| Running in production | `a7e13c1` — Heroku release **v47**, 2026-08-02 19:18 | `ac831ee` — Netlify, build ready |
+| `main` head | `2981bd3` — `a7e13c1` plus `.github/` and `CHANGELOG.md` only, so **runtime-identical** to production | `ac831ee` — identical to the deployed commit |
 | Working tree | clean | clean |
 | Tests | 1000 unit across 194 suites + integrationTest green in CI | 509 unit + 32 visual regression |
 | Latest migration | `V31__group_creation_codes.sql` | — |
 | Deployed through | **`V31`** (2026-08-02) | — |
+
+🔒 **1.1.0 is closed. New work goes to `next`.** `main` moves only when a release is cut, and when
+to cut the next one is a decision, not a schedule — `next` can hold finished work for as long as it
+takes for shipping it to be the right call. The version in `build.gradle` and `package.json` gets
+bumped as part of cutting it, not while work accumulates; that is why `main` read `1.0.0` for
+thirteen commits of 1.1.0 development.
+
+**Verify what is deployed against the platform, not against this file.** `heroku releases -a
+footmania` names the commit; Netlify's project page names the frontend's. This table is a snapshot
+and can be stale — the tag `v1.1.0` was first placed on `4e1856e` because an earlier snapshot named
+it as the head, and the platform then showed three further deploys the same afternoon. The tag was
+moved to `a7e13c1`. Both remain true of the same day, which is exactly why the platform wins.
 
 ✅ **All of Phase 5a is live.** V22–V31 were applied in production on 2026-08-02, and both repos
 are on `1.1.0`. The schema deployment is dark by design — one organization, an optional header, no

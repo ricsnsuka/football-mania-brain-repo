@@ -77,6 +77,31 @@ rename and will fail silently:
 CI trigger lists are the third: a workflow still filtering on a branch that no longer exists does
 not fail, it stops running, and an unchecked pull request looks exactly like a passing one.
 
+### Cutting a release
+
+`next` accumulates finished work for as long as it needs to. Releasing is a decision someone makes,
+not something that follows automatically from work being done — so the steps below start when you
+have decided, not when `next` is green.
+
+1. **Bump the version.** Backend: `build.gradle` *and* the jar name in `Procfile` — the Version
+   Check job fails the build if they disagree. Frontend: `package.json`. Bump at release time, not
+   while work accumulates.
+2. **Close the CHANGELOG section.** `[Unreleased]` becomes `[X.Y.Z] — date`, and the note says what
+   shipped, including whether it went out dark.
+3. **Merge `next` into `main`** in both repos. Fast-forward if it can.
+4. **Deploy the backend and confirm it** — `git push heroku main:master`, then `heroku releases -a
+   footmania` to see the commit that actually landed. See [Deployment order](#deployment-order) for
+   why this comes before the frontend.
+5. **Ship the frontend**, which deploys itself on the push to `main`.
+6. **Tag `vX.Y.Z` in both repos, at the commit that was deployed** — not at the branch tip, unless
+   they are the same. Annotate the tag with how you established that.
+7. **Update [STATUS.md](STATUS.md)** with the release, the running commit, and the platform's own
+   release number.
+
+**Step 6 is the one that goes wrong.** A release tag is a claim about production, so it is only as
+good as the evidence behind it. Placing `v1.1.0` from a status document put it three deploys early;
+the platform's release list put it right. Ask the platform, then tag.
+
 ### Naming a working branch
 
 Everything that is not `main` or `next` is temporary and named `type/what-it-does`, kebab-case:
