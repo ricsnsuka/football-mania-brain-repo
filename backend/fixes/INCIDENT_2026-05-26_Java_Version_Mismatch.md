@@ -102,9 +102,9 @@ while the application requires **Java 21**.
 
 ## 🔗 Related Documentation
 
-- [Build Config: `build.gradle`](https://github.com/ricsnsuka/FootMania-Back/blob/master/build.gradle) — Java toolchain line 17-19
-- [Gradle Properties](https://github.com/ricsnsuka/FootMania-Back/blob/master/gradle.properties) — Toolchain path line 3
-- [System Properties](https://github.com/ricsnsuka/FootMania-Back/blob/master/system.properties) — Heroku Java version
+- [Build Config: `build.gradle`](https://github.com/ricsnsuka/FootMania-Back/blob/main/build.gradle) — Java toolchain line 17-19
+- [Gradle Properties](https://github.com/ricsnsuka/FootMania-Back/blob/main/gradle.properties) — Toolchain path line 3
+- [System Properties](https://github.com/ricsnsuka/FootMania-Back/blob/main/system.properties) — Heroku Java version
 
 ---
 

@@ -112,7 +112,7 @@ endpoints:
 These call `recalculateSingleMatch(matchId)` directly (not via the completion event). Because
 recalculation is now **idempotent** (see below), re-running never double-counts. See
 [`MATCH_FEATURE.md`](./MATCH_FEATURE.md#rating-recalculation-admin) and
-[`../api/MATCH-RATING-RECALCULATION-API-CONTRACT.md`](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/MATCH-RATING-RECALCULATION-API-CONTRACT.md).
+[`../api/MATCH-RATING-RECALCULATION-API-CONTRACT.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-RATING-RECALCULATION-API-CONTRACT.md).
 
 ---
 

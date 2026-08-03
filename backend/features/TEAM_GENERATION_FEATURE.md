@@ -111,7 +111,7 @@ If player count does not match, the generate endpoint returns `400 Bad Request`.
 ```
 
 See [`docs/features/DRAFT_SESSION_FEATURE.md`](DRAFT_SESSION_FEATURE.md) and
-[`docs/frontend/DRAFT_SESSION_SSE_GUIDE.md`](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) for the
+[`docs/frontend/DRAFT_SESSION_SSE_GUIDE.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) for the
 full interactive draft documentation.
 
 ---
@@ -771,7 +771,7 @@ with `@Component`, and adding the value to the `GenerationType` enum. No changes
 - [`docs/features/MATCH_PLANS_FEATURE.md`](MATCH_PLANS_FEATURE.md) — Full match plan & availability poll docs
 - [`docs/features/MATCH_FEATURE.md`](MATCH_FEATURE.md) — Match entity, DTOs, lifecycle
 - [`docs/features/DRAFT_SESSION_FEATURE.md`](DRAFT_SESSION_FEATURE.md) — Interactive draft session full reference
-- [`docs/frontend/DRAFT_SESSION_SSE_GUIDE.md`](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) — Frontend SSE integration guide
+- [`docs/frontend/DRAFT_SESSION_SSE_GUIDE.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) — Frontend SSE integration guide
 - [`docs/features/TEAM_GENERATION_DESIGN.md`](TEAM_GENERATION_DESIGN.md) — Original design evaluation with algorithm analysis and architecture decision records
 - [`docs/features/CALCULATION_SERVICE.md`](CALCULATION_SERVICE.md) — How `skillRating` and `currentStreak` are computed (prerequisite for FORM_BASED / STREAK_AWARE)
 

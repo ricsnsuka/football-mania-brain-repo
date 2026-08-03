@@ -24,7 +24,7 @@ lives in one place instead of being reconstructed from two codebases every time.
 | What ships next and why | [product/roadmap.md](product/roadmap.md) |
 | What is built, in which repo, and whether it is documented | [product/feature-status.md](product/feature-status.md) |
 | The complete database migration history | [architecture/database-migrations.md](architecture/database-migrations.md) |
-| The API surface | [API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/API_REFERENCE.md) — lives in the backend repo |
+| The API surface | [API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md) — lives in the backend repo |
 | Which repo a document belongs in | [**where-documents-live.md**](where-documents-live.md) |
 | How to keep this repo true | [CONTRIBUTING.md](CONTRIBUTING.md) |
 

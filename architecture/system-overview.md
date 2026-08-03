@@ -41,16 +41,16 @@ push public key. Roles are **composable** since V18 — a user holds a *set* of 
 who runs the matches, the person who handles the money and the person who administers the system
 need not be the same. Do not treat `ADMIN` as a superset of the others; the frontend had that bug
 and fixed it in `418256e`. Contract:
-[backend/api/ROLES-API-CONTRACT.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/ROLES-API-CONTRACT.md).
+[backend/api/ROLES-API-CONTRACT.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/ROLES-API-CONTRACT.md).
 
 **2. Server-Sent Events**, for the live draft only. The draft is the one screen where several
 people act on shared state simultaneously. Everything else polls through TanStack Query, which is
 sufficient and much cheaper to reason about. Guide:
-[backend/frontend/DRAFT_SESSION_SSE_GUIDE.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md).
+[backend/frontend/DRAFT_SESSION_SSE_GUIDE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md).
 
 **3. Web Push**, backend → browser, bypassing the frontend entirely. Seven categories, every one on
 by default, with opt-outs stored rather than preferences — so a new category ships enabled with no
-backfill. Contract: [backend/api/PUSH-API-CONTRACT.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/PUSH-API-CONTRACT.md).
+backfill. Contract: [backend/api/PUSH-API-CONTRACT.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PUSH-API-CONTRACT.md).
 
 > **iOS delivers push only to an installed PWA.** That is why Phase 1 (installability) had to land
 > before Phase 2 was worth anything, and why the install-prompt UX is not cosmetic.
@@ -95,7 +95,7 @@ ADR-004 the LLM vendor choice for the not-yet-built AI match reports.
 
 | | Where | Notes |
 |---|---|---|
-| Backend | Heroku (`footmania`) | [backend/deployment/HEROKU_DEPLOYMENT_GUIDE.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/deployment/HEROKU_DEPLOYMENT_GUIDE.md) · Flyway runs on boot, so a deploy *is* a migration |
+| Backend | Heroku (`footmania`) | [backend/deployment/HEROKU_DEPLOYMENT_GUIDE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/deployment/HEROKU_DEPLOYMENT_GUIDE.md) · Flyway runs on boot, so a deploy *is* a migration |
 | Frontend | Netlify | [frontend/guides/netlify-deployment.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/v1.0.0/docs/guides/netlify-deployment.md) |
 
 Because Flyway runs on startup, **deploying the backend applies every pending migration**. See

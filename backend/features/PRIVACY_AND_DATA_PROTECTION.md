@@ -112,8 +112,8 @@ not legal advice and no template belongs in it.
 | Rectification | 16 | Existing `PATCH /api/players/{id}` and `PATCH /api/users/{id}` |
 | Restriction / objection | 18, 21 | Manual — no automated route. Deactivating a player (`PATCH /api/players/{id}/status`) removes them from selection without erasing anything |
 
-Implementation: [`PrivacyService`](https://github.com/ricsnsuka/FootMania-Back/blob/master/src/main/java/pt/rics/demo/football/service/PrivacyService.java),
-[`PrivacyController`](https://github.com/ricsnsuka/FootMania-Back/blob/master/src/main/java/pt/rics/demo/football/controller/PrivacyController.java).
+Implementation: [`PrivacyService`](https://github.com/ricsnsuka/FootMania-Back/blob/main/src/main/java/pt/rics/demo/football/service/PrivacyService.java),
+[`PrivacyController`](https://github.com/ricsnsuka/FootMania-Back/blob/main/src/main/java/pt/rics/demo/football/controller/PrivacyController.java).
 
 ### Endpoints
 

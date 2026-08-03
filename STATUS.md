@@ -1,11 +1,11 @@
 # Project Status
 
-**Snapshot: 2026-08-02.** Update it when the answers change, not on a schedule — a status page
+**Snapshot: 2026-08-03.** Update it when the answers change, not on a schedule — a status page
 nobody trusts is worse than none.
 
 | | Backend | Frontend |
 |---|---|---|
-| Branch | `master`, and `v1.0.0` rebased onto it | `v1.0.0` |
+| Branch | `main` (production), `next` (integration) | `v1.0.0` — **rename to `main` still pending** |
 | Head | `4e1856e` — *Stop registration writing a membership it has no tenant for* | `e934124` — *Test the login redirect guard…* |
 | Version | `1.1.0` — **deployed 2026-08-02** | `1.1.0` — matched to the backend |
 | Working tree | clean | clean |
@@ -101,7 +101,7 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 | Where | Problem | Correction |
 |---|---|---|
 | [backend/architecture/ARCHITECTURE.md](backend/architecture/ARCHITECTURE.md) | Migration table stops at **V13** of 31, and the rest of it predates multi-tenancy | Superseded on migrations by [architecture/database-migrations.md](architecture/database-migrations.md); the layering and schema sections need a tenancy pass |
-| [backend/api/API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/API_REFERENCE.md) | No Push section, no Payments/match-fee section; `totalCostCents` on `MatchPlanDTO` documented nowhere | Contracts exist standalone ([PUSH](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/PUSH-API-CONTRACT.md), [PAYMENTS](https://github.com/ricsnsuka/FootMania-Back/blob/master/docs/api/PAYMENTS-API-CONTRACT.md)); the reference needs the sections and the field |
+| [backend/api/API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md) | No Push section, no Payments/match-fee section; `totalCostCents` on `MatchPlanDTO` documented nowhere | Contracts exist standalone ([PUSH](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PUSH-API-CONTRACT.md), [PAYMENTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md)); the reference needs the sections and the field |
 | [backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md) | Last touched 2026-05-27 — predates kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | Rewrite against current behaviour |
 | ~~[backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md)~~ | Header read "DRAFT — not implemented"; it shipped in `828db3b` | ✅ **Resolved.** Corrected here on import, and the stale backend copy went with the documentation split — there is one copy now, and it is this one |
 | [backend/plans/ORCHESTRATOR_SESSION.md](backend/plans/ORCHESTRATOR_SESSION.md) | Last entry 2026-07-28, though `orchestrator.agent.md` still mandates an entry per session | Resume it, or retire the convention deliberately |
