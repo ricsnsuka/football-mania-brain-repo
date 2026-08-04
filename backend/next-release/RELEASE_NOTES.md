@@ -1,6 +1,47 @@
-# Release Notes — v1.1.0 (Unreleased)
+# Release Notes
 
-> Accumulated notes for the next release. Append new entries below — never delete existing ones.
+> **This file accumulates notes for the NEXT release. It is not the release history.**
+>
+> Once a release is cut, its notes belong in the code repo's `CHANGELOG.md` — that is where
+> [where-documents-live.md](../../where-documents-live.md) puts "release history for that artefact",
+> and the rule there is that **nothing is duplicated**. Append new entries below; never delete
+> existing ones. **Drain this file when a release ships** — that is the step that was missed, below.
+
+**Nothing is accumulated for the next release.** Everything in this file has shipped.
+
+---
+
+## What shipped, and where its notes are
+
+| Release | Date | Notes |
+|---|---|---|
+| `1.0.0` | 2026-07 | The historical entries below |
+| `1.1.0` | 2026-08-02 | The historical entries below — backfilled into the CHANGELOG as `[1.1.0]` on 2026-08-02 |
+| `1.2.0` | 2026-08-03 | CHANGELOG `[1.2.0]` — a security release; **`V33` is a rollback boundary** |
+| `1.3.0` | 2026-08-04 | CHANGELOG `[1.3.0]` — the group-less account fix, `V34`/`V35`, password policy and login throttling |
+| `1.3.1` | 2026-08-04 | CHANGELOG `[1.3.1]` — fixes for accounts that are not players, plus `GET /api/matches?playerId=` |
+
+The CHANGELOG lives at
+[FootMania-Back/CHANGELOG.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/CHANGELOG.md).
+
+**This file was titled "v1.1.0 (Unreleased)" until 2026-08-04**, four releases after 1.1.0 shipped,
+with its last entry dated 9 July. Nothing was wrong with the entries — the file was never *drained*
+when 1.1.0 was cut, so its title asserted something false about the state of the project. That is
+the same failure the drift table in [STATUS.md](../../STATUS.md) exists to catch, occurring in the
+file whose job is tracking releases.
+
+Those three releases' notes are deliberately **not** copied here. They exist in full in the
+CHANGELOG, and a second copy is exactly what `where-documents-live.md` was written to prevent: *"Two
+copies of a document have no owner, and that is precisely the mechanism that produced the drift
+above."*
+
+---
+
+## Historical entries — 1.0.0 and 1.1.0 development
+
+Kept because this file is append-only, and because several carry design reasoning that never made it
+anywhere else. **All of it has shipped.** The entries are *not* in date order — two May entries sit
+after July ones — which is worth knowing before reading them as a timeline.
 
 ---
 

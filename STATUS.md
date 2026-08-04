@@ -1,34 +1,48 @@
 # Project Status
 
-**Snapshot: 2026-08-03.** Update it when the answers change, not on a schedule — a status page
+**Snapshot: 2026-08-04.** Update it when the answers change, not on a schedule — a status page
 nobody trusts is worse than none.
 
 | | Backend | Frontend |
 |---|---|---|
-| Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| Release | **`v1.1.0` — closed** | **`v1.1.0` — closed** |
-| Running in production | `a7e13c1` — Heroku release **v47**, 2026-08-02 19:18 | `ac831ee` — Netlify, build ready |
-| `main` head | `2981bd3` — `a7e13c1` plus `.github/` and `CHANGELOG.md` only, so **runtime-identical** to production | `ac831ee` — identical to the deployed commit |
+| Branch | `main` (production) | `main` (production) |
+| Release | **`v1.3.1` — shipped and live** | **`v1.3.1` — shipped and live** |
+| Running in production | `f64fa92` — Heroku release **v55**, 2026-08-04 19:20; `/api/version` answers `1.3.1` | `242841f` — Netlify deploy `6a722d42`, published 18:20 UTC |
+| `main` head | `f64fa92` — identical to the deployed commit | `242841f` — identical to the deployed commit |
 | Working tree | clean | clean |
-| Tests | 1014 unit + integrationTest green | 554 unit + 32 visual regression |
-| Latest migration | `V33__rename_admin_to_group_admin.sql` — on `next`, ⏳ **undeployed** (V32 too) | — |
-| Deployed through | **`V31`** (2026-08-02) | — |
+| Tests | 1079 unit + 76 integration, SpotBugs clean | 635 unit |
+| Latest migration | `V35__platform_admin_exclusivity.sql` | — |
+| Deployed through | **`V35`** (2026-08-04) | — |
+| Tags | `v1.0.0` → `v1.3.1`, unbroken | `v1.1.0` → `v1.3.1` |
 
-🔒 **1.1.0 is closed. New work goes to `next`.** `main` moves only when a release is cut, and when
-to cut the next one is a decision, not a schedule — `next` can hold finished work for as long as it
-takes for shipping it to be the right call. The version in `build.gradle` and `package.json` gets
-bumped as part of cutting it, not while work accumulates; that is why `main` read `1.0.0` for
-thirteen commits of 1.1.0 development.
+**Both repos are fully deployed for the first time in a while — `main`, the tag and the running
+process are the same commit on both sides.** Four releases went out in two days: `1.2.0` (security),
+`1.3.0` (the group-less account fix plus password policy and login throttling), and `1.3.1` (fixes
+for accounts that are not players).
+
+⚠️ **The `next` branch has fallen out of use.** It sits at `31b6663` in the backend and `094e363` in
+the frontend — both the **1.2.0** merge point, zero commits ahead of `main`. The last three releases
+went straight to `main` through feature branches and release branches. The workflow this file used
+to describe ("1.1.0 is closed, new work goes to `next`") is **not what is happening**. Either revive
+it deliberately or retire it — a documented branch nobody uses is the next thing to mislead somebody.
 
 **Verify what is deployed against the platform, not against this file.** `heroku releases -a
-footmania` names the commit; Netlify's project page names the frontend's. This table is a snapshot
-and can be stale — the tag `v1.1.0` was first placed on `4e1856e` because an earlier snapshot named
-it as the head, and the platform then showed three further deploys the same afternoon. The tag was
-moved to `a7e13c1`. Both remain true of the same day, which is exactly why the platform wins.
+footmania` names the commit, and the running app's own `/api/version` confirms it independently —
+worth doing both, since that pair is what catches a deploy that succeeded but booted the wrong jar.
+Netlify's project page names the frontend's. This table is a snapshot and can be stale: the tag
+`v1.1.0` was first placed on `4e1856e` because an earlier snapshot named it as the head, and the
+platform then showed three further deploys the same afternoon.
 
-✅ **All of Phase 5a is live.** V22–V31 were applied in production on 2026-08-02, and both repos
-are on `1.1.0`. The schema deployment is dark by design — one organization, an optional header, no
-user-visible change — and it is now complete rather than partial.
+🔧 **`git.heroku.com` has been resetting connections.** `git push heroku main:master` failed
+repeatedly on 2026-08-04 while the Heroku *API* stayed reachable (`heroku releases`, `apps:info` all
+fine), so it is the git transport rather than auth. This gets through:
+
+```
+git -c http.postBuffer=524288000 -c http.version=HTTP/1.1 push heroku main:master
+```
+
+✅ **All of Phase 5a is live**, and so is everything after it. The schema deployment is no longer
+dark: `1.3.0` made the platform-operator account a real thing with its own console.
 
 **`user_roles` is gone.** That table was the thing that made a rollback to pre-V22 code
 survivable; V29 dropped it. See hazard 3 for what that changes about recovery.
@@ -46,7 +60,7 @@ See [product/roadmap.md](product/roadmap.md) for the plan itself.
 | **2** — Web Push | ✅ done, delivery observed end to end against a real push service |
 | **3** — the "steal from Capo" set | 🟡 balance-at-a-glance, waitlist, leaderboards/rankings, MOTM voting and badges all shipped in both repos. **Remaining: AI match reports** |
 | **4** — Capacitor + app stores | ⬜ not started, deliberately gated on real usage data |
-| **5** — multi-tenancy + billing | 🟢 **5a is complete and entirely live.** All four rungs deployed 2026-08-02: schema (`V22`–`V27`), enforcement (`V28`), the privacy fork, and onboarding (`V29`–`V31`) — group creation behind an operator-issued code, invites, and the last step of the guest arc. Running **dark**: one organization, an optional header, no behaviour change yet. Both onboarding UIs exist too — `/join/{token}` and the picker for members, invite links for group `GROUP_ADMIN`, creation codes for the platform operator. **Issuing a creation code is still the flip, and is still a separate deliberate act**: the endpoint and the screen exist, `group_creation_codes` is empty, and nothing is self-serve until a code is issued. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
+| **5** — multi-tenancy + billing | 🟢 **5a is complete and entirely live.** All four rungs deployed 2026-08-02: schema (`V22`–`V27`), enforcement (`V28`), the privacy fork, and onboarding (`V29`–`V31`) — group creation behind an operator-issued code, invites, and the last step of the guest arc. Running **dark**: one organization, an optional header, no behaviour change yet. Both onboarding UIs exist too — `/join/{token}` and the picker for members, invite links for group `GROUP_ADMIN`, creation codes for the platform operator. **Issuing a creation code is still the flip, and is still a separate deliberate act**: the endpoint and the screen exist, and nothing is self-serve until a code is issued. *(Whether `group_creation_codes` is still empty was true on 2026-08-03 and is not re-verified here — check the platform console rather than this file.)* **Since `1.3.0` the operator surface is real rather than latent**: `/platform` is an operator-only account's landing screen with the deployment counters and the code funnel, `V34` added deployment-wide settings, and `V35` states the rule that an account is either a platform operator or a member of groups, never both. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
 
 Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
 system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee
@@ -98,7 +112,8 @@ is empty"). When code is verifiably right and behaviour is wrong, **establish wh
 process is actually running before debugging the code** — process start time vs file mtime
 locally, deployed commit vs branch tip in production.
 
-**6. A group admin could lock a member out of every group — fixed on `next`, not yet deployed.**
+**6. ~~A group admin could lock a member out of every group.~~ Resolved — deployed 2026-08-03 in
+`1.2.0`.**
 Removing somebody used `DELETE /api/users/{id}`, which writes `users.is_active`, the flag governing
 login *everywhere*, while its guard said `ADMIN` — a per-membership grant since V23. One group's
 administrator was therefore ending a person's access to groups they have nothing to do with, and
@@ -108,8 +123,7 @@ every other group's people, not a data leak.
 
 Both account-level writes now require the platform operator grant, and the group-scoped answer is
 `PATCH /api/groups/members/{userId}/status`, which suspends a membership and leaves everything else
-bit-identical. ⏳ **Until the backend is deployed, production still has the old behaviour**, and
-until the frontend PR lands its Users screen 403s.
+bit-identical. Live in production since `1.2.0`.
 
 Two things worth keeping from how this was found. The gap was **known and written down** — the
 javadoc on `findOrThrow` said `deleteUser` still deactivated the account and handed the narrowing to
@@ -158,7 +172,31 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 A related failure, already fixed: the notification-settings screen rendered `MVP_VOTE_OPEN` and
 `FEE_CHARGED` as raw enum names because both categories were added backend-side without anyone
 adding the `en`/`pt`/`es` strings. Two separate commits missed it, and nothing tests that the
-locale files cover `NotificationCategory`. **A key-parity test still does not exist.**
+locale files cover `NotificationCategory`.
+
+**That exact shape recurred twice more on 2026-08-04, and both reached production:**
+
+- The administrator role chip lost its colour. `ADMIN` → `GROUP_ADMIN` renamed the role, three CSS
+  selectors kept the old name, and `RoleChips` emitted `--group_admin` against rules that matched
+  nothing. **No error, in CSS or anywhere else** — the chip kept its shape and silently lost its
+  fill. It shipped, survived a release, and was found by somebody looking at the screen.
+- `GUESTS_MAX_PER_INVITER` and `MATCH_DEFAULT_COST_CENTS` are editable group settings that rendered
+  as their storage keys, because `settings.system.settings.*` had no entry for them. The owner
+  reported the guest limit as a *missing feature*; it had been configurable all along and was simply
+  unrecognisable.
+
+The class is always the same: **a name is built at runtime and looked up somewhere untyped** — a CSS
+class, an i18n key — so nothing fails when the two sides drift, and the only detector is a person
+noticing. Type checking cannot see it (string concatenation), and rendering tests cannot either
+(jsdom applies no stylesheet; i18next returns the key and the assertion is on the key).
+
+✅ **One parity test now exists**: `tests/lib/modifierClassParity.test.ts` covers every runtime-built
+CSS modifier against `globals.css`, in both directions, with documented exemptions. It was verified
+to fail on a real break before being committed.
+
+⚠️ **The locale key-parity test still does not exist** — nothing checks that the locale files cover
+`NotificationCategory`, or `AppSetting`, or `Role`. The CSS one is a template for it; the settings
+labels above are precisely what it would have caught.
 
 The shape of all of this is the same: the code shipped, the follow-through did not. That is the
 reason this repo exists.
@@ -186,6 +224,21 @@ reason this repo exists.
    messages and cut as `[1.1.0]`. Keep fixing the rest of the drift table above.
 5. ~~Regenerate the Postman collection.~~ ✅ Done 2026-08-02 — and made a derived artefact, so this
    line cannot come back: `node postman/generate-collection.mjs` against a running app.
-6. Add the locale key-parity test, and a controller test asserting `totalCostCents` serialises.
-7. Then 5a-3 (privacy fork), or Phase 3's last item — AI match reports. 5a-4 is the visibility flip
-   and is owner-gated; billing is on hold.
+6. **Add the locale key-parity test**, and a controller test asserting `totalCostCents` serialises.
+   Still open, and now with three production sightings behind it — see the drift section. The
+   template exists: `modifierClassParity.test.ts` does exactly this for CSS modifiers. Point the
+   same shape at `NotificationCategory`, `AppSetting` and `Role` against `en`/`pt`/`es`.
+7. **Decide what `next` is for.** It is two releases behind `main` in both repos and nothing has
+   used it since 1.2.0. Revive it or retire it; leaving it documented and unused is how the next
+   person is misled.
+8. Then Phase 3's last item — AI match reports. Billing is on hold.
+
+---
+
+## Recent incidents
+
+- [`INCIDENT_2026-08-04_Users_Me_404_For_Groupless_Accounts.md`](backend/fixes/INCIDENT_2026-08-04_Users_Me_404_For_Groupless_Accounts.md)
+  — `GET /api/users/me` answered **404** to a platform operator, because the read asked "is this
+  account a member of the current group" about the caller reading *their own record*. Fixed in
+  `1.3.0`, together with the rule that removes the ambiguity: **an account is either a platform
+  operator or a member of groups, never both** (`V35`).
