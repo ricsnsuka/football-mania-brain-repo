@@ -5,7 +5,8 @@ nobody trusts is worse than none.
 
 | | Backend | Frontend |
 |---|---|---|
-| Branch | `main` (production) | `main` (production) |
+| Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
+| `next` head | `f64fa92` — level with `main` | `242841f` — level with `main` |
 | Release | **`v1.3.1` — shipped and live** | **`v1.3.1` — shipped and live** |
 | Running in production | `f64fa92` — Heroku release **v55**, 2026-08-04 19:20; `/api/version` answers `1.3.1` | `242841f` — Netlify deploy `6a722d42`, published 18:20 UTC |
 | `main` head | `f64fa92` — identical to the deployed commit | `242841f` — identical to the deployed commit |
@@ -20,11 +21,28 @@ process are the same commit on both sides.** Four releases went out in two days:
 `1.3.0` (the group-less account fix plus password policy and login throttling), and `1.3.1` (fixes
 for accounts that are not players).
 
-⚠️ **The `next` branch has fallen out of use.** It sits at `31b6663` in the backend and `094e363` in
-the frontend — both the **1.2.0** merge point, zero commits ahead of `main`. The last three releases
-went straight to `main` through feature branches and release branches. The workflow this file used
-to describe ("1.1.0 is closed, new work goes to `next`") is **not what is happening**. Either revive
-it deliberately or retire it — a documented branch nobody uses is the next thing to mislead somebody.
+🔒 **Work goes to `next`. `main` moves only when a release is cut.** Re-stated by the owner on
+2026-08-04 and both branches re-synced to `f64fa92` / `242841f`, so `main` and `next` now agree at
+`1.3.1` in both repos.
+
+This had lapsed: between 1.2.0 and 1.3.1, five feature branches and three releases went straight to
+`main`, leaving `next` two releases behind. **Do not infer the target branch from recent git
+history — that history is the lapse.**
+
+The flow:
+
+| Step | Branch | Base |
+|---|---|---|
+| Ordinary work | `feat/…`, `fix/…`, `test/…` | **`next`** |
+| Cutting a release | `release/x.y.z` off `next` — version bump + CHANGELOG section in one commit | **`main`** |
+| After a release | fast-forward `next` to `main` so the two agree | — |
+
+`git checkout next && git merge --ff-only main && git push origin next`
+
+`main` is what production runs, and the frontend auto-deploys from it, so a merge to `main` **is** a
+deploy. `next` is where finished work waits until shipping it is a deliberate decision rather than a
+side effect of merging. If `next` is ever behind `main` again, that is drift to fix, not evidence
+the convention is dead.
 
 **Verify what is deployed against the platform, not against this file.** `heroku releases -a
 footmania` names the commit, and the running app's own `/api/version` confirms it independently —
@@ -228,9 +246,9 @@ reason this repo exists.
    Still open, and now with three production sightings behind it — see the drift section. The
    template exists: `modifierClassParity.test.ts` does exactly this for CSS modifiers. Point the
    same shape at `NotificationCategory`, `AppSetting` and `Role` against `en`/`pt`/`es`.
-7. **Decide what `next` is for.** It is two releases behind `main` in both repos and nothing has
-   used it since 1.2.0. Revive it or retire it; leaving it documented and unused is how the next
-   person is misled.
+7. ~~**Decide what `next` is for.**~~ ✅ Answered 2026-08-04: **revived.** Work goes to `next`;
+   `main` moves only when a release is cut. Both branches re-synced to `1.3.1` — see the top of this
+   file for the flow.
 8. Then Phase 3's last item — AI match reports. Billing is on hold.
 
 ---
