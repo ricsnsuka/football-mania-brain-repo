@@ -11,7 +11,7 @@ nobody trusts is worse than none.
 | `main` head | `2981bd3` — `a7e13c1` plus `.github/` and `CHANGELOG.md` only, so **runtime-identical** to production | `ac831ee` — identical to the deployed commit |
 | Working tree | clean | clean |
 | Tests | 1014 unit + integrationTest green | 554 unit + 32 visual regression |
-| Latest migration | `V33__rename_admin_to_group_admin.sql` — on `next`, ⏳ **undeployed** (V32 too) | — |
+| Latest migration | `V34__platform_settings.sql` — on the recurring-plans branch, ⏳ **unmerged and undeployed** (V32/V33 merged, undeployed) | — |
 | Deployed through | **`V31`** (2026-08-02) | — |
 
 🔒 **1.1.0 is closed. New work goes to `next`.** `main` moves only when a release is cut, and when
@@ -49,8 +49,8 @@ See [product/roadmap.md](product/roadmap.md) for the plan itself.
 | **5** — multi-tenancy + billing | 🟢 **5a is complete and entirely live.** All four rungs deployed 2026-08-02: schema (`V22`–`V27`), enforcement (`V28`), the privacy fork, and onboarding (`V29`–`V31`) — group creation behind an operator-issued code, invites, and the last step of the guest arc. Running **dark**: one organization, an optional header, no behaviour change yet. Both onboarding UIs exist too — `/join/{token}` and the picker for members, invite links for group `GROUP_ADMIN`, creation codes for the platform operator. **Issuing a creation code is still the flip, and is still a separate deliberate act**: the endpoint and the screen exist, `group_creation_codes` is empty, and nothing is self-serve until a code is issued. ⛔ **The billing rung is ON HOLD by owner decision — do not start it, in any session, until the owner lifts the hold in their own words** |
 
 Built alongside the roadmap, not on it: runtime-configurable competition rules, admin settings and
-system endpoints, match-plan kickoff time and lifecycle, composable roles, and the match fee
-ledger. The ledger is bookkeeping only — **no money moves through the application**, by design.
+system endpoints, match-plan kickoff time and lifecycle, composable roles, weekly recurring match
+plans behind a platform-set horizon, and the match fee ledger. The ledger is bookkeeping only — **no money moves through the application**, by design.
 See [backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md) §14 for how a
 real payment integration would bolt on later without any of it being wasted.
 
@@ -204,5 +204,11 @@ reason this repo exists.
 5. ~~Regenerate the Postman collection.~~ ✅ Done 2026-08-02 — and made a derived artefact, so this
    line cannot come back: `node postman/generate-collection.mjs` against a running app.
 6. Add the locale key-parity test, and a controller test asserting `totalCostCents` serialises.
+6b. **Run `integrationTest` on the recurring-plans branch before merging it.** It carries `V34`,
+   which has never been applied to a real database, and two integration tests that have never been
+   executed at all — `MatchPlanCostCacheIT` and whatever `MigrationSchemaValidationIT` makes of
+   `PlatformSettingValue`. Both were written without Docker available. This is precisely the
+   discipline that closed hazards 1 and 2, and skipping it here would be the third time the same
+   lesson is available and unused.
 7. Then 5a-3 (privacy fork), or Phase 3's last item — AI match reports. 5a-4 is the visibility flip
    and is owner-gated; billing is on hold.

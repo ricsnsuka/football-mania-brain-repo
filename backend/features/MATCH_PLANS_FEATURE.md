@@ -7,6 +7,10 @@ wrong about the kickoff type, the status set, the roles, the team names and the 
 below was read out of `MatchPlanService`, `MatchPlanController`, `MatchPlan`, `MatchFeeService` and
 the migrations rather than carried over.
 
+⏳ **Recurring runs and the chronological list order are on the recurring-plans branch, unmerged and
+undeployed** (`V34` with them). They are documented here in the present tense with the rest; the
+deployment state is in [STATUS.md](../../STATUS.md).
+
 ---
 
 ## Overview
@@ -24,9 +28,10 @@ The split exists because organising who plays and recording what happened are di
 different audiences. A plan is answered by everyone in the group; a match is written by whoever kept
 the score.
 
-Three things have been added since the first version and each changed the shape of the feature:
-a plan now knows **what time** it kicks off, it knows **who is a reserve** rather than only who
-confirmed, and it can carry **what the pitch cost**.
+Four things have been added since the first version and each changed the shape of the feature: a
+plan now knows **what time** it kicks off, it knows **who is a reserve** rather than only who
+confirmed, it can carry **what the pitch cost**, and a manager can create **a weekly run** of them in
+one request.
 
 ---
 
@@ -202,6 +207,81 @@ preview somebody looked at a minute earlier.
 This is why `GET /{id}/confirmations?status=DECLINED` loads the whole ordered list and filters
 afterwards. Ranks are positions *within the confirmed set*; a query already narrowed to `DECLINED`
 could not produce them, and running two queries would mean two results that can disagree.
+
+---
+
+## Creating a weekly run
+
+A manager can create the next N Fridays in one request rather than thirteen.
+
+```http
+POST /api/match-plans/recurring
+{
+  "title": "Friday 5-a-side",
+  "matchType": "SEVEN_A_SIDE",
+  "proposedDate": "2026-09-04T19:00:00Z",
+  "confirmationDeadline": "2026-09-03T20:00:00Z",
+  "occurrences": 8
+}
+```
+
+Every field except `occurrences` means what it does on the single-plan create and is applied to each
+plan in the run. The response is `201` with the whole run in kickoff order, and **no `Location`
+header**: a run has no single resource to point at, and naming the first plan would imply the others
+hang off it.
+
+### The plans are independent, and that is the design
+
+Nothing links them once written. Each takes its own confirmations and is edited, cancelled,
+generated from or deleted on its own, so the existing lifecycle, poll and generation rules apply
+completely unchanged — a run is a faster way to reach rows a manager would otherwise create one at a
+time, not a new kind of thing.
+
+A series id was considered and rejected. It buys "cancel them all" and costs a second lifecycle to
+reason about, starting with what cancelling a run does to the plans in it that already have people
+confirmed or a match generated from them. There is no cheap answer to that, and the expensive one is
+a second terminal-state problem.
+
+### Weekly only
+
+Every occurrence is exactly seven days after the one before, so a run holds the same weekday at the
+same time. Fortnightly and monthly were left out rather than guessed at; monthly in particular needs
+a rule for what "the 31st" means in a 30-day month, and a rule nobody asked for is a rule nobody
+checked.
+
+**A confirmation deadline is shifted with its own kickoff**, so every plan keeps the same lead time.
+One shared deadline would close every poll but the first before anybody could answer it.
+
+### The horizon is a platform limit
+
+How far ahead a run may reach is `PlatformSetting.MATCH_PLAN_RECURRENCE_MAX_MONTHS` — **three months
+by default**, range 1–24, stored in `platform_settings` (`V34`) and changed only through
+`PATCH /api/admin/platform/settings` behind `PlatformGuard`.
+
+**Not an `AppSetting`.** That catalogue has been keyed by tenant since `V27` and is edited by
+`GROUP_ADMIN`, so a cap stored there would be self-service for the people it constrains. One call
+writes every plan in the run, so the horizon is really a bound on how many rows a single request
+creates — a limit on what one group can do to the deployment. A group that could raise its own
+ceiling would not be bounded at all.
+
+The horizon is measured from **now**, not from the first kickoff, so a run starting in eleven months
+cannot reach fourteen.
+
+**A run that overruns is refused, never truncated**, and the message names how many occurrences would
+have fitted — counted rather than estimated, so the number offered back is one the retry will
+actually accept. Writing the nine that fit out of the twelve asked for would return `201`, read as
+success, and surface as three missing Fridays weeks later.
+
+### A known limit: seven days is seven days
+
+Occurrences step by seven days of **absolute** time. Across a daylight-saving boundary that moves the
+*local* kickoff by an hour — a 19:00 fixture becomes 18:00 once the clocks change.
+
+Fixing it properly means adding weeks in the group's own timezone, and **the schema stores no
+timezone anywhere**: kickoffs are instants and the frontend renders them in whatever zone the browser
+is in. Hard-coding one would be silently wrong for every group that is not in it, which is a worse
+failure than an hour, and the product now onboards groups rather than serving one. Recorded rather
+than papered over — see [known gaps](#known-gaps).
 
 ---
 
@@ -441,6 +521,7 @@ Base path `/api/match-plans`, except the two cost endpoints, which are served by
 | Method   | Path                                 | Role                     | Notes                                        |
 |----------|--------------------------------------|--------------------------|----------------------------------------------|
 | `POST`   | `/`                                  | `MANAGER`                | `201`, `Location` header                     |
+| `POST`   | `/recurring`                         | `MANAGER`                | `201` with the whole run, no `Location`      |
 | `GET`    | `/`                                  | authenticated            | Paginated. `status`, `timeframe` params      |
 | `GET`    | `/{id}`                              | authenticated            | Cached                                       |
 | `PATCH`  | `/{id}`                              | `MANAGER`                | `PENDING` only. Null fields ignored          |
@@ -457,11 +538,42 @@ Base path `/api/match-plans`, except the two cost endpoints, which are served by
 | `PUT`    | `/{id}/cost`                         | `MANAGER` or `ORGANIZER` | `204`. `PaymentController`                   |
 | `POST`   | `/{id}/charges`                      | `MANAGER` or `ORGANIZER` | `PaymentController`. Idempotent              |
 
+The recurrence horizon is not on this controller at all — it is a deployment limit, read and written
+through the operator surface:
+
+| Method  | Path                            | Grant             | Notes                                  |
+|---------|---------------------------------|-------------------|----------------------------------------|
+| `GET`   | `/api/admin/platform/settings`  | platform operator | `AdminController`, behind `PlatformGuard` |
+| `PATCH` | `/api/admin/platform/settings`  | platform operator | Keys are `PlatformSetting` names       |
+
 `timeframe` is `upcoming` (kickoff ahead), `past` (kickoff behind), or omitted for both — anything
 else is a `400`. It is filtered **in the query, not the client**, because the list is server
 paginated: drop rows after the page is built and a page of twenty shows however many survived while
 `totalElements` keeps counting the ones that did not. Separating the two is what stops a plan from
 three weeks ago sitting above next Friday's.
+
+### Ordering
+
+Both halves run **away from now**:
+
+| `timeframe`  | Order                              | So that                                  |
+|--------------|------------------------------------|------------------------------------------|
+| `upcoming`   | `proposedDate ASC, id ASC`         | the next match is first                  |
+| `past`       | `proposedDate DESC, id DESC`       | the match just played is first           |
+| omitted      | ascending                          | neither direction is right for a mixed list; ascending is the plainer reading of "chronological", and the frontend never reaches it |
+
+Opposite directions, one rule: what happens or happened nearest is what somebody is looking for.
+
+**There was no `ORDER BY` at all before this**, and the frontend sends no sort — so row order was
+whatever Postgres returned. That is not merely unhelpful but *unstable*: with no total order,
+`LIMIT`/`OFFSET` slice an ordering that is not there, and a row can appear on two pages or on none.
+
+`id` is the tie-break and it is what makes the order total. Two plans can share a kickoff — a
+recurring run creating a duplicate of an existing Friday does exactly that — and an unbroken tie
+brings the pagination instability straight back for the rows that share one.
+
+**A caller who supplies their own `sort` keeps it.** The default fills a gap rather than overruling
+anybody; replacing an explicit sort would make `?sort=` silently inoperative on this endpoint alone.
 
 ### Roles
 
@@ -480,7 +592,9 @@ is now the flat, per-membership set below. See [multi-tenancy](../../architectur
 | Override a confirmation         | ❌ | ✅ | ❌ | ❌ |
 | Generate teams                  | ❌ | ✅ | ❌ | ❌ |
 | Set the pitch cost              | ❌ | ✅ | ✅ | ❌ |
+| Create a weekly run             | ❌ | ✅ | ❌ | ❌ |
 | **Delete a plan**               | ❌ | ❌ | ❌ | ✅ |
+| **Set the recurrence horizon**  | ❌ | ❌ | ❌ | ❌ — platform operator only |
 
 `GROUP_ADMIN` holds exactly one thing here, and holds it *only* — deleting a plan destroys everyone's
 answers, so it sits with group administration rather than with running matches. A `GROUP_ADMIN` who
@@ -505,6 +619,19 @@ also organises matches holds `MANAGER` too, and says so.
 Both the kickoff and the deadline checks are comparisons **between instants**. They used to widen the
 kickoff to the start of its day, which let a plan be created for a kickoff that had already been and
 gone this morning, and let a deadline land after the match had started.
+
+### `RecurringMatchPlanCreateDTO` — `POST /recurring`
+
+Every field of `MatchPlanCreateDTO`, applied to each plan in the run, plus:
+
+| Field         | Type    | Required | Validation                                              |
+|---------------|---------|----------|---------------------------------------------------------|
+| `occurrences` | Integer | Yes      | `@Min(2)`, `@Max(120)` — and within the platform horizon |
+
+Two is the floor because one occurrence is not a recurrence; `POST /api/match-plans` already does
+that, and accepting it here would be a second way to do the same thing. The `@Max` is a
+**structural** bound that stops arithmetic on an absurd count before the horizon check runs — it is
+not the policy limit, which is the horizon and is enforced in `MatchPlanService`.
 
 ### `MatchPlanUpdateDTO` — `PATCH /{id}`
 
@@ -566,6 +693,9 @@ the stored one if it is unchanged.
 | Deadline not before kickoff                     | `400`  | `confirmationDeadline must be before proposedDate`             |
 | `minPlayersRequired` below the match-type total | `400`  | names both numbers                                             |
 | Invalid `timeframe`                             | `400`  | `Must be 'upcoming' or 'past'`                                 |
+| Run overruns the recurrence horizon             | `400`  | names the horizon and how many occurrences would fit           |
+| First kickoff already beyond the horizon        | `400`  | `no plan in this run could be created`                         |
+| `occurrences` below 2 or above 120              | `400`  | bean validation on the DTO                                     |
 | Unknown enum value                              | `400`  | lists the valid ones                                           |
 | Updating a non-`PENDING` plan                   | `409`  | `only PENDING plans can be updated`                            |
 | Deleting a non-`PENDING` plan                   | `409`  | `only PENDING plans can be deleted`                            |
@@ -589,17 +719,20 @@ the stored one if it is unchanged.
 | Layer      | Files                                                                          |
 |------------|--------------------------------------------------------------------------------|
 | Entities   | `MatchPlan`, `PlayerConfirmation`, `PlanStatus`, `ConfirmationStatus`           |
+| Platform   | `PlatformSetting` (catalogue), `PlatformSettingValue` (overrides), `PlatformSettingsService`, `PlatformSettingValueRepository` — the deployment's limits, deliberately a separate enum and service from `AppSetting`/`AppSettingsService` so the two cannot end up behind the same guard |
 | Service    | `MatchPlanService` — the whole feature, including guests and the waitlist        |
 | Controller | `MatchPlanController`; cost and charges on `PaymentController`                   |
 | Mapper     | `MatchPlanMapper` (MapStruct). Waitlist fields are `ignore`d — they cannot be derived from one confirmation, so `MatchPlanService` fills them in |
 | Repos      | `MatchPlanRepository` (search, reminder claims, privacy scrubs), `PlayerConfirmationRepository` (the ordering) |
 | Fees       | `MatchFeeService`                                                                |
 | Push       | `ReminderScheduler`, `ReminderDispatcher`                                        |
-| Migrations | `V1` initial · `V13` reminder guards · `V17` kickoff + `GENERATED` · `V19` cost · `V20` delegation · `V24`/`V25` tenancy |
+| Migrations | `V1` initial · `V13` reminder guards · `V17` kickoff + `GENERATED` · `V19` cost · `V20` delegation · `V24`/`V25` tenancy · `V34` platform settings |
 
 Frontend: `src/features/matchPlans/` (page, card, detail modal, create modal, edit form, cost
 section, guest modal), `useMatchPlans`, `matchPlanService`, `types/matchPlan.ts`, route
-`/match-plans`.
+`/match-plans`. The repeat-weekly checkbox lives on `CreateMatchPlanModal`; the horizon control is a
+Deployment limits section on `PlatformSettings.tsx`, above the creation codes, since these bound
+every group that already exists whereas a code decides whether one more may.
 
 ---
 
@@ -624,13 +757,26 @@ Recorded here rather than left to be discovered — see [CONTRIBUTING](../../CON
 
    ⚠️ **It has not been executed.** The fix was written in an environment without Docker, so
    `./gradlew integrationTest` could not run. The unit tier is green. Run it before merging.
-2. **`STREAK_AWARE` is reachable.** It parses, resolves to a real bean, and throws `422` from inside
+2. **A weekly run steps by absolute time, so daylight saving moves the local kickoff.** Seven days
+   is seven days; a 19:00 fixture becomes 18:00 once the clocks change. Adding weeks in the group's
+   own timezone is the fix, and there is no timezone to add them in — kickoffs are instants and the
+   frontend renders them in the browser's zone. Hard-coding one would be silently wrong for every
+   group that is not in it. Either a per-group timezone or an explicit "same local time" rule would
+   close it; both are larger than the feature that surfaced it.
+
+3. **`STREAK_AWARE` is reachable.** It parses, resolves to a real bean, and throws `422` from inside
    the strategy. Harmless, but the failure happens later than the other unsupported values.
-3. **The `parsePlanStatus` error message omits `GENERATED`.** Sending it is accepted by the parser
+4. **The `parsePlanStatus` error message omits `GENERATED`.** Sending it is accepted by the parser
    and then rejected by the transition table with a `409`, so the `400` never names it — but the
    message claims the valid values are `PENDING, CONFIRMED, CANCELLED`, which is not the enum.
-4. **There is no `frontend/features/match-plans.md`.** Every other frontend feature has a file, and
+5. **There is no `frontend/features/match-plans.md`.** Every other frontend feature has a file, and
    the match-plan UI is one of the larger ones — seven components and a route. The frontend types are
    unusually well commented, so the material exists.
-5. **Unused `LocalDate` imports** remain in `MatchPlanDTO`, `MatchPlanCreateDTO` and
-   `MatchPlanUpdateDTO` — leftovers from `V17`. Cosmetic.
+6. **Unused `LocalDate` imports** remain in `MatchPlanDTO`, `MatchPlanCreateDTO` and
+   `MatchPlanUpdateDTO` — leftovers from `V17`. Cosmetic. (`MatchPlanService`'s own was removed
+   with the ordering change.)
+
+7. **`V34` and the recurrence feature have never run against a real database.** The unit tier is
+   green, but `integrationTest` needs Docker and was unavailable where this was written — so
+   `MigrationSchemaValidationIT` has not checked `PlatformSettingValue` against the migration, and
+   `MatchPlanCostCacheIT` (gap 1) is still unexecuted alongside it. Run the tier before merging.
