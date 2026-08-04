@@ -1,451 +1,627 @@
-# Match Plans & Availability Poll Feature
+# Match Plans & the Availability Poll
 
-**Added in:** v1.0.0  
-**Date:** May 17, 2026  
+**Added in:** v1.0.0
 **Status:** ✅ Released
+**Rewritten against the code:** 2026-08-04 — the previous version described May's behaviour and was
+wrong about the kickoff type, the status set, the roles, the team names and the cache. Every claim
+below was read out of `MatchPlanService`, `MatchPlanController`, `MatchPlan`, `MatchFeeService` and
+the migrations rather than carried over.
 
 ---
 
 ## Overview
 
-A **Match Plan** is a pre-match organisation tool. Before a match can be created, an
-admin or master user:
+A **match plan** is the thing that exists before a match does. Somebody proposes a game, players say
+whether they are coming, and once enough have said yes the teams are drawn and a real `Match` is
+created from it.
 
-1. Creates a **Match Plan** with a proposed date, location, match type, and confirmation deadline.
-2. The plan opens an **availability poll** — players confirm or decline participation.
-3. Once enough players have confirmed, the admin **generates a team preview** using one of
-   three algorithms (BALANCED, RANDOM, SNAKE_DRAFT).
-4. The admin reviews the preview and **confirms** it — which creates the actual `Match`.
+```
+create plan ──▶ players confirm ──▶ enough confirmed ──▶ draw teams ──▶ Match exists
+   PENDING          PENDING             CONFIRMED         GENERATED     (plan is done)
+```
 
-This decouples "planning who will play" from "running the match stats".
+The split exists because organising who plays and recording what happened are different jobs with
+different audiences. A plan is answered by everyone in the group; a match is written by whoever kept
+the score.
+
+Three things have been added since the first version and each changed the shape of the feature:
+a plan now knows **what time** it kicks off, it knows **who is a reserve** rather than only who
+confirmed, and it can carry **what the pitch cost**.
 
 ---
 
-## Domain Model
+## The plan itself
 
-### `match_plans` Table
+### `match_plans`
 
-| Column                  | Type           | Nullable | Notes                                                                 |
-|-------------------------|----------------|----------|-----------------------------------------------------------------------|
-| `id`                    | BIGSERIAL (PK) | No       |                                                                       |
-| `title`                 | VARCHAR(100)   | No       | Default `'Unnamed Plan'`                                              |
-| `proposed_date`         | DATE           | No       | Must be in the future at creation (@Future)                           |
-| `location`              | VARCHAR(255)   | Yes      |                                                                       |
-| `description`           | VARCHAR(500)   | Yes      |                                                                       |
-| `match_type`            | VARCHAR(20)    | No       | `FIVE_A_SIDE` / `SEVEN_A_SIDE` / `ELEVEN_A_SIDE`                    |
-| `status`                | VARCHAR(20)    | No       | `PENDING` / `CONFIRMED` / `CANCELLED`                                |
-| `confirmed_count`       | INTEGER        | No       | Denormalised count of `CONFIRMED` player confirmations                |
-| `min_players_required`  | INTEGER        | No       | Default `14` for SEVEN_A_SIDE                                         |
-| `confirmation_deadline` | TIMESTAMPTZ    | Yes      | After this time, `pollOpen` becomes `false`                           |
-| `created_by`            | VARCHAR(50)    | Yes      | Username of the admin/master who created the plan                     |
-| `created_at`            | TIMESTAMPTZ    | No       |                                                                       |
-| `updated_at`            | TIMESTAMPTZ    | No       |                                                                       |
+| Column                      | Type           | Null | Notes                                                              |
+|-----------------------------|----------------|------|--------------------------------------------------------------------|
+| `id`                        | BIGSERIAL (PK) | No   |                                                                    |
+| `tenant_id`                 | BIGINT         | No   | The owning organization. Stamped at persist — `V24`                 |
+| `title`                     | VARCHAR(100)   | No   |                                                                    |
+| `proposed_date`             | **TIMESTAMPTZ**| No   | Kickoff, **with a time of day** since `V17`                        |
+| `location`                  | VARCHAR(255)   | Yes  |                                                                    |
+| `description`               | VARCHAR(500)   | Yes  |                                                                    |
+| `match_type`                | VARCHAR(20)    | No   | `FIVE_A_SIDE` / `SEVEN_A_SIDE` / `ELEVEN_A_SIDE`                   |
+| `status`                    | VARCHAR(20)    | No   | `PENDING` / `CONFIRMED` / `CANCELLED` / **`GENERATED`** — `V17`     |
+| `confirmed_count`           | INTEGER        | No   | Denormalised; recomputed by a `COUNT` after every confirmation write|
+| `min_players_required`      | INTEGER        | No   | Defaults to the match type's own total                             |
+| `confirmation_deadline`     | TIMESTAMPTZ    | Yes  | After it passes, `pollOpen` is false                               |
+| `total_cost_cents`          | INTEGER        | Yes  | What the pitch cost — `V19`. `CHECK (>= 0)`                        |
+| `deadline_reminder_sent_at` | TIMESTAMPTZ    | Yes  | Reminder idempotency guard — `V13`                                 |
+| `match_reminder_sent_at`    | TIMESTAMPTZ    | Yes  | Independent of the above — `V13`                                   |
+| `created_by`                | VARCHAR(50)    | Yes  | Username. Scrubbed to a tombstone on erasure                       |
+| `created_at` / `updated_at` | TIMESTAMPTZ    | No   |                                                                    |
 
-### `player_confirmations` Table
+#### Kickoff is an instant, and that was a bug fix
 
-| Column          | Type           | Nullable | Notes                                                |
-|-----------------|----------------|----------|------------------------------------------------------|
-| `id`            | BIGSERIAL (PK) | No       |                                                      |
-| `match_plan_id` | BIGINT (FK)    | No       | FK → `match_plans.id` (CASCADE DELETE)               |
-| `player_id`     | BIGINT (FK)    | No       | FK → `players.id` (CASCADE DELETE)                   |
-| `status`        | VARCHAR(20)    | No       | `CONFIRMED` / `DECLINED` / `PENDING`                 |
-| `notes`         | VARCHAR(500)   | Yes      | Optional note from player (e.g. "5 minutes late")    |
-| `confirmed_at`  | TIMESTAMPTZ    | Yes      | Timestamp when player confirmed                      |
+`proposed_date` was a `DATE`. The frontend's input has always been a `datetime-local` and has always
+sent a time; the backend parsed it into a `LocalDate` and threw the time away. A bare date is parsed
+by clients as UTC midnight, which renders as **01:00 in Lisbon** — so every plan in the app appeared
+to kick off at one in the morning, and every match generated from one inherited it.
 
-Unique constraint: `(match_plan_id, player_id)` — one confirmation record per player per plan.
+`V17` widened the column. **Existing rows converted to midnight UTC**, which is what they already
+effectively meant; no plausible-looking 19:00 was invented for them, because a made-up kickoff hour
+is indistinguishable from one somebody chose.
 
----
+### `player_confirmations`
 
-## Plan Status Lifecycle
+| Column          | Type           | Null | Notes                                          |
+|-----------------|----------------|------|------------------------------------------------|
+| `id`            | BIGSERIAL (PK) | No   |                                                |
+| `tenant_id`     | BIGINT         | No   | Stamped at persist                             |
+| `match_plan_id` | BIGINT (FK)    | No   | → `match_plans.id`, CASCADE DELETE             |
+| `player_id`     | BIGINT (FK)    | No   | → `players.id`, CASCADE DELETE                 |
+| `status`        | VARCHAR(20)    | No   | `CONFIRMED` / `DECLINED` / `PENDING`           |
+| `notes`         | VARCHAR(500)   | Yes  | "Will be five minutes late"                    |
+| `confirmed_at`  | TIMESTAMPTZ    | Yes  | Set on confirming, **cleared on withdrawing**  |
 
-```
-      POST /api/match-plans
-              │
-              ▼
-          [ PENDING ]   ← poll is open (if deadline not passed)
-              │
-              ├─── PATCH /api/match-plans/{id}/status  { status: "CONFIRMED" }
-              │         ▼
-              │     [ CONFIRMED ]
-              │           │
-              │           ├─── PATCH .../status  { status: "CANCELLED" }
-              │           │         ▼
-              │           │     [ CANCELLED ]
-              │           │
-              │           └─── keeps active (match may be generated from this)
-              │
-              └─── PATCH /api/match-plans/{id}/status  { status: "CANCELLED" }
-                        ▼
-                    [ CANCELLED ]
-```
+Unique on `(match_plan_id, player_id)` — one answer per player per plan.
 
-Status transitions:
-- `PENDING` → `CONFIRMED` ✅
-- `PENDING` → `CANCELLED` ✅
-- `CONFIRMED` → `CANCELLED` ✅
-- Any other transition → `400 Bad Request`
+`confirmed_at` doing double duty as the queue position is what makes the waitlist work without any
+separate bookkeeping. See [Starters and reserves](#starters-and-reserves).
 
 ---
 
-## Team Generation Flow
+## Lifecycle
 
 ```
-GET  /api/match-plans/{id}/confirmations   (review who confirmed)
-          │
-          ▼
-POST /api/match-plans/{id}/generate?generationType=BALANCED
-          │
-          ▼
-    MatchPreviewDTO  (NOT persisted — preview only)
-    {
-      teamARatingAvg: 7.14,
-      teamBRatingAvg: 7.12,
-      ratingDelta: 0.02,
-      teams: [ { name: "Team A", players: [...] }, { name: "Team B", players: [...] } ]
-    }
-          │
-          │  ← admin reviews, can regenerate with different algorithm
-          │
-          ▼
-POST /api/match-plans/{id}/generate/confirm?generationType=BALANCED
-          │
-          ▼
-    MatchDTO (201 Created — the actual Match is now persisted)
+   POST /api/match-plans
+            │
+            ▼
+      ┌───────────┐   PATCH /status {CONFIRMED}    ┌────────────┐
+      │  PENDING  │ ─────────────────────────────▶ │ CONFIRMED  │
+      └───────────┘   (needs enough confirmations) └────────────┘
+            │                                            │
+            │ PATCH /status {CANCELLED}                   │ POST /generate/confirm
+            │                                            │
+            ▼                    PATCH /status {CANCELLED}▼
+      ┌───────────┐ ◀──────────────────────────────┌────────────┐
+      │ CANCELLED │                                │ GENERATED  │  ◀── terminal
+      └───────────┘                                └────────────┘
 ```
 
-Available `generationType` values:
-| Value         | Description                                             |
-|---------------|---------------------------------------------------------|
-| `BALANCED`    | Greedy skill-rating equalizer (default, most fair)      |
-| `RANDOM`      | Pure random shuffle                                     |
-| `SNAKE_DRAFT` | Alternating top-pick (snake order by skill rating)      |
+| From        | To          | Via                       | Conditions                                            |
+|-------------|-------------|---------------------------|-------------------------------------------------------|
+| `PENDING`   | `CONFIRMED` | `PATCH /{id}/status`      | `confirmedCount` ≥ `minPlayersRequired` **and** ≥ the match type's total |
+| `PENDING`   | `CANCELLED` | `PATCH /{id}/status`      | kickoff has not passed                                |
+| `CONFIRMED` | `CANCELLED` | `PATCH /{id}/status`      | kickoff has not passed                                |
+| `CONFIRMED` | `GENERATED` | `POST /{id}/generate/confirm` | **not** reachable through the status endpoint     |
+
+Everything else is a `409`.
+
+### `GENERATED` is terminal, and that is the point
+
+A plan whose teams had been drawn used to stay `CONFIRMED` forever. It therefore stayed selectable
+for generation — one plan could produce two matches — and the "plans you can generate from" list only
+ever grew. `GENERATED` records that this plan *became* a match, which is a fact about the past that
+editing the plan cannot undo. Nothing transitions out of it, **including cancellation**: cancelling a
+generated plan would be claiming that a match already on record was called off.
+
+`V17` did **not** backfill existing plans to `GENERATED`. Nothing records which plan a match came
+from — a match stores the players it was played with, not its origin — so a backfill could only guess
+by pairing plans with same-day matches, and it would mark the wrong plan whenever two matches shared
+a date. A plan wrongly frozen as `GENERATED` cannot be recovered through the UI. It was also
+unnecessary: every already-used plan is in the past, and past plans are excluded from generation by
+the expiry rule regardless of status.
+
+### There is deliberately no `EXPIRED`
+
+A plan goes out of date because **the clock moved**, not because anything happened to it. Storing
+that would need a scheduled job whose entire output is "time passed", and every row the job had not
+yet reached would be lying. It is derived on read instead:
+
+| Derived flag  | Rule                                              | Sent on `MatchPlanDTO` as |
+|---------------|---------------------------------------------------|---------------------------|
+| `isExpired()` | `proposedDate` is before now                      | `expired`                 |
+| `isGeneratable()` | status is `CONFIRMED` **and** not expired     | `generatable`             |
+| `isCancellable()` | status is `PENDING` or `CONFIRMED` **and** not expired | `cancellable`    |
+| `pollOpen`    | status is `PENDING` **and** deadline null or ahead | `pollOpen`               |
+
+All four are serialised **so the UI does not re-derive them and drift**. `generatable` in particular
+encodes the "one plan, one match" rule; a client computing it from `status` alone would get it wrong
+the moment expiry mattered.
 
 ---
 
-## API Endpoints
+## The poll
 
-Base path: `/api/match-plans`
+Any authenticated user with a linked player answers for themselves:
 
-| Method  | Path                                            | Auth                          | Description                                                    |
-|---------|-------------------------------------------------|-------------------------------|----------------------------------------------------------------|
-| `POST`  | `/api/match-plans`                              | `ADMIN_USER` or `MASTER_USER` | Create plan and open poll                                      |
-| `GET`   | `/api/match-plans`                              | Any authenticated             | List plans (paginated, optional `status` filter)               |
-| `GET`   | `/api/match-plans/{id}`                         | Any authenticated             | Get plan by ID                                                 |
-| `PATCH` | `/api/match-plans/{id}`                         | `ADMIN_USER` or `MASTER_USER` | Update plan details (PENDING only)                             |
-| `PATCH` | `/api/match-plans/{id}/status`                  | `ADMIN_USER` or `MASTER_USER` | Transition status                                              |
-| `DELETE`| `/api/match-plans/{id}`                         | `ADMIN_USER`                  | Delete a PENDING plan                                          |
-| `GET`   | `/api/match-plans/{id}/confirmations`           | Any authenticated             | List all confirmations (optional `status` filter)              |
-| `POST`  | `/api/match-plans/{id}/confirmations/me`        | Any authenticated             | Self-confirm or decline availability                           |
-| `GET`   | `/api/match-plans/{id}/confirmations/me`        | Any authenticated             | Get your own confirmation entry                                |
-| `PATCH` | `/api/match-plans/{id}/confirmations/{playerId}`| `ADMIN_USER` or `MASTER_USER` | Admin override: set any player's confirmation status           |
-| `POST`  | `/api/match-plans/{id}/generate`                | `ADMIN_USER` or `MASTER_USER` | Preview generated teams (stateless, not persisted)             |
-| `POST`  | `/api/match-plans/{id}/generate/confirm`        | `ADMIN_USER` or `MASTER_USER` | Confirm preview and create the match                           |
+```http
+POST /api/match-plans/5/confirmations/me
+{ "status": "CONFIRMED", "notes": "Straight from work, five minutes late" }
+```
 
-### Authorization Matrix
+It is an upsert — the row is created on first answer and rewritten afterwards. **The poll must be
+open**: status `PENDING`, and the confirmation deadline either unset or still ahead. Both failures
+are `409`.
 
-| Action                           | `BASIC_USER` | `MASTER_USER` | `ADMIN_USER` |
-|----------------------------------|:---:|:---:|:---:|
-| Read plans / confirmations       | ✅ | ✅ | ✅ |
-| Self-confirm availability        | ✅ | ✅ | ✅ |
-| Create plan                      | ❌ | ✅ | ✅ |
-| Update plan details              | ❌ | ✅ | ✅ |
-| Change plan status               | ❌ | ✅ | ✅ |
-| Override any player confirmation | ❌ | ✅ | ✅ |
-| Generate team preview            | ❌ | ✅ | ✅ |
-| Confirm generation (create match)| ❌ | ✅ | ✅ |
-| Delete plan                      | ❌ | ❌ | ✅ |
+An account with no linked player gets `400 No player linked to your account`. That linked player is
+the membership test throughout this feature, including for bringing guests: an account without one is
+a spectator.
+
+`confirmed_count` is recomputed with a `COUNT` after every write rather than incremented, so it
+cannot drift from the rows it summarises.
+
+### Manager override
+
+`PATCH /{id}/confirmations/{playerId}` lets a `MANAGER` set anyone's answer — for the player who
+texts the group instead of opening the app. It is refused **only** on a `CANCELLED` plan; a manager
+can still correct confirmations on a `PENDING`, `CONFIRMED` or `GENERATED` one, and it ignores the
+confirmation deadline, which is the difference between an override and self-service.
+
+---
+
+## Starters and reserves
+
+A plan may collect more confirmations than the match needs, and for a long time nothing told the
+players that. Somebody could confirm, see `CONFIRMED`, and be fourth in line with no way to know.
+
+Every confirmation now carries its standing:
+
+| Field              | Meaning                                                              |
+|--------------------|----------------------------------------------------------------------|
+| `confirmationRank` | 1-based place among `CONFIRMED` players, in confirmation order       |
+| `isStarter`        | Whether that rank is within the match type's required count          |
+| `waitlistPosition` | 1-based place in the reserve queue — 1 means next in                 |
+
+All three are **null for anyone not `CONFIRMED`**. A pending or declined player holds no place in the
+queue, and a `0` or `-1` would invite a frontend to render one.
+
+**One ordering produces all of it.** Ranks, the starting selection, and the pool team generation
+actually draws from are each read from `confirmedAt ASC NULLS LAST, id ASC`. Deriving them separately
+would let the badge a player sees disagree with the team they end up in.
+
+**Promotion needs no bookkeeping.** Withdrawing clears `confirmedAt` and drops the player out of the
+`CONFIRMED` set entirely, so everyone behind them moves up and the first reserve lands in the freed
+slot. It is re-evaluated on every read and again at generation — including between the preview and
+the confirm, so a late withdrawal is reflected in the match that gets created rather than in the
+preview somebody looked at a minute earlier.
+
+This is why `GET /{id}/confirmations?status=DECLINED` loads the whole ordered list and filters
+afterwards. Ranks are positions *within the confirmed set*; a query already narrowed to `DECLINED`
+could not produce them, and running two queries would mean two results that can disagree.
+
+---
+
+## Guests
+
+Any member with a linked player may bring an outsider to fill an empty spot.
+
+```http
+POST /api/match-plans/5/guests
+{ "name": "João (Rui's friend)", "baseSkillRating": 6, "notes": "coming straight from work" }
+```
+
+**It is deliberately not role-gated.** Everything that decides whether an invite is legitimate is
+*state* — is the poll open, is there room, has this member already brought their allowance, is there
+already a João on this plan — and none of it fits in a `@PreAuthorize` expression. The endpoint is
+`isAuthenticated()` and the real checks live in `MatchPlanService`, the same conclusion
+`DraftSessionService` reached about turn order.
+
+The checks, in order:
+
+| Check                                 | Failure                                                     |
+|---------------------------------------|-------------------------------------------------------------|
+| Caller has a linked player            | `400` — no player linked to your account                    |
+| Poll is open                          | `409`                                                       |
+| Plan is not already full              | `409` — guests fill spots, they never extend the queue      |
+| Per-inviter cap                       | `409` — `guests.max.per.inviter`, default **2**, range 0–10 |
+| No guest of that name on this plan     | `409` — two members adding "João" is probably the same João |
+
+A guest never joins the waitlist. A member queues because a promotion later actually benefits them; a
+stranger sitting fourth in line benefits nobody, and promising someone a game the group cannot give
+them is worse than saying no. The cap is a per-group setting, resolved against the group the request
+is acting in — a closed Sunday league and an open kickabout want different answers, and **zero is a
+real policy** meaning members only. It is counted live, so removing a guest frees the slot again.
+
+The name check is scoped to the plan, not the group: a group can perfectly well know three Joãos
+across a season.
+
+**Three rows in one transaction** — the guest `Player`, their already-`CONFIRMED` confirmation, and a
+payment delegation making the inviter the person the organiser asks about the fee. A guest exists
+*because* they are coming to this match, so a half-created one is not a state worth reaching. The
+fee itself stays on the guest's own ledger row: `uq_player_charges_plan` forbids a second charge on
+the inviter for the same plan, and the split is proven to sum to the plan's total. The delegation
+carries the *responsibility*, which is a different thing from the debt.
+
+There is **no phone number**, deliberately. A guest's details are typed by somebody else, about a
+person who agreed to a football match but not to an app. A name and a rough skill guess are what a
+team sheet needs. It also sidesteps a real gap: `PlayerPiiPolicy` has no concept of "the person who
+invited them", so an inviting member could not have seen the number they themselves typed.
+
+`baseSkillRating` is optional, 1–10, and **defaults to 5** — the same value a new player's computed
+rating starts at, so generation has something to balance with. Insisting the inviter be precise about
+a stranger would only produce confident-looking noise.
+
+### Removing one
+
+`DELETE /{id}/guests/{playerId}`. The **inviter** may remove their own while the poll is open — the
+same window as changing their own answer. A **`MANAGER`** may remove any until the plan is
+`GENERATED`. Everyone else gets `403`: a guest is somebody's specific arrangement, not communal
+property.
+
+What happens to the player row depends on whether there is anything to protect:
+
+- **Never played** → hard-deleted, along with the delegation. The delegation must be *deleted* rather
+  than ended — an ended row still references the player being removed and Hibernate rejects that at
+  flush. This was found by the first real use of the feature, not by the mocked test suite.
+- **Has history** → deactivated, keeping their record, exactly as `PlayerService.deletePlayer`
+  refuses to delete anyone holding stats.
+
+---
+
+## What the pitch cost
+
+`total_cost_cents` lives on the plan but is written through the **payments** API, because the
+authorization question is a payments one:
+
+| Endpoint                             | Roles                    |
+|--------------------------------------|--------------------------|
+| `PUT /api/match-plans/{id}/cost`     | `MANAGER` or `ORGANIZER` |
+| `POST /api/match-plans/{id}/charges` | `MANAGER` or `ORGANIZER` |
+
+Whoever booked the pitch knows what it cost, and that is the manager; whether money actually arrived
+is only known to the person it was sent to, and that is the organizer.
+
+**Null and zero are different.** Null means "nobody has recorded it yet" and generates no charges;
+zero means the match was free, which happens. `totalCostCents` is serialised **non-null**, so the key
+is *absent* rather than null when unset — without that the value could be saved and never read back,
+and the field appeared to reset itself on every render.
+
+**The total is stored, not a per-head figure.** The total is the number somebody actually knows when
+they book. Per-head amounts are derived from it once, at charge generation, when the headcount is
+finally settled — and each charge then carries its own frozen amount, so correcting the total
+afterwards cannot rewrite what people already owe.
+
+Charges are generated automatically at the `CONFIRMED → GENERATED` transition: the moment the squad
+is final is the moment the pitch is committed, so it is the moment the fee is owed. Generation is a
+no-op when there is no recorded cost, and idempotent — `POST /charges` exists for when the cost was
+not known at generation time, and re-running it adds nothing.
+
+---
+
+## Team generation
+
+```
+POST /api/match-plans/{id}/generate?generationType=BALANCED          → MatchPreviewDTO (nothing persisted)
+POST /api/match-plans/{id}/generate/confirm?generationType=BALANCED  → MatchDTO (201, the Match exists)
+```
+
+Both require `MANAGER` and both require `generatable` — `CONFIRMED` **and** kickoff still ahead. The
+error message distinguishes the three ways that fails:
+
+| State                | `400` message                                                |
+|----------------------|--------------------------------------------------------------|
+| `GENERATED`          | Teams have already been generated for this match plan        |
+| expired              | Match plan kickoff has already passed                        |
+| anything else        | Match plan must be in CONFIRMED status before generating teams |
+
+**The preview persists nothing.** Call it as often as you like with different algorithms to compare
+distributions. `RANDOM` will produce a different result each time, by design; `BALANCED` and
+`SNAKE_DRAFT` are deterministic.
+
+### Algorithms
+
+| `generationType` | State                                                            |
+|------------------|------------------------------------------------------------------|
+| `BALANCED`       | Greedy rating equalizer. The default                             |
+| `RANDOM`         | Pure shuffle                                                     |
+| `SNAKE_DRAFT`    | Alternating top pick                                             |
+| `FORM_BASED`     | Last-N-match linearly weighted form score                        |
+| `CAPTAIN_PICK`   | Server-side simulation. The *interactive* version is a [draft session](DRAFT_SESSION_FEATURE.md) |
+| `STREAK_AWARE`   | ⛔ Resolves, then throws `422` — awaiting `CalculationService`     |
+| `MANUAL`         | Rejected here with `400` — it means "the caller supplied the teams", which is `POST /api/matches` |
+
+### Who actually plays
+
+The first `required` confirmations in confirmation order — 10, 14 or 22 by match type. Surplus
+confirmations are reserves and are excluded from the draw. Fewer than `required` is a `400`, which is
+why the `PENDING → CONFIRMED` transition enforces the match-type minimum as well as
+`minPlayersRequired`: generation must not be able to fail after a plan has been declared confirmed.
+
+Two defensive checks sit around the strategy, both `422`:
+
+- A confirmed player who no longer exists — the response names the missing ids so the caller can
+  clear the stale confirmations.
+- A strategy returning teams that are not both exactly half the required size. A strategy bug must
+  not be able to persist a lopsided match.
+
+`confirmGeneration` additionally needs a **current season** (`400` if there is none), reactivates any
+inactive player it drew, writes the `Match`, two `MatchTeam` rows and every `PlayerStat` in batches,
+marks the plan `GENERATED`, and then generates the fee charges.
+
+### Teams are named after their best player
+
+Not "Team A" and "Team B" — those told you nothing and read identically on every match ever played.
+Each side is named `Team {name of its highest-rated player}`, which gives it an identity people
+recognise, and it is derived rather than stored, so the same squad always produces the same name.
+**Ties break on player id**, not list order: two players on identical ratings is common on a small
+roster, and without a tie-break the name would depend on whatever order the strategy happened to
+emit, which changes between runs of the same generation.
+
+`MatchPreviewDTO.teams[].name` carries these real names too, so the preview matches what gets
+created. The field names `teamARatingAvg` / `teamBRatingAvg` / `ratingDelta` are positional — A is
+`teams[0]`.
+
+---
+
+## Reminders
+
+Two independent push notifications, both driven by `ReminderScheduler` hourly on the hour.
+
+| Reminder      | Window        | Sent to                        | Category                |
+|---------------|---------------|--------------------------------|-------------------------|
+| Deadline near | next 24 hours | Everyone who has **not answered** | `CONFIRMATION_DEADLINE` |
+| Match soon    | next 1 day    | Everyone **confirmed**         | `MATCH_REMINDER`        |
+
+Only the people the message is for. Someone who already answered has done what the deadline asks, and
+telling them again is exactly the noise that gets a whole notification channel switched off.
+
+**Each send is claimed before it is sent**, with a conditional `UPDATE ... WHERE sent_at IS NULL`
+(`V13`). The database picks the winner, so a second application instance updates zero rows and sends
+nothing; a read-then-write would leave a window where both instances see null and both send. Claiming
+*before* sending means a crash in between loses that reminder rather than re-sending it to everybody
+on the next tick — a missed reminder is a small annoyance, a duplicated one is why people turn
+notifications off. The guarantee is therefore **at most once**, not exactly once.
+
+The sweep is global across every group — one query rather than waking once per group to ask the same
+question — and the tenant is bound **per row**, from the plan the sweep found. A scheduler has no
+request to inherit a group from, and each row already knows which one it belongs to.
+
+---
+
+## Tenancy
+
+Every plan and every confirmation carries `tenant_id`, stamped at persist by `TenantStamping`.
+
+- Single-row loads go through `findPlanOrThrow`, which loads by id and then `TenantGuard.assertOwned`
+  — an id from another group is refused rather than returned.
+- The paginated list query takes `tenantId` as a **non-optional, never-widened** parameter. Every
+  other predicate in that query exists to narrow a list somebody asked to be narrowed; this one
+  exists so the list was never wider than the caller's group to begin with.
+- The cache key is prefixed with the current tenant.
+
+Note the deliberate asymmetry in the list query: status and timeframe are expressed as *widened*
+arguments — every status, and bounds that cannot exclude anything — rather than as nullable binds.
+A null-valued bind on an enum or timestamp leans on driver type inference, and the `CAST` workaround
+is dialect-specific. The same SQL runs every time, so nothing surprises on Postgres that did not
+surprise on H2.
+
+### Privacy
+
+`created_by` stores a username, which identifies a person as surely as their name does. Erasure
+replaces the attribution with a tombstone and keeps the plans:
+
+- `scrubCreatedBy` — every tenant. Correct for erase-platform, where the account is going and
+  usernames are globally unique.
+- `scrubCreatedByInTenant` — one group. Somebody leaving their Tuesday five-a-side has not asked to
+  be scrubbed from the audit trail of a different group they still play in.
+
+---
+
+## Caching
+
+| Cache       | Populated by            | Evicted by                                            |
+|-------------|-------------------------|-------------------------------------------------------|
+| `matchPlans`| `GET /api/match-plans/{id}` | Every write in `MatchPlanService`, `allEntries` |
+
+Its own Caffeine cache since the match-plan feature grew past sharing `matches` — 10-minute TTL,
+500 entries, per node. `confirmGeneration` evicts `matches` as well, because it creates one.
+
+The paginated list is **not** cached; only the single-plan read is.
+
+---
+
+## API
+
+Base path `/api/match-plans`, except the two cost endpoints, which are served by `PaymentController`.
+
+| Method   | Path                                 | Role                     | Notes                                        |
+|----------|--------------------------------------|--------------------------|----------------------------------------------|
+| `POST`   | `/`                                  | `MANAGER`                | `201`, `Location` header                     |
+| `GET`    | `/`                                  | authenticated            | Paginated. `status`, `timeframe` params      |
+| `GET`    | `/{id}`                              | authenticated            | Cached                                       |
+| `PATCH`  | `/{id}`                              | `MANAGER`                | `PENDING` only. Null fields ignored          |
+| `PATCH`  | `/{id}/status`                       | `MANAGER`                | See the transition table                     |
+| `DELETE` | `/{id}`                              | **`GROUP_ADMIN`**        | `PENDING` only. `204`                        |
+| `GET`    | `/{id}/confirmations`                | authenticated            | Optional `status` filter                     |
+| `POST`   | `/{id}/confirmations/me`             | authenticated            | Upsert. Poll must be open                    |
+| `GET`    | `/{id}/confirmations/me`             | authenticated            | Includes the caller's own waitlist standing  |
+| `PATCH`  | `/{id}/confirmations/{playerId}`     | `MANAGER`                | Override. Refused only on `CANCELLED`        |
+| `POST`   | `/{id}/guests`                       | authenticated            | `201`. State checks, not a role gate         |
+| `DELETE` | `/{id}/guests/{playerId}`            | authenticated            | Inviter or `MANAGER`. `204`                  |
+| `POST`   | `/{id}/generate`                     | `MANAGER`                | Preview. Persists nothing                    |
+| `POST`   | `/{id}/generate/confirm`             | `MANAGER`                | `201`. Creates the `Match`                   |
+| `PUT`    | `/{id}/cost`                         | `MANAGER` or `ORGANIZER` | `204`. `PaymentController`                   |
+| `POST`   | `/{id}/charges`                      | `MANAGER` or `ORGANIZER` | `PaymentController`. Idempotent              |
+
+`timeframe` is `upcoming` (kickoff ahead), `past` (kickoff behind), or omitted for both — anything
+else is a `400`. It is filtered **in the query, not the client**, because the list is server
+paginated: drop rows after the page is built and a page of twenty shows however many survived while
+`totalElements` keeps counting the ones that did not. Separating the two is what stops a plan from
+three weeks ago sitting above next Friday's.
+
+### Roles
+
+The names changed in `V33`: `ADMIN` → `GROUP_ADMIN`, and what used to be `MASTER_USER` / `ADMIN_USER`
+is now the flat, per-membership set below. See [multi-tenancy](../../architecture/multi-tenancy.md).
+
+| Action                          | member | `MANAGER` | `ORGANIZER` | `GROUP_ADMIN` |
+|---------------------------------|:------:|:---------:|:-----------:|:-------------:|
+| Read plans and confirmations    | ✅ | ✅ | ✅ | ✅ |
+| Answer for yourself             | ✅ | ✅ | ✅ | ✅ |
+| Bring a guest                   | ✅ | ✅ | ✅ | ✅ |
+| Remove your own guest           | ✅ | ✅ | ✅ | ✅ |
+| Remove any guest                | ❌ | ✅ | ❌ | ❌ |
+| Create / update a plan          | ❌ | ✅ | ❌ | ❌ |
+| Change status                   | ❌ | ✅ | ❌ | ❌ |
+| Override a confirmation         | ❌ | ✅ | ❌ | ❌ |
+| Generate teams                  | ❌ | ✅ | ❌ | ❌ |
+| Set the pitch cost              | ❌ | ✅ | ✅ | ❌ |
+| **Delete a plan**               | ❌ | ❌ | ❌ | ✅ |
+
+`GROUP_ADMIN` holds exactly one thing here, and holds it *only* — deleting a plan destroys everyone's
+answers, so it sits with group administration rather than with running matches. A `GROUP_ADMIN` who
+also organises matches holds `MANAGER` too, and says so.
 
 ---
 
 ## DTOs
 
-### `MatchPlanDTO` (Response)
+### `MatchPlanCreateDTO` — `POST /`
 
-| Field                  | Type    | Nullable | Notes                                                              |
-|------------------------|---------|----------|--------------------------------------------------------------------|
-| `id`                   | Long    | No       |                                                                    |
-| `title`                | String  | No       |                                                                    |
-| `matchType`            | String  | No       | `FIVE_A_SIDE` / `SEVEN_A_SIDE` / `ELEVEN_A_SIDE`                 |
-| `location`             | String  | Yes      |                                                                    |
-| `proposedDate`         | String  | No       | ISO-8601 date: `"2026-05-23"`                                      |
-| `confirmationDeadline` | Instant | Yes      |                                                                    |
-| `status`               | String  | No       | `PENDING` / `CONFIRMED` / `CANCELLED`                             |
-| `confirmedCount`       | int     | No       | Number of players who CONFIRMED                                    |
-| `minPlayersRequired`   | int     | No       | Minimum needed to generate teams                                   |
-| `description`          | String  | Yes      |                                                                    |
-| `createdBy`            | String  | Yes      | Username of creator                                                |
-| `playersNeeded`        | int     | No       | `max(0, minPlayersRequired - confirmedCount)` — computed           |
-| `pollOpen`             | boolean | No       | `true` when `status == PENDING` and deadline has not passed        |
-| `createdAt`            | Instant | No       |                                                                    |
-| `updatedAt`            | Instant | No       |                                                                    |
+| Field                  | Type      | Required | Validation                                    |
+|------------------------|-----------|----------|-----------------------------------------------|
+| `title`                | String    | Yes      | `@NotBlank`, 2–100                            |
+| `matchType`            | String    | Yes      | one of the three                              |
+| `location`             | String    | No       | ≤ 255                                         |
+| `proposedDate`         | **Instant** | Yes    | `@FutureOrPresent`, **and** must be after now |
+| `confirmationDeadline` | Instant   | No       | must be strictly before `proposedDate`        |
+| `description`          | String    | No       | ≤ 500                                         |
+| `minPlayersRequired`   | Integer   | No       | `@Positive`. Defaults to, and cannot be below, the match type's total |
 
-### `MatchPlanCreateDTO` (POST request)
+Both the kickoff and the deadline checks are comparisons **between instants**. They used to widen the
+kickoff to the start of its day, which let a plan be created for a kickoff that had already been and
+gone this morning, and let a deadline land after the match had started.
 
-| Field                  | Type    | Required | Validation                                              |
-|------------------------|---------|----------|---------------------------------------------------------|
-| `title`                | String  | Yes      | `@NotBlank`                                             |
-| `matchType`            | String  | Yes      | `FIVE_A_SIDE` / `SEVEN_A_SIDE` / `ELEVEN_A_SIDE`       |
-| `location`             | String  | No       |                                                         |
-| `proposedDate`         | String  | Yes      | `@Future` — must be a future date, format `YYYY-MM-DD`  |
-| `confirmationDeadline` | Instant | No       |                                                         |
-| `description`          | String  | No       |                                                         |
-| `minPlayersRequired`   | Integer | No       | Default `14`                                            |
+### `MatchPlanUpdateDTO` — `PATCH /{id}`
 
-### `MatchPlanUpdateDTO` (PATCH request — all fields optional)
+`title`, `location`, `proposedDate`, `confirmationDeadline`, `description`. All optional; **null
+means no change**, so a field cannot be cleared through this endpoint. `PENDING` plans only (`409`
+otherwise). A supplied deadline is validated against the kickoff being set in the same request, or
+the stored one if it is unchanged.
 
-| Field                  | Type    | Notes                       |
-|------------------------|---------|-----------------------------|
-| `title`                | String  | Null = no change            |
-| `location`             | String  | Null = no change            |
-| `proposedDate`         | String  | Null = no change            |
-| `confirmationDeadline` | Instant | Null = no change            |
-| `description`          | String  | Null = no change            |
+`totalCostCents` is **not** here — see [what the pitch cost](#what-the-pitch-cost).
 
-> ⚠️ Updates are only allowed when the plan is in `PENDING` status.
+### `MatchPlanDTO` — response
 
-### `MatchPlanStatusDTO` (PATCH /status request)
+`id`, `title`, `matchType`, `location`, `proposedDate`, `confirmationDeadline`, `status`,
+`confirmedCount`, `minPlayersRequired`, `description`, `createdBy`, `createdAt`, `updatedAt`, plus:
 
-| Field    | Type   | Required | Validation            |
-|----------|--------|----------|-----------------------|
-| `status` | String | Yes      | `@NotBlank`           |
+| Field            | Derived from                                        |
+|------------------|-----------------------------------------------------|
+| `playersNeeded`  | `max(0, minPlayersRequired - confirmedCount)`        |
+| `pollOpen`       | `PENDING` and the deadline has not passed            |
+| `expired`        | kickoff is behind us                                 |
+| `generatable`    | `CONFIRMED` and not expired                          |
+| `cancellable`    | `PENDING`/`CONFIRMED` and not expired                |
+| `totalCostCents` | **omitted entirely when unset** — absent ≠ `0`       |
 
-### `ConfirmationUpsertDTO` (POST /confirmations/me and PATCH /confirmations/{playerId})
+### `PlayerConfirmationDTO` — response
 
-| Field    | Type   | Required | Validation              | Notes                                       |
-|----------|--------|----------|-------------------------|---------------------------------------------|
-| `status` | String | Yes      | `@NotBlank`             | `CONFIRMED` / `DECLINED` / `PENDING`        |
-| `notes`  | String | No       | `@Size(max=500)`        | Optional note (e.g. "Will be 5 min late")   |
+`id`, `matchPlanId`, `playerId`, `playerName`, `status`, `notes`, `confirmedAt`, plus
+`confirmationRank`, `isStarter`, `waitlistPosition` (see
+[starters and reserves](#starters-and-reserves)) and:
 
-### `PlayerConfirmationDTO` (Response)
+| Field               | Notes                                                                 |
+|---------------------|-----------------------------------------------------------------------|
+| `isGuest`           | Carried on the confirmation, not looked up from the roster — the member view of a plan never loads the roster, and the row has to render its own chip |
+| `invitedByPlayerId` | Null for members. What the remove affordance compares against         |
 
-| Field         | Type    | Nullable | Notes                                          |
-|---------------|---------|----------|------------------------------------------------|
-| `id`          | Long    | No       |                                                |
-| `matchPlanId` | Long    | No       |                                                |
-| `playerId`    | Long    | No       |                                                |
-| `playerName`  | String  | No       |                                                |
-| `status`      | String  | No       | `CONFIRMED` / `DECLINED` / `PENDING`           |
-| `notes`       | String  | Yes      |                                                |
-| `confirmedAt` | Instant | Yes      | Set when player first confirms                 |
+### `ConfirmationUpsertDTO` / `GuestCreateDTO` / `MatchPlanStatusDTO`
 
-### `MatchPreviewDTO` (POST /generate response)
+| DTO                     | Fields                                                            |
+|-------------------------|--------------------------------------------------------------------|
+| `ConfirmationUpsertDTO` | `status` (`@NotBlank`), `notes` (≤ 500)                            |
+| `GuestCreateDTO`        | `name` (`@NotBlank`, 2–100), `baseSkillRating` (1–10, default 5), `notes` (≤ 500) |
+| `MatchPlanStatusDTO`    | `status` (`@NotBlank`)                                             |
 
-| Field              | Type                         | Notes                                               |
-|--------------------|------------------------------|-----------------------------------------------------|
-| `matchPlanId`      | Long                         |                                                     |
-| `matchType`        | String                       |                                                     |
-| `generationType`   | String                       |                                                     |
-| `location`         | String                       |                                                     |
-| `proposedDate`     | String                       |                                                     |
-| `generationNotes`  | String                       | Algorithm explanation                               |
-| `teamARatingAvg`   | double                       | Average skill rating of Team A                      |
-| `teamBRatingAvg`   | double                       | Average skill rating of Team B                      |
-| `ratingDelta`      | double                       | `|teamARatingAvg - teamBRatingAvg|` → fairness gauge|
-| `teams`            | List\<PreviewTeamDTO\>       | Two teams with players and their ratings            |
+### `MatchPreviewDTO` — `POST /{id}/generate`
 
-**`PreviewTeamDTO`:**
-
-| Field        | Type                                | Notes                      |
-|--------------|-------------------------------------|----------------------------|
-| `name`       | String                              | `"Team A"` / `"Team B"`    |
-| `ratingAvg`  | double                              | Average skill rating        |
-| `players`    | List\<PreviewPlayerDTO\>            | Players in this team        |
-
-**`PreviewPlayerDTO`:**
-
-| Field         | Type   | Notes                  |
-|---------------|--------|------------------------|
-| `playerId`    | Long   |                        |
-| `playerName`  | String |                        |
-| `skillRating` | double |                        |
+`matchPlanId`, `matchType`, `generationType`, `location`, `proposedDate`, `generationNotes`,
+`teamARatingAvg`, `teamBRatingAvg`, `ratingDelta`, and `teams[]` of
+`{ name, ratingAvg, players[{ playerId, playerName, skillRating }] }`.
 
 ---
 
-## Business Rules
+## Errors
 
-1. **`proposedDate` must be in the future** — validated with `@Future`. Updating a plan to
-   a past date is rejected.
-
-2. **Only `PENDING` plans can be updated** — `PATCH /{id}` returns `409 Conflict` if the
-   plan is `CONFIRMED` or `CANCELLED`.
-
-3. **Only `PENDING` plans can be deleted** — `DELETE /{id}` returns `409 Conflict` for
-   non-pending plans.
-
-4. **Confirmations are upsert** — `POST /confirmations/me` creates the record if it
-   doesn't exist, or updates it if it does.
-
-5. **`confirmedCount` is maintained automatically** — the service increments/decrements
-   `confirmedCount` on the `MatchPlan` record whenever a confirmation status changes
-   to/from `CONFIRMED`.
-
-6. **`pollOpen` is computed** — `true` when `status == PENDING` and either
-   `confirmationDeadline` is null or it is in the future. It is **not** a stored column.
-
-7. **`playersNeeded` is computed** — `max(0, minPlayersRequired - confirmedCount)`.
-   Useful for UI display ("Still need 3 more players").
-
-8. **Team generation uses confirmed players only** — only players with `status == CONFIRMED`
-   are included in the generated teams. The confirmed pool must match the team
-   size requirements of the `matchType` (e.g. 14 for SEVEN_A_SIDE).
-
-9. **Generation is stateless** — `POST /generate` never persists anything. The preview
-   is computed in memory. Call it multiple times with different `generationType` values
-   to compare distributions.
-
-10. **`generate/confirm` creates the match** — each call to `POST /generate/confirm`
-    creates one `Match`. Calling it multiple times creates multiple matches from the same
-    plan (admins should confirm only once).
+| Scenario                                        | Status | Message                                                        |
+|-------------------------------------------------|--------|----------------------------------------------------------------|
+| Plan not found, or belongs to another group     | `404`  | `MatchPlan with id {id} not found`                             |
+| Caller has no linked player                     | `400`  | `No player linked to your account`                             |
+| Kickoff not in the future                       | `400`  | `proposedDate must be in the future`                           |
+| Deadline not before kickoff                     | `400`  | `confirmationDeadline must be before proposedDate`             |
+| `minPlayersRequired` below the match-type total | `400`  | names both numbers                                             |
+| Invalid `timeframe`                             | `400`  | `Must be 'upcoming' or 'past'`                                 |
+| Unknown enum value                              | `400`  | lists the valid ones                                           |
+| Updating a non-`PENDING` plan                   | `409`  | `only PENDING plans can be updated`                            |
+| Deleting a non-`PENDING` plan                   | `409`  | `only PENDING plans can be deleted`                            |
+| Disallowed status transition                    | `409`  | `Cannot transition match plan from {from} to {to}`             |
+| Cancelling after kickoff                        | `409`  | `Cannot cancel a match plan whose kickoff has already passed`  |
+| Answering a closed poll                         | `409`  | not `PENDING`, or the deadline has passed                      |
+| Confirming without enough players               | `422`  | names the shortfall, twice if the match-type minimum also fails |
+| Plan full / guest cap / duplicate guest name    | `409`  | see [guests](#guests)                                          |
+| Removing someone else's guest                   | `403`  | `Only the member who brought this guest, or a manager`         |
+| Generating from a plan that is not generatable  | `400`  | one of three distinct messages                                 |
+| Too few confirmed to generate                   | `400`  | `Confirmed player count must be at least {N}`                  |
+| Confirmed player no longer exists               | `422`  | names the missing ids                                          |
+| Strategy returned unbalanced teams              | `422`  | names both sizes                                               |
+| `STREAK_AWARE`                                  | `422`  | not yet available                                              |
+| No current season at generation                 | `400`  | `No active season; cannot create match`                        |
 
 ---
 
-## Request / Response Examples
+## Implementation
 
-### Create a Match Plan
+| Layer      | Files                                                                          |
+|------------|--------------------------------------------------------------------------------|
+| Entities   | `MatchPlan`, `PlayerConfirmation`, `PlanStatus`, `ConfirmationStatus`           |
+| Service    | `MatchPlanService` — the whole feature, including guests and the waitlist        |
+| Controller | `MatchPlanController`; cost and charges on `PaymentController`                   |
+| Mapper     | `MatchPlanMapper` (MapStruct). Waitlist fields are `ignore`d — they cannot be derived from one confirmation, so `MatchPlanService` fills them in |
+| Repos      | `MatchPlanRepository` (search, reminder claims, privacy scrubs), `PlayerConfirmationRepository` (the ordering) |
+| Fees       | `MatchFeeService`                                                                |
+| Push       | `ReminderScheduler`, `ReminderDispatcher`                                        |
+| Migrations | `V1` initial · `V13` reminder guards · `V17` kickoff + `GENERATED` · `V19` cost · `V20` delegation · `V24`/`V25` tenancy |
 
-```http
-POST /api/match-plans HTTP/1.1
-Content-Type: application/json
-Authorization: Bearer <admin-token>
-
-{
-  "title": "Friday Night — Week 21",
-  "matchType": "SEVEN_A_SIDE",
-  "location": "Central Park Pitch 2",
-  "proposedDate": "2026-05-30",
-  "confirmationDeadline": "2026-05-29T20:00:00Z",
-  "description": "Bring bibs",
-  "minPlayersRequired": 14
-}
-```
-
-**Response `201 Created`:**
-```json
-{
-  "id": 5,
-  "title": "Friday Night — Week 21",
-  "matchType": "SEVEN_A_SIDE",
-  "location": "Central Park Pitch 2",
-  "proposedDate": "2026-05-30",
-  "confirmationDeadline": "2026-05-29T20:00:00Z",
-  "status": "PENDING",
-  "confirmedCount": 0,
-  "minPlayersRequired": 14,
-  "description": "Bring bibs",
-  "createdBy": "admin",
-  "playersNeeded": 14,
-  "pollOpen": true,
-  "createdAt": "2026-05-22T10:00:00Z",
-  "updatedAt": "2026-05-22T10:00:00Z"
-}
-```
-
-### Player Self-Confirms
-
-```http
-POST /api/match-plans/5/confirmations/me HTTP/1.1
-Content-Type: application/json
-Authorization: Bearer <player-token>
-
-{
-  "status": "CONFIRMED",
-  "notes": "Will be 5 minutes late"
-}
-```
-
-**Response `200 OK`:**
-```json
-{
-  "id": 33,
-  "matchPlanId": 5,
-  "playerId": 42,
-  "playerName": "João Silva",
-  "status": "CONFIRMED",
-  "notes": "Will be 5 minutes late",
-  "confirmedAt": "2026-05-22T11:00:00Z"
-}
-```
-
-### Generate Team Preview (BALANCED)
-
-```http
-POST /api/match-plans/5/generate?generationType=BALANCED HTTP/1.1
-Authorization: Bearer <admin-token>
-```
-
-**Response `200 OK`:**
-```json
-{
-  "matchPlanId": 5,
-  "matchType": "SEVEN_A_SIDE",
-  "generationType": "BALANCED",
-  "location": "Central Park Pitch 2",
-  "proposedDate": "2026-05-30",
-  "generationNotes": "Teams balanced by skill rating using greedy bin-packing",
-  "teamARatingAvg": 7.14,
-  "teamBRatingAvg": 7.12,
-  "ratingDelta": 0.02,
-  "teams": [
-    {
-      "name": "Team A",
-      "ratingAvg": 7.14,
-      "players": [
-        { "playerId": 1, "playerName": "João Silva", "skillRating": 9.0 },
-        { "playerId": 3, "playerName": "Carlos M.", "skillRating": 7.5 }
-      ]
-    },
-    {
-      "name": "Team B",
-      "ratingAvg": 7.12,
-      "players": [
-        { "playerId": 2, "playerName": "Pedro Costa", "skillRating": 8.5 }
-      ]
-    }
-  ]
-}
-```
-
-### Confirm Generation (Creates the Match)
-
-```http
-POST /api/match-plans/5/generate/confirm?generationType=BALANCED HTTP/1.1
-Authorization: Bearer <admin-token>
-```
-
-**Response `201 Created`:** Full `MatchDTO` (same shape as `POST /api/matches` response).
+Frontend: `src/features/matchPlans/` (page, card, detail modal, create modal, edit form, cost
+section, guest modal), `useMatchPlans`, `matchPlanService`, `types/matchPlan.ts`, route
+`/match-plans`.
 
 ---
 
-## Caching Strategy
+## Known gaps
 
-Match plans use the `matches` Caffeine cache (shared with the Match feature):
+Recorded here rather than left to be discovered — see [CONTRIBUTING](../../CONTRIBUTING.md) rule 5.
 
-| Cache Name | Populated By         | Evicted When          |
-|------------|----------------------|-----------------------|
-| `matches`  | `GET /api/match-plans/{id}` | Any write to match plans |
-
----
-
-## Implementation Details
-
-- **Entity:** `MatchPlan.java`, `PlayerConfirmation.java` — JPA entities with Lombok
-- **Service:** `MatchPlanService.java` — business logic, confirmation management, team generation dispatch
-- **Controller:** `MatchPlanController.java` — REST layer; `@AuthenticationPrincipal UserPrincipal` used for self-service confirmation
-- **Team generation:** Delegated to `TeamGenerationStrategyFactory` → `BalancedGenerationStrategy` / `RandomGenerationStrategy` / `SnakeDraftGenerationStrategy`
-- **DTOs:** `MatchPlanCreateDTO`, `MatchPlanDTO`, `MatchPlanUpdateDTO`, `MatchPlanStatusDTO`, `ConfirmationUpsertDTO`, `PlayerConfirmationDTO`, `MatchPreviewDTO` — all Java Records
-
----
-
-## Error Reference
-
-| Scenario                                       | Status | Message                                                  |
-|------------------------------------------------|--------|----------------------------------------------------------|
-| Plan not found                                 | 404    | `MatchPlan with id {id} not found`                       |
-| Updating a non-PENDING plan                    | 409    | `Match plan cannot be updated in status {status}`        |
-| Deleting a non-PENDING plan                    | 409    | `Match plan cannot be deleted in status {status}`        |
-| Invalid status transition                      | 400    | `Invalid status transition from {from} to {to}`          |
-| Not enough confirmed players for generation    | 400    | `Not enough confirmed players: need {N}, have {M}`       |
-| `CAPTAIN_PICK` or unsupported algorithm        | 422    | `CAPTAIN_PICK is not yet available`                      |
-| Player not found for admin confirmation        | 404    | `Player with id {id} not found`                          |
-| proposedDate in the past                       | 400    | Validation violation on `proposedDate`                   |
-
+1. **Setting the cost does not evict the plan cache.** `MatchFeeService.setPlanCost` writes
+   `total_cost_cents` and saves, but carries no `@CacheEvict`, while `MatchPlanService.getPlan` is
+   `@Cacheable` on `matchPlans`. The detail modal reads `GET /api/match-plans/{id}`, so a save
+   followed by a refetch can be served the pre-write entry for up to the 10-minute TTL and show
+   "not set". The frontend's own invalidation was already fixed for this exact symptom
+   (`useSetPlanCost` invalidates both plan query keys); the server-side half was not. Worth checking
+   against [hazard 4](../../STATUS.md#live-hazards), which attributed the observed occurrence
+   entirely to a stale JVM.
+2. **`STREAK_AWARE` is reachable.** It parses, resolves to a real bean, and throws `422` from inside
+   the strategy. Harmless, but the failure happens later than the other unsupported values.
+3. **The `parsePlanStatus` error message omits `GENERATED`.** Sending it is accepted by the parser
+   and then rejected by the transition table with a `409`, so the `400` never names it — but the
+   message claims the valid values are `PENDING, CONFIRMED, CANCELLED`, which is not the enum.
+4. **There is no `frontend/features/match-plans.md`.** Every other frontend feature has a file, and
+   the match-plan UI is one of the larger ones — seven components and a route. The frontend types are
+   unusually well commented, so the material exists.
+5. **Unused `LocalDate` imports** remain in `MatchPlanDTO`, `MatchPlanCreateDTO` and
+   `MatchPlanUpdateDTO` — leftovers from `V17`. Cosmetic.

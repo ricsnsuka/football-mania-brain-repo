@@ -98,6 +98,18 @@ is empty"). When code is verifiably right and behaviour is wrong, **establish wh
 process is actually running before debugging the code** — process start time vs file mtime
 locally, deployed commit vs branch tip in production.
 
+⚠️ **The pitch-cost one may also have had a second, real cause, found on 2026-08-04 while rewriting
+the match-plans doc.** `MatchFeeService.setPlanCost` writes `total_cost_cents` and saves, but carries
+no `@CacheEvict`, while `MatchPlanService.getPlan` is `@Cacheable` on `matchPlans` — so `GET
+/api/match-plans/{id}`, which is what the detail modal reads, can serve the pre-write entry for up to
+the 10-minute TTL. That produces exactly the reported symptom, on a correctly built process. The
+frontend's half of it was already fixed for the same symptom (`useSetPlanCost` invalidates both plan
+query keys, because they are not related by prefix); the server's half was not. **Not yet
+confirmed against a running instance and not yet fixed** — see gap 1 in
+[MATCH_PLANS_FEATURE](backend/features/MATCH_PLANS_FEATURE.md#known-gaps). The lesson above still
+stands on its own two other occurrences; this is a caution against closing the first one as
+fully explained.
+
 **6. A group admin could lock a member out of every group — fixed on `next`, not yet deployed.**
 Removing somebody used `DELETE /api/users/{id}`, which writes `users.is_active`, the flag governing
 login *everywhere*, while its guard said `ADMIN` — a per-membership grant since V23. One group's
@@ -147,7 +159,7 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 |---|---|---|
 | [backend/architecture/ARCHITECTURE.md](backend/architecture/ARCHITECTURE.md) | Migration table stops at **V13** of 31, and the rest of it predates multi-tenancy | Superseded on migrations by [architecture/database-migrations.md](architecture/database-migrations.md); the layering and schema sections need a tenancy pass |
 | [backend/api/API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md) | No Push section, no Payments/match-fee section; `totalCostCents` on `MatchPlanDTO` documented nowhere | Contracts exist standalone ([PUSH](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PUSH-API-CONTRACT.md), [PAYMENTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md)); the reference needs the sections and the field |
-| [backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md) | Last touched 2026-05-27 — predates kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | Rewrite against current behaviour |
+| ~~[backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md)~~ | Last touched 2026-05-27 — predates kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | ✅ **Resolved 2026-08-04.** Rewritten against the code. It was wrong about more than the drift line said: the kickoff type, the fourth status, all three role names, the generated team names and the cache it uses. Its own "Known gaps" section now carries five things the rewrite found, one of which is a live defect — see the note under hazard 4 |
 | ~~[backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md)~~ | Header read "DRAFT — not implemented"; it shipped in `828db3b` | ✅ **Resolved.** Corrected here on import, and the stale backend copy went with the documentation split — there is one copy now, and it is this one |
 | [backend/plans/ORCHESTRATOR_SESSION.md](backend/plans/ORCHESTRATOR_SESSION.md) | Last entry 2026-07-28, though `orchestrator.agent.md` still mandates an entry per session | Resume it, or retire the convention deliberately |
 | ~~Postman collection~~ | Was 60 requests against a 103-operation API, and — the deeper find — **gitignored the whole time**, so every copy lived on one person's disk and none could be diffed | ✅ **Resolved 2026-08-02.** Now *generated* from the running app's `/v3/api-docs` by `postman/generate-collection.mjs`, committed to the repo (103 requests, 17 folders, `X-Group-Id` per the tenancy contract), and regeneration is one command. The hand-maintenance workflow in `postman-engineer.agent.md` is marked historical |

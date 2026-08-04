@@ -34,7 +34,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [MICROSERVICES_ARCHITECTURE](backend/features/MICROSERVICES_ARCHITECTURE.md) | Why it is still one deployable |
 | [CALCULATION_SERVICE](backend/features/CALCULATION_SERVICE.md) | The skill-rating engine — formulas, constants, worked examples |
 | [MATCH_FEATURE](backend/features/MATCH_FEATURE.md) | Match lifecycle, completion, amendment |
-| [MATCH_PLANS_FEATURE](backend/features/MATCH_PLANS_FEATURE.md) ⚠️ | Plans and the availability poll. **Stale since 2026-05-27** |
+| [MATCH_PLANS_FEATURE](backend/features/MATCH_PLANS_FEATURE.md) | Plans, the availability poll, the waitlist, guests and the pitch cost. Rewritten against the code 2026-08-04 |
 | [PLAYER_FEATURE](backend/features/PLAYER_FEATURE.md) | Roster, aggregates, soft delete |
 | [USERS](backend/features/USERS.md) | Accounts, authentication, roles |
 | [SEASON_FEATURE](backend/features/SEASON_FEATURE.md) | Seasons and the single-current invariant |
