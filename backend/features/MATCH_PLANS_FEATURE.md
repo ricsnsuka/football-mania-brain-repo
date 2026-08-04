@@ -607,14 +607,23 @@ section, guest modal), `useMatchPlans`, `matchPlanService`, `types/matchPlan.ts`
 
 Recorded here rather than left to be discovered — see [CONTRIBUTING](../../CONTRIBUTING.md) rule 5.
 
-1. **Setting the cost does not evict the plan cache.** `MatchFeeService.setPlanCost` writes
-   `total_cost_cents` and saves, but carries no `@CacheEvict`, while `MatchPlanService.getPlan` is
-   `@Cacheable` on `matchPlans`. The detail modal reads `GET /api/match-plans/{id}`, so a save
-   followed by a refetch can be served the pre-write entry for up to the 10-minute TTL and show
-   "not set". The frontend's own invalidation was already fixed for this exact symptom
-   (`useSetPlanCost` invalidates both plan query keys); the server-side half was not. Worth checking
-   against [hazard 4](../../STATUS.md#live-hazards), which attributed the observed occurrence
-   entirely to a stale JVM.
+1. ~~**Setting the cost does not evict the plan cache.**~~ **Fixed 2026-08-04, ⏳ not yet
+   deployed.** `MatchFeeService.setPlanCost` wrote `total_cost_cents` and saved but carried no
+   `@CacheEvict`, while `MatchPlanService.getPlan` is `@Cacheable` on `matchPlans` — so a save
+   followed by the detail modal's refetch of `GET /api/match-plans/{id}` could be served the
+   pre-write entry for up to the 10-minute TTL and show "not set". The frontend's own invalidation
+   had already been fixed for this exact symptom (`useSetPlanCost` invalidates both plan query keys,
+   which are not related by prefix), and that is why the server half survived: the client stopped
+   showing its own stale copy and started refetching into the server's.
+
+   `setPlanCost` now evicts, and `MatchPlanCostCacheIT` pins it. That test is an `*IT` rather than a
+   unit test on purpose — the defect lived in an annotation, and neither the Mockito unit tier
+   (which never builds the proxy that reads it) nor the `test` profile (`spring.cache.type=none`)
+   can tell a correct eviction from a missing one. It asserts the priming read populated the cache
+   before asserting the write cleared it, so it cannot pass by caching nothing.
+
+   ⚠️ **It has not been executed.** The fix was written in an environment without Docker, so
+   `./gradlew integrationTest` could not run. The unit tier is green. Run it before merging.
 2. **`STREAK_AWARE` is reachable.** It parses, resolves to a real bean, and throws `422` from inside
    the strategy. Harmless, but the failure happens later than the other unsupported values.
 3. **The `parsePlanStatus` error message omits `GENERATED`.** Sending it is accepted by the parser

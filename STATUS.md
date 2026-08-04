@@ -104,11 +104,16 @@ no `@CacheEvict`, while `MatchPlanService.getPlan` is `@Cacheable` on `matchPlan
 /api/match-plans/{id}`, which is what the detail modal reads, can serve the pre-write entry for up to
 the 10-minute TTL. That produces exactly the reported symptom, on a correctly built process. The
 frontend's half of it was already fixed for the same symptom (`useSetPlanCost` invalidates both plan
-query keys, because they are not related by prefix); the server's half was not. **Not yet
-confirmed against a running instance and not yet fixed** — see gap 1 in
-[MATCH_PLANS_FEATURE](backend/features/MATCH_PLANS_FEATURE.md#known-gaps). The lesson above still
-stands on its own two other occurrences; this is a caution against closing the first one as
-fully explained.
+query keys, because they are not related by prefix); the server's half was not — and that is
+plausibly *why* it survived, since the client stopped showing its own stale copy and started
+refetching into the server's.
+
+**Fixed the same day**, with `MatchPlanCostCacheIT` to hold it. ⏳ **Neither the fix nor the test has
+been run or deployed**: it was written without Docker available, so `integrationTest` could not
+execute — run it before merging. The claim that this *caused* the 2026-07-31 report also remains
+unconfirmed against a running instance; the mechanism is real, whether or not it was that day's
+mechanism. The lesson above stands on its own two other occurrences regardless. See gap 1 in
+[MATCH_PLANS_FEATURE](backend/features/MATCH_PLANS_FEATURE.md#known-gaps).
 
 **6. A group admin could lock a member out of every group — fixed on `next`, not yet deployed.**
 Removing somebody used `DELETE /api/users/{id}`, which writes `users.is_active`, the flag governing
