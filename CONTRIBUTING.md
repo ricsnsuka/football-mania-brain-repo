@@ -88,15 +88,42 @@ have decided, not when `next` is green.
    while work accumulates.
 2. **Close the CHANGELOG section.** `[Unreleased]` becomes `[X.Y.Z] — date`, and the note says what
    shipped, including whether it went out dark.
-3. **Merge `next` into `main`** in both repos. Fast-forward if it can.
+3. **Merge `next` into `main`** in both repos. Fast-forward if it can. **The release branch merges
+   into `next` first** — it is a pull request like any other, and merging it straight into `main` is
+   what broke this on 2026-08-05 (see below).
 4. **Deploy the backend and confirm it** — `git push heroku main:master`, then `heroku releases -a
    footmania` to see the commit that actually landed. See [Deployment order](#deployment-order) for
    why this comes before the frontend.
 5. **Ship the frontend**, which deploys itself on the push to `main`.
 6. **Tag `vX.Y.Z` in both repos, at the commit that was deployed** — not at the branch tip, unless
    they are the same. Annotate the tag with how you established that.
-7. **Update [STATUS.md](STATUS.md)** with the release, the running commit, and the platform's own
+7. **Make `next` identical to `main` again**, and check it rather than assuming it:
+
+   ```bash
+   git log --oneline next..main   # must print nothing, in both repos
+   ```
+
+8. **Update [STATUS.md](STATUS.md)** with the release, the running commit, and the platform's own
    release number.
+
+**Step 7 exists because step 3 was done backwards on 2026-08-05.** A frontend release branch cut
+from `next` was merged straight into `main`. The version bump therefore existed only on `main`,
+`next` sat two commits behind production for the rest of the day, and every branch cut from `next`
+afterwards started from a base missing what had shipped. Nothing failed and nothing said so — a
+branch that is behind looks exactly like a branch that is not.
+
+**"Every pull request bases on `next`" was already written here and did not prevent it.** The rule
+was true and incomplete: it says where work enters, and says nothing about the one merge that goes
+the other way, or about the branch that is left behind by it. A release is the only time `main`
+moves, and it is the only time the two branches can disagree — so it is the only place the check
+belongs.
+
+Both code repos now carry a short copy of this pointing back here — frontend
+[`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/AGENTS.md), backend
+[`.github/copilot-instructions.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/.github/copilot-instructions.md).
+That is a deliberate exception to "link, don't copy": the rule governs the moment somebody is inside
+one of those repos about to open a pull request, and a rule they have to leave the repo to read is
+one they will not read. Each copy is four sentences and names this file as canonical.
 
 **Step 6 is the one that goes wrong.** A release tag is a claim about production, so it is only as
 good as the evidence behind it. Placing `v1.1.0` from a status document put it three deploys early;

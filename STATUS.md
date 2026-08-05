@@ -6,18 +6,24 @@ nobody trusts is worse than none.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `f64fa92` — level with `main` | `242841f` — level with `main` |
+| `next` head | `f64fa92` — level with `main` | `ac3cf16` — level with `main`, after being fast-forwarded on 2026-08-05 |
 | Release | **`v1.3.1` — shipped and live** | **`v1.3.1` — shipped and live** |
-| Running in production | `f64fa92` — Heroku release **v55**, 2026-08-04 19:20; `/api/version` answers `1.3.1` | `242841f` — Netlify deploy `6a722d42`, published 18:20 UTC |
-| `main` head | `f64fa92` — identical to the deployed commit | `242841f` — identical to the deployed commit |
+| Running in production | `f64fa92` — Heroku release **v55**, 2026-08-04 19:20; `/api/version` answers `1.3.1` | `ac3cf16` merged to `main` 2026-08-05, which is what Netlify publishes from — **deploy id not verified against the platform**, so ask Netlify rather than this line |
+| `main` head | `f64fa92` — identical to the deployed commit | `ac3cf16` — weekly recurring match plans, shipped under **1.3.1** |
 | Working tree | clean | clean |
 | Tests | 1079 unit + 76 integration, SpotBugs clean | 635 unit |
 | Latest migration | `V35__platform_admin_exclusivity.sql` | — |
 | Deployed through | **`V35`** (2026-08-04) | — |
 | Tags | `v1.0.0` → `v1.3.1`, unbroken | `v1.1.0` → `v1.3.1` |
 
-**Both repos are fully deployed for the first time in a while — `main`, the tag and the running
-process are the same commit on both sides.** Four releases went out in two days: `1.2.0` (security),
+**The frontend moved on 2026-08-05**: weekly recurring match plans reached `main`, and therefore
+production, **without a version bump**. `v1.3.1` remains the current tag on both sides — a bump to
+1.4.0 was made and reverted, because releasing is a decision the owner makes rather than something
+that follows from work being finished, and no `v1.4.0` tag was ever cut. `main` is consequently
+ahead of the tag it carries, which is the normal state between releases.
+
+**Before that, both repos were fully deployed for the first time in a while — `main`, the tag and
+the running process were the same commit on both sides.** Four releases went out in two days: `1.2.0` (security),
 `1.3.0` (the group-less account fix plus password policy and login throttling), and `1.3.1` (fixes
 for accounts that are not players).
 
@@ -28,6 +34,13 @@ for accounts that are not players).
 This had lapsed: between 1.2.0 and 1.3.1, five feature branches and three releases went straight to
 `main`, leaving `next` two releases behind. **Do not infer the target branch from recent git
 history — that history is the lapse.**
+
+⚠️ **And it lapsed again on 2026-08-05, in the other direction.** Feature work went to `next`
+correctly, then the release branch was merged straight into `main` — so the bump lived only on
+`main` and `next` was behind production for the rest of the day. `next` has been fast-forwarded, and
+[CONTRIBUTING](CONTRIBUTING.md#cutting-a-release) now carries the missing step: after the release
+merge, `git log --oneline next..main` must print nothing. Both code repos carry a short copy of the
+rule, because the brain repo is not open when somebody is about to open a pull request.
 
 The flow:
 
