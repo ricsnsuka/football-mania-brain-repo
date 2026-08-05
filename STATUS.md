@@ -1,31 +1,52 @@
 # Project Status
 
-**Snapshot: 2026-08-04.** Update it when the answers change, not on a schedule — a status page
+**Snapshot: 2026-08-05.** Update it when the answers change, not on a schedule — a status page
 nobody trusts is worse than none.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `f64fa92` — level with `main` | `ac3cf16` — level with `main`, after being fast-forwarded on 2026-08-05 |
-| Release | **`v1.3.1` — shipped and live** | **`v1.3.1` — shipped and live** |
-| Running in production | `f64fa92` — Heroku release **v55**, 2026-08-04 19:20; `/api/version` answers `1.3.1` | `ac3cf16` merged to `main` 2026-08-05, which is what Netlify publishes from — **deploy id not verified against the platform**, so ask Netlify rather than this line |
-| `main` head | `f64fa92` — identical to the deployed commit | `ac3cf16` — weekly recurring match plans, shipped under **1.3.1** |
+| `next` head | `9fa0134` — level with `main`, checked after the release merge | `4e87ddc` — level with `main`, checked after the release merge |
+| Release | **`1.4.0` — shipped and live** | **`1.4.0` — shipped** |
+| Running in production | `9fa0134` — Heroku release **v56**, 2026-08-05, as reported by the owner | `4e87ddc` merged to `main` 2026-08-05, which is what Netlify publishes from — **deploy id not verified against the platform**, so ask Netlify rather than this line |
+| `main` head | `9fa0134` — identical to the deployed commit | `4e87ddc` |
 | Working tree | clean | clean |
-| Tests | 1079 unit + 76 integration, SpotBugs clean | 635 unit |
+| Tests | 1100 unit + 76 integration, SpotBugs clean | 670 unit |
 | Latest migration | `V35__platform_admin_exclusivity.sql` | — |
-| Deployed through | **`V35`** (2026-08-04) | — |
-| Tags | `v1.0.0` → `v1.3.1`, unbroken | `v1.1.0` → `v1.3.1` |
+| Deployed through | **`V35`** (2026-08-04) — 1.4.0 carried no migration | — |
+| Tags | `v1.0.0` → `v1.3.1` unbroken; **`v1.4.0` written but not yet pushed** | `v1.1.0` → `v1.3.1`; **`v1.4.0` written but not yet pushed** |
 
-**The frontend moved on 2026-08-05**: weekly recurring match plans reached `main`, and therefore
-production, **without a version bump**. `v1.3.1` remains the current tag on both sides — a bump to
-1.4.0 was made and reverted, because releasing is a decision the owner makes rather than something
-that follows from work being finished, and no `v1.4.0` tag was ever cut. `main` is consequently
-ahead of the tag it carries, which is the normal state between releases.
+## 1.4.0, on 2026-08-05
 
-**Before that, both repos were fully deployed for the first time in a while — `main`, the tag and
-the running process were the same commit on both sides.** Four releases went out in two days: `1.2.0` (security),
-`1.3.0` (the group-less account fix plus password policy and login throttling), and `1.3.1` (fixes
-for accounts that are not players).
+**Backend first, then the frontend**, because the frontend calls two endpoints that ship in the
+backend's half — the squads tab's swap and replace. Heroku took `9fa0134` as release **v56** before
+`main` moved on the frontend at all.
+
+What it carries:
+
+- **The last-administrator guard.** `PATCH /api/users/{id}/role` refuses a write that leaves the
+  group with no `GROUP_ADMIN`. This is the fix for a lockout that happened in production earlier the
+  same day, and which no API call could undo — every route back is behind the grant that had just
+  been given up, and an operator holds no membership to act with.
+- **Lineup swap and replace**, plus the career-total reversal fix underneath them. `reverseMatchEffect`
+  only ever ran for players still in the match, which was true of every caller until a replacement
+  could take somebody out of one.
+- **The match modal, rebuilt** — one scoresheet table instead of two that never lined up — and three
+  ways to correct a match that previously had none: its details, its figures, and who played.
+- **A data-loss bug closed**: the old amend form sent three zeroed goal fields on every save, so
+  correcting somebody's assists wiped their goals and the scoreline derived from them. Worth checking
+  whether any completed match lost goals that way before `1.4.0`.
+
+⚠️ **The `v1.4.0` tags are written and not pushed.** The session that cut the release could push
+branches but not tags, so both annotations exist only in that session — they name `9fa0134` and
+`4e87ddc`, and the backend one records that the SHA first reported for v56, `9fa0343`, matches no
+object in the repository and is a transposition. **Until somebody pushes them, `v1.3.1` is still the
+newest tag in both repos while production runs 1.4.0.**
+
+**Before this, both repos were fully deployed for the first time in a while — `main`, the tag and
+the running process were the same commit on both sides.** Four releases went out in two days:
+`1.2.0` (security), `1.3.0` (the group-less account fix plus password policy and login throttling),
+and `1.3.1` (fixes for accounts that are not players).
 
 🔒 **Work goes to `next`. `main` moves only when a release is cut.** Re-stated by the owner on
 2026-08-04 and both branches re-synced to `f64fa92` / `242841f`, so `main` and `next` now agree at
