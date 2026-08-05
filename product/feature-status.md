@@ -19,8 +19,9 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Seasons | ✅ | 🟡 | [SEASON_FEATURE](../backend/features/SEASON_FEATURE.md) — season **write** API still deferred |
 | Team generation (6 strategies) | ✅ | ✅ | [TEAM_GENERATION_FEATURE](../backend/features/TEAM_GENERATION_FEATURE.md) · [design](../backend/features/TEAM_GENERATION_DESIGN.md) · [FE](../frontend/features/team-generation.md) |
 | Draft sessions (captain pick, SSE) | ✅ | ✅ | [DRAFT_SESSION_FEATURE](../backend/features/DRAFT_SESSION_FEATURE.md) · [SSE guide](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) |
-| Match plans — RSVP, deadline, waitlist | ✅ `57844eb` | ✅ `3e8aa79` | [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md) ⚠️ **stale since 2026-05-27** |
-| Kickoff time + plan lifecycle (V17) | ✅ `4120ad1` | ✅ `eff49bf` | ⚠️ only in the migration and the changelog gap |
+| Match plans — RSVP, deadline, waitlist | ✅ `57844eb` | ✅ `3e8aa79` | [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md) — rewritten against the code 2026-08-05 · [FE match-plans](../frontend/features/match-plans.md) |
+| Kickoff time + plan lifecycle (V17) | ✅ `4120ad1` | ✅ `eff49bf` | [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md) — the instant kickoff, `GENERATED`, and the derived `expired`/`generatable`/`cancellable` flags |
+| Weekly recurring match plans (V34 horizon) | ✅ `5aff478` | ✅ `4dec174` | [recurring contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/RECURRING-MATCH-PLANS-API-CONTRACT.md) · [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md#weekly-recurring-runs) · [FE match-plans](../frontend/features/match-plans.md) |
 
 ## Roadmap Phase 0–3
 
@@ -46,7 +47,8 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Match fee ledger (V19) | ✅ `828db3b` | ✅ `a3efac0` | [PAYMENTS contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md) · [ledger plan](../backend/plans/MATCH-FEE-LEDGER-PLAN.md) · ⚠️ **no FE feature doc** |
 | Payment delegation (V20) | ✅ `d3b3339` | ✅ `722335c` | [PAYMENTS contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md) · [plan](../backend/plans/PAYMENT-DELEGATION-PLAN.md) · deployed 2026-08-01 |
 | Guest players (V21) | ✅ `d3b3339`, `2eac528` + fix `3159812` | ✅ `722335c` + fix `c041898` | [GUEST-PLAYERS contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/GUEST-PLAYERS-API-CONTRACT.md) · [plan](../backend/plans/GUEST-PLAYERS-PLAN.md) §12b — guest removal broke in production on day one, fixed same day · ⚠️ `GuestIsolationIT` still never executed |
-| Pitch cost on `MatchPlanDTO` | ✅ `e87d624` | ✅ `4f47bf5` | ⚠️ **documented nowhere** |
+| Pitch cost on `MatchPlanDTO` | ✅ `e87d624` | ✅ `4f47bf5` | [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md) — the column, and that absent ≠ zero. Still missing from `API_REFERENCE.md` |
+| Platform settings, operator-only (V34) | ✅ `5aff478` | ✅ | [platform settings contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PLATFORM-SETTINGS-API-CONTRACT.md) · [migrations](../architecture/database-migrations.md) |
 | i18n — en / pt / es | — | ✅ | [FE i18n guide](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/guides/i18n.md) · [language switcher](../frontend/features/language-switcher.md) |
 | Theme (light / dark) | — | ✅ | [FE theme](../frontend/features/theme.md) |
 
@@ -63,6 +65,8 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 
 ## Where the gaps are
 
-Three shipped features have no or stale documentation — plan lifecycle, the frontend ledger UI, and
-`totalCostCents`. All three are in the drift table in [../STATUS.md](../STATUS.md), which is the
-list to work from.
+Two of the three gaps that stood here on 2026-07-31 are closed: the plan lifecycle and
+`totalCostCents` are now written down, in a MATCH_PLANS_FEATURE rewritten against the code on
+2026-08-05. **The frontend ledger UI still has no feature doc** — `a3efac0` shipped the whole "what
+you owe" screen and nothing describes it. That, and whatever else is open, is in the drift table in
+[../STATUS.md](../STATUS.md), which is the list to work from.
