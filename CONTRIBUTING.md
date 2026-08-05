@@ -70,9 +70,10 @@ rename and will fail silently:
 - **Netlify** deploys the frontend from a branch named in its site settings. Change that setting
   *before* renaming the branch, or production deploys stop — or worse, resume from the wrong
   branch. See hazard 5 in [STATUS.md](STATUS.md) for what that already cost once.
-- **Heroku** keeps its own `master` regardless. The backend deploy is `git push heroku main:master`;
-  pushing `main` alone creates a branch Heroku never builds and reports success having deployed
-  nothing.
+- **Heroku** deploys from `main` automatically since 2026-08-05, but it still keeps its own
+  `master` internally. Renaming the branch it watches breaks that connection silently, and the
+  manual fallback if it ever comes to that is `git push heroku main:master` — pushing `main` alone
+  creates a branch Heroku never builds and reports success having deployed nothing.
 
 CI trigger lists are the third: a workflow still filtering on a branch that no longer exists does
 not fail, it stops running, and an unchecked pull request looks exactly like a passing one.
@@ -91,10 +92,13 @@ have decided, not when `next` is green.
 3. **Merge `next` into `main`** in both repos. Fast-forward if it can. **The release branch merges
    into `next` first** — it is a pull request like any other, and merging it straight into `main` is
    what broke this on 2026-08-05 (see below).
-4. **Deploy the backend and confirm it** — `git push heroku main:master`, then `heroku releases -a
-   footmania` to see the commit that actually landed. See [Deployment order](#deployment-order) for
-   why this comes before the frontend.
-5. **Ship the frontend**, which deploys itself on the push to `main`.
+4. **The backend deploys itself** from `main` — automatic deployment was turned on 2026-08-05, so
+   step 3 already shipped it. **Confirm it anyway**: `heroku releases -a footmania` for the commit
+   that actually landed, and `/api/version` for what the running process says it is. A deploy that
+   started is not a deploy that booted the right jar. See [Deployment order](#deployment-order) for
+   why the backend still goes first.
+5. **The frontend deploys itself too**, on the same merge to `main`. Confirm the Netlify deploy id
+   rather than assuming the push published.
 6. **Tag `vX.Y.Z` in both repos, at the commit that was deployed** — not at the branch tip, unless
    they are the same. Annotate the tag with how you established that.
 7. **Make `next` identical to `main` again**, and check it rather than assuming it:
@@ -155,23 +159,27 @@ reviewed as either, and cannot be reverted without taking the other with it.
 
 ## Deployment order
 
-**The backend deploys first, and *deployed* means deployed — not merged.**
-
-The two repos fail asymmetrically, and that asymmetry is the whole reason this section exists:
+**The backend goes first, and *deployed* means confirmed — not merged.**
 
 | | Trigger | Lag |
 |---|---|---|
-| Frontend | pushing `main` — Netlify builds every push | minutes, automatic |
-| Backend | somebody running `git push heroku main:master` | until somebody runs it |
+| Frontend | merging `main` — Netlify builds every push | minutes, automatic |
+| Backend | merging `main` — Heroku builds every push, **since 2026-08-05** | minutes, automatic |
 
-So for any change where the frontend depends on new backend behaviour:
+The asymmetry this section was written for is gone: both sides now deploy themselves, so a backend
+change can no longer sit merged and unshipped while the frontend that needs it goes live. What
+remains is the ordering and the confirmation.
 
-1. Merge the backend change and **deploy it** — `git push heroku main:master`.
-2. Confirm the running dyno actually has it. `heroku releases` and the deployed commit, not the
-   branch tip.
-3. Then merge the frontend, which deploys itself.
+For any change where the frontend depends on new backend behaviour:
 
-**This is written down because the obvious order caused a partial outage on 2026-08-02.** The
+1. Merge the backend release. That **is** the deploy.
+2. Confirm the running dyno actually has it — `heroku releases -a footmania` for the commit that
+   landed, `/api/version` for what the process says it is. Automatic is not the same as arrived,
+   and a build can fail after a merge succeeds.
+3. Then merge the frontend, which deploys itself on the same terms.
+
+**This is written down because the obvious order caused a partial outage on 2026-08-02**, back when
+the backend needed a human to push it. The
 `X-Group-Id` CORS fix was merged on the backend and the frontend that needed it was pushed the same
 day. The frontend deployed itself in minutes; the backend sat merged and undeployed. Every
 authenticated request failed preflight, and because each screen degraded to its empty state rather

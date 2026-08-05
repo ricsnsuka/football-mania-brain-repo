@@ -6,15 +6,15 @@ nobody trusts is worse than none.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `9fa0134` — level with `main`, checked after the release merge | `4e87ddc` — level with `main`, checked after the release merge |
-| Release | **`1.4.0` — shipped and live** | **`1.4.0` — shipped** |
-| Running in production | `9fa0134` — Heroku release **v56**, 2026-08-05, as reported by the owner | `4e87ddc` merged to `main` 2026-08-05, which is what Netlify publishes from — **deploy id not verified against the platform**, so ask Netlify rather than this line |
-| `main` head | `9fa0134` — identical to the deployed commit | `4e87ddc` |
+| `next` head | `358285b` — level with `main`, checked after the release merge | `f343678` — level with `main`, checked after the release merge |
+| Release | **`1.4.1` — merged to `main`** | **`1.4.1` — merged to `main`** |
+| Running in production | `358285b` — **Heroku deploys automatically from `main`**, so the release merge was the deploy. Release number not read back to this session; `heroku releases` and `/api/version` are the check | `f343678` — Netlify publishes from `main`, so the same is true here. **Deploy id not verified against the platform** |
+| `main` head | `358285b` — 1.4.1 | `f343678` — 1.4.1 |
 | Working tree | clean | clean |
-| Tests | 1100 unit + 76 integration, SpotBugs clean | 670 unit |
+| Tests | 1104 unit + 76 integration, SpotBugs clean | 677 unit |
 | Latest migration | `V35__platform_admin_exclusivity.sql` | — |
 | Deployed through | **`V35`** (2026-08-04) — 1.4.0 carried no migration | — |
-| Tags | `v1.0.0` → `v1.3.1` unbroken; **`v1.4.0` written but not yet pushed** | `v1.1.0` → `v1.3.1`; **`v1.4.0` written but not yet pushed** |
+| Tags | `v1.0.0` → `v1.3.1`; **`v1.4.0` and `v1.4.1` both missing** | `v1.1.0` → `v1.3.1`; **`v1.4.0` and `v1.4.1` both missing** |
 
 ## 1.4.0, on 2026-08-05
 
@@ -37,16 +37,52 @@ What it carries:
   correcting somebody's assists wiped their goals and the scoreline derived from them. Worth checking
   whether any completed match lost goals that way before `1.4.0`.
 
-⚠️ **The `v1.4.0` tags are written and not pushed.** The session that cut the release could push
+## 1.4.1, later the same day
+
+**Deleting a match now unwinds it.** A completed one could not be deleted at all; it can, and the
+order is the design — reverse before deleting, because `skill_rating_history.match_id` is
+`ON DELETE SET NULL` and deleting first strands the rows that record what to give back. Then delete,
+rebuild streaks from what remains, and replay the players' later matches, each flagged
+`needs_recalc` before it runs. The endpoint answers `200` with a report instead of `204`.
+
+On the frontend the delete control moved to where it is useful — it was offered only for matches
+that had *not* been played — and its confirmation names what deleting costs before it happens.
+
+**Released as a patch by the owner's call**, though the status code moved: the only caller is this
+project's own frontend, which shipped in the matching release. The frontend also learned to survive
+a `204` from an older server, so the two halves no longer have to deploy in a fixed order for
+anything but deleting a completed match.
+
+⚠️ **The `v1.4.0` tags are written and not pushed, and `v1.4.1` has none either.** The session that cut the release could push
 branches but not tags, so both annotations exist only in that session — they name `9fa0134` and
 `4e87ddc`, and the backend one records that the SHA first reported for v56, `9fa0343`, matches no
-object in the repository and is a transposition. **Until somebody pushes them, `v1.3.1` is still the
-newest tag in both repos while production runs 1.4.0.**
+object in the repository and is a transposition. **Until somebody pushes them, `v1.3.1` is the
+newest tag in both repos while production runs 1.4.x — two releases of daylight.**
+
+The four that are owed:
+
+```bash
+# backend                                     # frontend
+git tag -a v1.4.0 9fa0134 …                   git tag -a v1.4.0 4e87ddc …
+git tag -a v1.4.1 358285b …                   git tag -a v1.4.1 f343678 …
+```
+
+Place `v1.4.1` at whatever the platforms report rather than at these SHAs if they disagree.
 
 **Before this, both repos were fully deployed for the first time in a while — `main`, the tag and
 the running process were the same commit on both sides.** Four releases went out in two days:
 `1.2.0` (security), `1.3.0` (the group-less account fix plus password policy and login throttling),
 and `1.3.1` (fixes for accounts that are not players).
+
+🚀 **Both sides now deploy themselves from `main`.** Netlify always did; Heroku does since the owner
+turned on automatic deployment on 2026-08-05. **Merging a release pull request is therefore the
+deploy in both repos** — there is no separate `git push heroku main:master` step to forget, and no
+window where `main` is ahead of production.
+
+What that does *not* remove is the confirmation. A deploy that started is not a deploy that booted
+the right jar, and this project has a release list showing three deploys in an afternoon that a
+status file had recorded as one. Ask `heroku releases -a footmania` and `/api/version`; ask Netlify
+for its deploy id.
 
 🔒 **Work goes to `next`. `main` moves only when a release is cut.** Re-stated by the owner on
 2026-08-04 and both branches re-synced to `f64fa92` / `242841f`, so `main` and `next` now agree at

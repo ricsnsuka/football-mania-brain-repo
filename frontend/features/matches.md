@@ -105,6 +105,60 @@ The `MatchModal` has three display modes depending on match state:
 | `record` | Past, not completed | Admin/master: live stat-entry form. Basic user: awaiting-result message |
 | `scoresheet` | Completed | Scoreboard, then **tabs**: Scoresheet / Squads / MOTM |
 
+### The scoresheet is one table, not two
+
+Until `1.4.0` each team rendered **its own table**, sized by its own contents — so the rating column
+and the amend button landed at different x-positions for the two sides, and the column heads were
+printed twice in one panel. A reader comparing a Reds player against a Blues one was reading across
+two grids that only looked alike. `MatchScoresheet` measures every column once and makes the team a
+band inside the table rather than a second table around it.
+
+The figures carry **no emoji**. A ball before the goals and a boxed red A before the assists were
+decoration standing in a data cell — the red one read as an error state, and both render differently
+on every platform. MVP and the winning side are chips; ratings carry `/10`, and colour marks the
+best rating of the match rather than every rating, which only repeated what the column head said.
+
+**No team colour anywhere.** The squads tab used to give each side a coloured dot assigned by team
+*order*, so a team called "Reds" got a blue one. Team names are free text: any palette can contradict
+the name beside it, so the band and the winner chip separate the sides instead.
+
+### Three ways to correct a match
+
+All added in `1.4.0`–`1.4.1`, and each is a different scope with a different grant:
+
+| Control | Where | Grant | Writes |
+|---|---|---|---|
+| **Edit details** | Modal header | `MANAGER` | `PATCH /api/matches/{id}` — description, kickoff, location |
+| **Edit sheet** | Scoresheet tab bar | `GROUP_ADMIN` | One `PATCH …/stats/{statId}` per changed row, on Save |
+| **Edit lineup** | Squads tab | `GROUP_ADMIN` | `POST …/lineup/swap` or `…/lineup/replace` |
+| **Delete match** | Below the tabs | `GROUP_ADMIN` | `DELETE /api/matches/{id}` |
+
+**Editing the sheet stages its changes.** Each row's save used to fire its own request, and each one
+replayed the rating engine over the whole match — so correcting three players meant three
+reconciliations. Changes are now staged, changed rows marked while unsaved, and Save issues one
+request per changed row **sequentially**, because two reconciliations at once would be two engines
+writing the same rows.
+
+It also sends **only the fields that were touched**. The previous form seeded the three goal-type
+fields to zero and sent all six every time, so correcting somebody's assists wiped their goals — and
+the scoreline, which the server derives from the stats, dropped with them.
+
+Goals are stored as three types and returned only as a total, so the app cannot round-trip them: the
+goals cell opens the three inputs on request, sends nothing when untouched, and says outright that
+what you enter replaces the total shown.
+
+**Editing the lineup is select-then-target.** Tap a player, then tap somebody on the other side to
+swap them, or choose a replacement from everybody not already in the match. Tapping the same side
+re-selects rather than erroring — far likelier to be a change of mind, and there is no one-way move
+to offer, because the sides must stay the size they were.
+
+**Deleting a played match says what it costs first.** The control used to be offered only for
+matches that had *not* been played, which is the wrong half. The confirmation names what happens —
+every player gets their rating, goals, assists and appearance back, their later matches are
+recalculated, and none of it is reversible — and the server's report is repeated afterwards rather
+than swallowed. Anything left needing recalculation is raised as its own error, because it is a job
+somebody has to go and do.
+
 ### Post-match content is tabbed
 
 Everything used to render in one column — scoreboard, both scoresheets, the MOTM panel and the
@@ -140,9 +194,15 @@ time once on open; the modal is short-lived, so not ticking is not a problem.
 | Group | Prefix | Purpose |
 |-------|--------|---------|
 | Shell | `match-modal` | Dialog, header, close, subtitle |
-| Scoreboard | `match-modal-score*` | Score display shared across modes |
-| Roster | `match-modal-roster-*` | Upcoming-match player lists |
+| Scoreboard | `match-modal-score*` | Score display, result line, muted losing figure |
+| Scoresheet | `match-sheet__*` | The single table, its team bands, chips, and edit-mode inputs |
+| Details form | `match-details-form*` | Editing description, kickoff and location |
+| Squads | `match-squads__*` | Side-by-side lists, and lineup editing |
 | Record form | `match-record-*` | Live goal entry, player rows, actions bar |
+
+Two focus rings are `focus-visible` rather than `focus` — the close button and the tabs.
+`showModal()` moves focus to the first control, so every match used to open with a grey ring boxing
+the ✕, and clicking a tab left a blue box around it, marking the selected tab twice.
 | Stats table | `match-stats-*` | Completed-match per-player table |
 
 The stats table uses `min-width: 340px` with `overflow-x: auto` on its parent so it scrolls horizontally on narrow screens instead of wrapping.

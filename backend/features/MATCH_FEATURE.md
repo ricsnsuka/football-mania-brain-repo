@@ -98,24 +98,36 @@ Base path: `/api/matches`
 | `PATCH`  | `/api/matches/{id}`                               | `ADMIN_USER` or `MASTER_USER` | Update description / date / location                                   |
 | `PATCH`  | `/api/matches/{id}/complete`                      | `ADMIN_USER` or `MASTER_USER` | Complete match; run compliance check; compute ratings                  |
 | `PATCH`  | `/api/matches/{id}/stats/live`                    | `ADMIN_USER` or `MASTER_USER` | Live stat update; returns preview ratings                              |
-| `PATCH`  | `/api/matches/{id}/teams/{teamId}/stats/{statId}` | `ADMIN_USER`                  | Amend a single player stat post-completion                             |
-| `POST`   | `/api/matches/{id}/recalculate`                   | `ADMIN_USER`                  | Idempotently recalc ratings for one completed match                    |
-| `POST`   | `/api/matches/recalculate`                        | `ADMIN_USER`                  | Bulk recalc (matchIds / seasonId / all completed); per-match summary   |
-| `DELETE` | `/api/matches/{id}`                               | `ADMIN_USER`                  | Delete a non-completed match                                           |
+| `PATCH`  | `/api/matches/{id}/teams/{teamId}/stats/{statId}` | `GROUP_ADMIN`                 | Amend a single player stat post-completion                             |
+| `POST`   | `/api/matches/{id}/lineup/swap`                   | `GROUP_ADMIN`                 | Two players exchange teams — [contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-LINEUP-API-CONTRACT.md) |
+| `POST`   | `/api/matches/{id}/lineup/replace`                | `GROUP_ADMIN`                 | Somebody not in the match takes a player's place                       |
+| `POST`   | `/api/matches/{id}/recalculate`                   | `GROUP_ADMIN`                 | Idempotently recalc ratings for one completed match                    |
+| `POST`   | `/api/matches/recalculate`                        | `GROUP_ADMIN`                 | Bulk recalc (matchIds / seasonId / all completed); per-match summary   |
+| `DELETE` | `/api/matches/{id}`                               | `GROUP_ADMIN`                 | Delete **any** match, unwinding a completed one — [contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-DELETION-API-CONTRACT.md) |
+
+The first five rows still read `ADMIN_USER` / `MASTER_USER` in older copies of this table. Those
+names went in V33: `MANAGER` runs matches, `GROUP_ADMIN` administers **one group**, and neither
+implies the other.
 
 ### Authorization Matrix
 
-| Action                  | `BASIC_USER` | `MASTER_USER` | `ADMIN_USER` |
-|-------------------------|:------------:|:-------------:|:------------:|
-| List / read matches     |      ✅       |       ✅       |      ✅       |
-| Create match            |      ❌       |       ✅       |      ✅       |
-| Create manual match     |      ❌       |       ✅       |      ✅       |
-| Update match details    |      ❌       |       ✅       |      ✅       |
-| Complete match          |      ❌       |       ✅       |      ✅       |
-| Live stats update       |      ❌       |       ✅       |      ✅       |
-| Amend stat (post-comp.) |      ❌       |       ❌       |      ✅       |
-| Recalculate ratings     |      ❌       |       ❌       |      ✅       |
-| Delete match            |      ❌       |       ❌       |      ✅       |
+| Action                  | Member | `MANAGER` | `GROUP_ADMIN` |
+|-------------------------|:------:|:---------:|:-------------:|
+| List / read matches     |   ✅    |     ✅     |       ✅       |
+| Create match            |   ❌    |     ✅     |       ✅       |
+| Create manual match     |   ❌    |     ✅     |       ✅       |
+| Update match details    |   ❌    |     ✅     |       ✅       |
+| Complete match          |   ❌    |     ✅     |       ✅       |
+| Live stats update       |   ❌    |     ✅     |       ✅       |
+| Amend stat (post-comp.) |   ❌    |     ❌     |       ✅       |
+| Swap / replace a player |   ❌    |     ❌     |       ✅       |
+| Recalculate ratings     |   ❌    |     ❌     |       ✅       |
+| Delete match            |   ❌    |     ❌     |       ✅       |
+
+**Everything that can rewrite a finished match is `GROUP_ADMIN`**, whether or not the match in
+question has been finished. Amending a stat, moving a player and deleting can each change who won —
+and a grant that depended on the match's state would be a rule whose answer changes with a field,
+which the platform-settings contract already argues against.
 
 ---
 
@@ -368,10 +380,42 @@ Clients cannot submit a rating value — the field does not exist on `PlayerStat
 The `Match` entity carries a `@Version` field. Concurrent attempts to complete the same
 match will result in `409 Conflict` (`ObjectOptimisticLockingFailureException`).
 
-### 8. Delete Restriction
+### 8. Deleting a match unwinds it
 
-A match can only be deleted if `isCompleted = false`. Attempting to delete a completed match
-returns `409 Conflict`.
+**Any match can be deleted, including a completed one** (`1.4.1`). It used to be refused with a
+`409` on the ground that the effect could not be taken back — it can, using the machinery an
+amendment already uses, and the refusal left a wrongly-recorded match in the record permanently
+along with the ratings it produced.
+
+The order is the design, and it is not the obvious one:
+
+1. **Reverse before deleting.** `skill_rating_history.match_id` is `ON DELETE SET NULL`, so deleting
+   the match first leaves its history rows pointing at nothing — every rating change, goal, assist
+   and appearance they applied stays applied, and nothing can find them afterwards, because the
+   column that identified them is the one just nulled.
+2. **Delete**, cascading teams, stats, goals and MOTM votes. A badge citing the match keeps its row
+   and loses the citation (`ON DELETE SET NULL`): the badge was still earned.
+3. **Rebuild streaks** from the matches that remain — after the delete, because a streak replays
+   from the chain and until the row is gone this match is still in it.
+4. **Replay the players' later matches.** Reversal restores a rating by subtracting what was added,
+   which is exact only where the deleted match was that player's most recent.
+
+Each replayed match is flagged `needs_recalc` before it runs and cleared by its own recalculation,
+so an interrupted pass leaves a queue rather than silence. The endpoint answers **200 with a
+report** — restored players, replayed matches, and anything still flagged — rather than `204`.
+
+Full reasoning, including why this is not a soft-delete:
+[MATCH-DELETION-API-CONTRACT](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-DELETION-API-CONTRACT.md).
+
+### 8b. Changing who played
+
+Two operations, both `GROUP_ADMIN`, both preserving the size of each side: `lineup/swap` exchanges
+two players' teams, and `lineup/replace` hands one player's place — **and the stat row with it** — to
+somebody who was not in the match.
+
+**There is deliberately no one-way move.** The rating engine credits a goal the same whichever side
+scored it, so six against eight would pay the short side more rating per goal than it earned.
+Balancing uneven sides is a change to `CalculationService`, not to an endpoint.
 
 ---
 
