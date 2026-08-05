@@ -21,6 +21,7 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Draft sessions (captain pick, SSE) | ✅ | ✅ | [DRAFT_SESSION_FEATURE](../backend/features/DRAFT_SESSION_FEATURE.md) · [SSE guide](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) |
 | Match plans — RSVP, deadline, waitlist | ✅ `57844eb` | ✅ `3e8aa79` | [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md) — rewritten against the code 2026-08-05 · [FE match-plans](../frontend/features/match-plans.md) |
 | Kickoff time + plan lifecycle (V17) | ✅ `4120ad1` | ✅ `eff49bf` | [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md) — the instant kickoff, `GENERATED`, and the derived `expired`/`generatable`/`cancellable` flags |
+| Match editing — details, scoresheet, lineup (1.4.0) | ✅ `e69e604` | ✅ `b55274f` | [lineup contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-LINEUP-API-CONTRACT.md) · [FE matches](../frontend/features/matches.md) ⚠️ **does not yet describe the rebuilt modal or any of the editing** |
 | Weekly recurring match plans (V34 horizon) | ✅ `5aff478` | ✅ `4dec174` | [recurring contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/RECURRING-MATCH-PLANS-API-CONTRACT.md) · [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md#weekly-recurring-runs) · [FE match-plans](../frontend/features/match-plans.md) |
 
 ## Roadmap Phase 0–3

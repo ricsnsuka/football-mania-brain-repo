@@ -20,6 +20,7 @@
 | `1.2.0` | 2026-08-03 | CHANGELOG `[1.2.0]` — a security release; **`V33` is a rollback boundary** |
 | `1.3.0` | 2026-08-04 | CHANGELOG `[1.3.0]` — [weekly recurring match plans](../features/MATCH_PLANS_FEATURE.md#weekly-recurring-runs) and chronological plan ordering, operator-only platform settings, the group-less account fix, `V34`/`V35`, password policy and login throttling |
 | `1.3.1` | 2026-08-04 | CHANGELOG `[1.3.1]` — fixes for accounts that are not players, plus `GET /api/matches?playerId=` |
+| `1.4.0` | 2026-08-05 | CHANGELOG `[1.4.0]` — the last-administrator guard, [lineup swap/replace](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-LINEUP-API-CONTRACT.md) and the reversal fix under them; frontend: the match modal rebuilt and match/scoresheet/lineup editing. **No migration** |
 
 The CHANGELOG lives at
 [FootMania-Back/CHANGELOG.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/CHANGELOG.md).
