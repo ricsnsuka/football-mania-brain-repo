@@ -18,7 +18,7 @@
 | `1.0.0` | 2026-07 | The historical entries below |
 | `1.1.0` | 2026-08-02 | The historical entries below — backfilled into the CHANGELOG as `[1.1.0]` on 2026-08-02 |
 | `1.2.0` | 2026-08-03 | CHANGELOG `[1.2.0]` — a security release; **`V33` is a rollback boundary** |
-| `1.3.0` | 2026-08-04 | CHANGELOG `[1.3.0]` — the group-less account fix, `V34`/`V35`, password policy and login throttling |
+| `1.3.0` | 2026-08-04 | CHANGELOG `[1.3.0]` — [weekly recurring match plans](../features/MATCH_PLANS_FEATURE.md#weekly-recurring-runs) and chronological plan ordering, operator-only platform settings, the group-less account fix, `V34`/`V35`, password policy and login throttling |
 | `1.3.1` | 2026-08-04 | CHANGELOG `[1.3.1]` — fixes for accounts that are not players, plus `GET /api/matches?playerId=` |
 
 The CHANGELOG lives at

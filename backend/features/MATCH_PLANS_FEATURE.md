@@ -1,23 +1,34 @@
 # Match Plans & Availability Poll Feature
 
 **Added in:** v1.0.0  
-**Date:** May 17, 2026  
-**Status:** ✅ Released
+**Date:** May 17, 2026 · **rewritten against the code on 2026-08-05**  
+**Status:** ✅ Released — weekly recurring runs added in `1.3.0`
+
+> **Why the rewrite.** This document was last touched on 2026-05-27 and had been carrying a drift
+> entry ever since, because it was *wrong* rather than merely old: `proposed_date` was documented as
+> a `DATE` two months after V17 made it an instant, `GENERATED` was missing from the lifecycle it
+> terminates, the grants were written in role names V33 renamed, and neither the waitlist, the pitch
+> cost, the past/upcoming split nor guests appeared at all. Everything below is checked against the
+> entities, the migrations and `MatchPlanController` at that date.
 
 ---
 
 ## Overview
 
-A **Match Plan** is a pre-match organisation tool. Before a match can be created, an
-admin or master user:
+A **Match Plan** is a pre-match organisation tool. Before a match can be created, a `MANAGER`:
 
-1. Creates a **Match Plan** with a proposed date, location, match type, and confirmation deadline.
-2. The plan opens an **availability poll** — players confirm or decline participation.
-3. Once enough players have confirmed, the admin **generates a team preview** using one of
-   three algorithms (BALANCED, RANDOM, SNAKE_DRAFT).
+1. Creates a **Match Plan** with a kickoff instant, location, match type, and confirmation deadline.
+2. The plan opens an **availability poll** — players confirm or decline participation, and anyone
+   with a linked player may bring a guest to fill a spot that is still empty.
+3. Once enough players have confirmed, they **generate a team preview** using one of the
+   generation strategies (BALANCED, RANDOM, SNAKE_DRAFT, …).
 4. The admin reviews the preview and **confirms** it — which creates the actual `Match`.
 
 This decouples "planning who will play" from "running the match stats".
+
+A group that plays the same fixture every week can create the whole run in one request — see
+[Weekly recurring runs](#weekly-recurring-runs). The plans it writes are ordinary plans; a run is a
+faster way to reach the same rows, not a new kind of thing.
 
 ---
 
@@ -28,18 +39,25 @@ This decouples "planning who will play" from "running the match stats".
 | Column                  | Type           | Nullable | Notes                                                                 |
 |-------------------------|----------------|----------|-----------------------------------------------------------------------|
 | `id`                    | BIGSERIAL (PK) | No       |                                                                       |
+| `tenant_id`             | BIGINT (FK)    | No       | The owning group (V24). Every read is scoped to it                    |
 | `title`                 | VARCHAR(100)   | No       | Default `'Unnamed Plan'`                                              |
-| `proposed_date`         | DATE           | No       | Must be in the future at creation (@Future)                           |
+| `proposed_date`         | TIMESTAMPTZ    | No       | **Kickoff instant, not a date** — V17. Must be in the future at creation (@Future) |
 | `location`              | VARCHAR(255)   | Yes      |                                                                       |
 | `description`           | VARCHAR(500)   | Yes      |                                                                       |
 | `match_type`            | VARCHAR(20)    | No       | `FIVE_A_SIDE` / `SEVEN_A_SIDE` / `ELEVEN_A_SIDE`                    |
-| `status`                | VARCHAR(20)    | No       | `PENDING` / `CONFIRMED` / `CANCELLED`                                |
+| `status`                | VARCHAR(20)    | No       | `PENDING` / `CONFIRMED` / `CANCELLED` / `GENERATED` (V17)             |
 | `confirmed_count`       | INTEGER        | No       | Denormalised count of `CONFIRMED` player confirmations                |
 | `min_players_required`  | INTEGER        | No       | Default `14` for SEVEN_A_SIDE                                         |
 | `confirmation_deadline` | TIMESTAMPTZ    | Yes      | After this time, `pollOpen` becomes `false`                           |
-| `created_by`            | VARCHAR(50)    | Yes      | Username of the admin/master who created the plan                     |
+| `total_cost_cents`      | INTEGER        | Yes      | What the pitch cost (V19). **Absent ≠ zero** — nobody recorded it, versus the match was free |
+| `deadline_reminder_sent_at` | TIMESTAMPTZ | Yes     | Conditional-update guard (V13) so the reminder scheduler is safe across instances and restarts |
+| `match_reminder_sent_at`| TIMESTAMPTZ    | Yes      | The same guard for the pre-match reminder                             |
+| `created_by`            | VARCHAR(50)    | Yes      | Username of the manager who created the plan                          |
 | `created_at`            | TIMESTAMPTZ    | No       |                                                                       |
 | `updated_at`            | TIMESTAMPTZ    | No       |                                                                       |
+
+**There is no recurrence column, deliberately.** A weekly run writes independent rows and keeps no
+series — see [Weekly recurring runs](#weekly-recurring-runs).
 
 ### `player_confirmations` Table
 
@@ -52,7 +70,18 @@ This decouples "planning who will play" from "running the match stats".
 | `notes`         | VARCHAR(500)   | Yes      | Optional note from player (e.g. "5 minutes late")    |
 | `confirmed_at`  | TIMESTAMPTZ    | Yes      | Timestamp when player confirmed                      |
 
+Plus `tenant_id` (V24), as everywhere else.
+
 Unique constraint: `(match_plan_id, player_id)` — one confirmation record per player per plan.
+
+**The waitlist is not stored.** `confirmationRank`, `isStarter` and `waitlistPosition` are derived
+on read from confirmation order against `min_players_required`: rank ≤ required is a starter, and
+everyone past it gets `rank - required` as their place in the queue. Storing them would mean
+rewriting every later row each time somebody drops out.
+
+**Guests are `players`, not confirmations.** `is_guest` and `invited_by_player_id` are columns on
+`players` (V21), so a guest holds an ordinary confirmation and the ranking queries exclude them with
+one predicate.
 
 ---
 
@@ -83,7 +112,66 @@ Status transitions:
 - `PENDING` → `CONFIRMED` ✅
 - `PENDING` → `CANCELLED` ✅
 - `CONFIRMED` → `CANCELLED` ✅
+- `CONFIRMED` → `GENERATED` ✅ — written by `POST /generate/confirm`, not by a client
 - Any other transition → `400 Bad Request`
+
+**`GENERATED` is terminal** (V17). Teams were drawn and a `Match` exists, so nothing transitions out
+of it — that is what stops one plan producing two matches.
+
+**There is no `EXPIRED` status**, and adding one would be a mistake: a plan goes out of date because
+the clock moved, not because anything happened to it, so no write exists to make. The API derives
+`expired` per request instead, alongside `generatable` and `cancellable`. **Clients must branch on
+those flags rather than re-deriving them**, or the UI drifts from the server's rule.
+
+---
+
+## Weekly recurring runs
+
+`POST /api/match-plans/recurring` (`MANAGER`) writes a whole weekly run in one request. It shipped
+in `1.3.0`; the frontend reaches it from the same create form, as a **Repeat weekly** checkbox plus a
+count. The [API contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/RECURRING-MATCH-PLANS-API-CONTRACT.md)
+is authoritative on the request shape. What is worth recording here is why it looks like this.
+
+**The plans are independent — there is no series.** Every occurrence is an ordinary plan the moment
+it is written: its own poll, its own lifecycle, edited, cancelled, generated from or deleted on its
+own. A series id was considered and rejected — it buys "cancel them all" and costs a second
+lifecycle to reason about, including what cancelling a run means for the plans in it that already
+have people confirmed or a match generated. Every existing rule therefore applies unchanged, which
+is why this feature added no column.
+
+**Weekly only.** Each occurrence is exactly seven days after the one before, so a run holds the same
+weekday at the same time — the "Friday 5-a-side" a group actually plays. Fortnightly and monthly were
+left out rather than guessed at: monthly needs a rule for what "the 31st" means in a 30-day month,
+and *a rule nobody asked for is a rule nobody checked*.
+
+**A count, not an end date.** `occurrences` is 2–120 inclusive of the first, because "the next eight
+Fridays" is the thing a manager knows. One occurrence is not a recurrence — `POST /api/match-plans`
+already does that — and the 120 ceiling is structural, stopping arithmetic on an absurd count before
+the horizon check runs. It is not the real limit.
+
+**The deadline is a lead time, not an instant.** Each later plan's `confirmationDeadline` moves by
+the same seven days its kickoff does. A run of thirteen plans all sharing one deadline in week one
+would close twelve polls before anybody could answer them.
+
+**The horizon is a platform setting, not a group one.** `PlatformSetting.MATCH_PLAN_RECURRENCE_MAX_MONTHS`
+(default 3, range 1–24) bounds how far ahead a run may reach, and it sits behind the operator grant
+in `platform_settings` (V34) rather than in a group's own `app_settings`. One call writes every row
+in the run, so the horizon bounds what a single request can do to the deployment — a group able to
+raise its own ceiling would not be bounded at all. The horizon is measured **from now**, not from the
+first kickoff; otherwise a run starting in eleven months could reach fourteen.
+
+**Refused whole, never truncated.** A run that overruns the horizon is rejected with `400`, and the
+message names how many occurrences *would* have fitted — counted, not estimated, so the number
+offered back is one that will be accepted. Silently writing the nine that fit out of twelve would
+answer `201`, look like success, and leave the manager to discover the gap weeks later.
+
+**Known limitation: seven days is seven days.** Occurrences step by seven days of *absolute* time, so
+across a daylight-saving boundary the local kickoff moves by an hour — a 19:00 fixture becomes 18:00.
+Adding weeks in the group's own timezone is the correct fix and the schema stores no timezone
+anywhere: kickoffs are instants, and the frontend renders them in whatever zone the browser is in.
+Hard-coding one would be silently wrong for every group not in it, which is worse than an hour.
+Recorded rather than papered over — and the frontend's "last kickoff" preview steps the same way, so
+it shows the date the backend will actually write.
 
 ---
 
@@ -126,28 +214,56 @@ Available `generationType` values:
 
 Base path: `/api/match-plans`
 
-| Method  | Path                                            | Auth                          | Description                                                    |
-|---------|-------------------------------------------------|-------------------------------|----------------------------------------------------------------|
-| `POST`  | `/api/match-plans`                              | `ADMIN_USER` or `MASTER_USER` | Create plan and open poll                                      |
-| `GET`   | `/api/match-plans`                              | Any authenticated             | List plans (paginated, optional `status` filter)               |
-| `GET`   | `/api/match-plans/{id}`                         | Any authenticated             | Get plan by ID                                                 |
-| `PATCH` | `/api/match-plans/{id}`                         | `ADMIN_USER` or `MASTER_USER` | Update plan details (PENDING only)                             |
-| `PATCH` | `/api/match-plans/{id}/status`                  | `ADMIN_USER` or `MASTER_USER` | Transition status                                              |
-| `DELETE`| `/api/match-plans/{id}`                         | `ADMIN_USER`                  | Delete a PENDING plan                                          |
-| `GET`   | `/api/match-plans/{id}/confirmations`           | Any authenticated             | List all confirmations (optional `status` filter)              |
-| `POST`  | `/api/match-plans/{id}/confirmations/me`        | Any authenticated             | Self-confirm or decline availability                           |
-| `GET`   | `/api/match-plans/{id}/confirmations/me`        | Any authenticated             | Get your own confirmation entry                                |
-| `PATCH` | `/api/match-plans/{id}/confirmations/{playerId}`| `ADMIN_USER` or `MASTER_USER` | Admin override: set any player's confirmation status           |
-| `POST`  | `/api/match-plans/{id}/generate`                | `ADMIN_USER` or `MASTER_USER` | Preview generated teams (stateless, not persisted)             |
-| `POST`  | `/api/match-plans/{id}/generate/confirm`        | `ADMIN_USER` or `MASTER_USER` | Confirm preview and create the match                           |
+| Method  | Path                                            | Auth                | Description                                                    |
+|---------|-------------------------------------------------|---------------------|----------------------------------------------------------------|
+| `POST`  | `/api/match-plans`                              | `MANAGER`           | Create plan and open poll                                      |
+| `POST`  | `/api/match-plans/recurring`                    | `MANAGER`           | Create a weekly run in one request — `201` with the plans in kickoff order |
+| `GET`   | `/api/match-plans`                              | Any authenticated   | List plans (paginated; optional `status` and `timeframe` filters) |
+| `GET`   | `/api/match-plans/{id}`                         | Any authenticated   | Get plan by ID                                                 |
+| `PATCH` | `/api/match-plans/{id}`                         | `MANAGER`           | Update plan details (PENDING only)                             |
+| `PATCH` | `/api/match-plans/{id}/status`                  | `MANAGER`           | Transition status                                              |
+| `DELETE`| `/api/match-plans/{id}`                         | `GROUP_ADMIN`       | Delete a PENDING plan                                          |
+| `GET`   | `/api/match-plans/{id}/confirmations`           | Any authenticated   | List all confirmations (optional `status` filter)              |
+| `POST`  | `/api/match-plans/{id}/confirmations/me`        | Any authenticated   | Self-confirm or decline availability                           |
+| `GET`   | `/api/match-plans/{id}/confirmations/me`        | Any authenticated   | Get your own confirmation entry                                |
+| `POST`  | `/api/match-plans/{id}/guests`                  | Any authenticated   | Bring an outsider to fill a spot — the gate is state, not role  |
+| `DELETE`| `/api/match-plans/{id}/guests/{playerId}`       | Any authenticated   | Take a guest off — the inviter while the poll is open, or a `MANAGER` |
+| `PATCH` | `/api/match-plans/{id}/confirmations/{playerId}`| `MANAGER`           | Override any player's confirmation status                      |
+| `POST`  | `/api/match-plans/{id}/generate`                | `MANAGER`           | Preview generated teams (stateless, not persisted)             |
+| `POST`  | `/api/match-plans/{id}/generate/confirm`        | `MANAGER`           | Confirm preview and create the match                           |
+
+### `timeframe`, and the ordering that goes with it
+
+`timeframe` is `upcoming` (kickoff still ahead), `past` (kickoff behind), or omitted for both. It is
+a **server-side** filter because the list is paginated — dropping rows after the page is built shows
+however many survived while `totalElements` keeps counting the ones that did not.
+
+Ordering runs **away from now** unless the client sends its own `sort`, which still wins:
+
+| `timeframe` | Default order |
+|---|---|
+| `upcoming` | `proposedDate ASC, id ASC` — the next match is first |
+| `past` | `proposedDate DESC, id DESC` — the one just played is first |
+| omitted | ascending, as the plainer reading of "chronological" |
+
+Opposite directions, one rule: whatever happens or happened nearest is what somebody is looking for.
+The `id` tie-break matters — without it, rows sharing a `proposedDate` reintroduce the pagination
+instability the ordering exists to fix. **Until `1.3.0` the query had no `ORDER BY` at all**, so
+Postgres was free to return any order it liked.
 
 ### Authorization Matrix
 
-| Action                           | `BASIC_USER` | `MASTER_USER` | `ADMIN_USER` |
+Role names are post-V33: `GROUP_ADMIN` administers **one group** (it was called `ADMIN` and the name
+was the root cause of a cross-group bug), `MANAGER` runs matches, and every grant is held per
+membership.
+
+| Action                           | Member | `MANAGER` | `GROUP_ADMIN` |
 |----------------------------------|:---:|:---:|:---:|
 | Read plans / confirmations       | ✅ | ✅ | ✅ |
 | Self-confirm availability        | ✅ | ✅ | ✅ |
+| Bring / remove a guest           | ✅ | ✅ | ✅ |
 | Create plan                      | ❌ | ✅ | ✅ |
+| Create a weekly run              | ❌ | ✅ | ✅ |
 | Update plan details              | ❌ | ✅ | ✅ |
 | Change plan status               | ❌ | ✅ | ✅ |
 | Override any player confirmation | ❌ | ✅ | ✅ |
@@ -167,17 +283,24 @@ Base path: `/api/match-plans`
 | `title`                | String  | No       |                                                                    |
 | `matchType`            | String  | No       | `FIVE_A_SIDE` / `SEVEN_A_SIDE` / `ELEVEN_A_SIDE`                 |
 | `location`             | String  | Yes      |                                                                    |
-| `proposedDate`         | String  | No       | ISO-8601 date: `"2026-05-23"`                                      |
+| `proposedDate`         | Instant | No       | Kickoff, full instant: `"2026-05-23T19:00:00Z"` (date-only until V17) |
 | `confirmationDeadline` | Instant | Yes      |                                                                    |
-| `status`               | String  | No       | `PENDING` / `CONFIRMED` / `CANCELLED`                             |
+| `status`               | String  | No       | `PENDING` / `CONFIRMED` / `CANCELLED` / `GENERATED`               |
+| `totalCostCents`       | Integer | Yes      | Pitch cost. **Omitted when unrecorded**, which is not zero          |
 | `confirmedCount`       | int     | No       | Number of players who CONFIRMED                                    |
 | `minPlayersRequired`   | int     | No       | Minimum needed to generate teams                                   |
 | `description`          | String  | Yes      |                                                                    |
 | `createdBy`            | String  | Yes      | Username of creator                                                |
 | `playersNeeded`        | int     | No       | `max(0, minPlayersRequired - confirmedCount)` — computed           |
 | `pollOpen`             | boolean | No       | `true` when `status == PENDING` and deadline has not passed        |
+| `expired`              | boolean | No       | Kickoff has passed. Derived per read, never stored                 |
+| `generatable`          | boolean | No       | `CONFIRMED` and not expired. **Do not re-derive** — a `GENERATED` plan is `false` here, which is what stops one plan producing two matches |
+| `cancellable`          | boolean | No       | Not generated from, and has not already happened                   |
 | `createdAt`            | Instant | No       |                                                                    |
 | `updatedAt`            | Instant | No       |                                                                    |
+
+Nullable fields are **omitted** rather than sent as `null` — the API sets
+`spring.jackson.default-property-inclusion: non_null`.
 
 ### `MatchPlanCreateDTO` (POST request)
 
@@ -186,10 +309,24 @@ Base path: `/api/match-plans`
 | `title`                | String  | Yes      | `@NotBlank`                                             |
 | `matchType`            | String  | Yes      | `FIVE_A_SIDE` / `SEVEN_A_SIDE` / `ELEVEN_A_SIDE`       |
 | `location`             | String  | No       |                                                         |
-| `proposedDate`         | String  | Yes      | `@Future` — must be a future date, format `YYYY-MM-DD`  |
-| `confirmationDeadline` | Instant | No       |                                                         |
-| `description`          | String  | No       |                                                         |
-| `minPlayersRequired`   | Integer | No       | Default `14`                                            |
+| `proposedDate`         | Instant | Yes      | `@Future` — the kickoff instant, not a date             |
+| `confirmationDeadline` | Instant | No       | Must be before `proposedDate`                           |
+| `description`          | String  | No       | `@Size(max=500)`                                        |
+| `minPlayersRequired`   | Integer | No       | Defaults to the minimum for the match type (10 / 14 / 22) |
+
+### `RecurringMatchPlanCreateDTO` (POST /recurring request)
+
+Every field of `MatchPlanCreateDTO`, meaning exactly what it means there and applied to each plan in
+the run, plus one:
+
+| Field         | Type    | Required | Validation                                                        |
+|---------------|---------|----------|-------------------------------------------------------------------|
+| `occurrences` | int     | Yes      | `2`–`120`, **inclusive of the first**; further bounded by the horizon |
+
+`proposedDate` is the **first** kickoff. Validating it is enough for the whole run: every later
+kickoff is strictly further into the future, so a valid first one makes the rest valid on those
+checks. The response is a plain array in kickoff order, with **no `Location` header** — the run has
+no single resource to point at, and naming the first plan would imply the others hang off it.
 
 ### `MatchPlanUpdateDTO` (PATCH request — all fields optional)
 
@@ -293,9 +430,16 @@ Base path: `/api/match-plans`
    is computed in memory. Call it multiple times with different `generationType` values
    to compare distributions.
 
-10. **`generate/confirm` creates the match** — each call to `POST /generate/confirm`
-    creates one `Match`. Calling it multiple times creates multiple matches from the same
-    plan (admins should confirm only once).
+10. **`generate/confirm` creates the match** — it moves the plan to `GENERATED`, which is terminal.
+    That is the guard against one plan producing two matches; branch on `generatable` rather than
+    on status.
+
+11. **A weekly run is refused whole or written whole** — the horizon check runs before anything is
+    written, so a rejected run leaves no partial rows behind.
+
+12. **A run's plans are independent from the moment they exist** — no series id, no cascade, no
+    "cancel them all". Whatever is true of a plan created one at a time is true of every plan in a
+    run.
 
 ---
 
@@ -312,12 +456,15 @@ Authorization: Bearer <admin-token>
   "title": "Friday Night — Week 21",
   "matchType": "SEVEN_A_SIDE",
   "location": "Central Park Pitch 2",
-  "proposedDate": "2026-05-30",
+  "proposedDate": "2026-05-30T19:00:00Z",
   "confirmationDeadline": "2026-05-29T20:00:00Z",
   "description": "Bring bibs",
   "minPlayersRequired": 14
 }
 ```
+
+> Sending a date-only `"2026-05-30"` used to be accepted, and the API took the date and discarded
+> the rest — so every plan kicked off at midnight. Send the instant.
 
 **Response `201 Created`:**
 ```json
@@ -326,7 +473,7 @@ Authorization: Bearer <admin-token>
   "title": "Friday Night — Week 21",
   "matchType": "SEVEN_A_SIDE",
   "location": "Central Park Pitch 2",
-  "proposedDate": "2026-05-30",
+  "proposedDate": "2026-05-30T19:00:00Z",
   "confirmationDeadline": "2026-05-29T20:00:00Z",
   "status": "PENDING",
   "confirmedCount": 0,
@@ -337,6 +484,35 @@ Authorization: Bearer <admin-token>
   "pollOpen": true,
   "createdAt": "2026-05-22T10:00:00Z",
   "updatedAt": "2026-05-22T10:00:00Z"
+}
+```
+
+### Create Eight Weeks of It
+
+```http
+POST /api/match-plans/recurring HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer <manager-token>
+
+{
+  "title": "Friday 5-a-side",
+  "matchType": "FIVE_A_SIDE",
+  "location": "Pavilhão Municipal",
+  "proposedDate": "2026-08-07T19:00:00Z",
+  "confirmationDeadline": "2026-08-06T19:00:00Z",
+  "occurrences": 8
+}
+```
+
+**Response `201 Created`:** an array of eight `MatchPlanDTO`s in kickoff order — 7 Aug, 14 Aug, …,
+25 Sep — each with its deadline a day before its own kickoff.
+
+**Response `400 Bad Request`** when the run overruns the horizon:
+
+```json
+{
+  "status": 400,
+  "message": "A weekly run of 20 would reach 2026-12-18T19:00:00Z, beyond the 3-month recurrence horizon. At most 12 occurrence(s) fit from this start date."
 }
 ```
 
@@ -418,11 +594,16 @@ Authorization: Bearer <admin-token>
 
 ## Caching Strategy
 
-Match plans use the `matches` Caffeine cache (shared with the Match feature):
+Match plans have their own Caffeine cache, `matchPlans` (`CacheConfig.MATCH_PLANS`) — not the
+`matches` cache this document used to name:
 
-| Cache Name | Populated By         | Evicted When          |
-|------------|----------------------|-----------------------|
-| `matches`  | `GET /api/match-plans/{id}` | Any write to match plans |
+| Cache Name  | Populated By                | Evicted When                                |
+|-------------|-----------------------------|---------------------------------------------|
+| `matchPlans`| `GET /api/match-plans/{id}` | Any write to a plan, its confirmations, its guests or its cost — `allEntries = true` |
+
+Keys carry the tenant (`TenantContext.currentTenant() + ':plan-' + id`), so one group's cached plan
+can never be served to another. Creating a **run** evicts the whole cache for the same reason every
+other write does: a run lands anywhere in the list, and no single-key eviction describes that.
 
 ---
 
@@ -432,7 +613,9 @@ Match plans use the `matches` Caffeine cache (shared with the Match feature):
 - **Service:** `MatchPlanService.java` — business logic, confirmation management, team generation dispatch
 - **Controller:** `MatchPlanController.java` — REST layer; `@AuthenticationPrincipal UserPrincipal` used for self-service confirmation
 - **Team generation:** Delegated to `TeamGenerationStrategyFactory` → `BalancedGenerationStrategy` / `RandomGenerationStrategy` / `SnakeDraftGenerationStrategy`
-- **DTOs:** `MatchPlanCreateDTO`, `MatchPlanDTO`, `MatchPlanUpdateDTO`, `MatchPlanStatusDTO`, `ConfirmationUpsertDTO`, `PlayerConfirmationDTO`, `MatchPreviewDTO` — all Java Records
+- **DTOs:** `MatchPlanCreateDTO`, `RecurringMatchPlanCreateDTO`, `MatchPlanDTO`, `MatchPlanUpdateDTO`, `MatchPlanStatusDTO`, `ConfirmationUpsertDTO`, `PlayerConfirmationDTO`, `GuestCreateDTO`, `MatchPreviewDTO` — all Java Records
+- **Recurrence horizon:** `PlatformSettingsService` reading `PlatformSetting.MATCH_PLAN_RECURRENCE_MAX_MONTHS` — a separate bean from `AppSettingsService` on purpose, because the two answer to different grants
+- **Frontend:** the create modal's **Repeat weekly** checkbox — see [FE match plans](../../frontend/features/match-plans.md)
 
 ---
 
@@ -448,4 +631,9 @@ Match plans use the `matches` Caffeine cache (shared with the Match feature):
 | `CAPTAIN_PICK` or unsupported algorithm        | 422    | `CAPTAIN_PICK is not yet available`                      |
 | Player not found for admin confirmation        | 404    | `Player with id {id} not found`                          |
 | proposedDate in the past                       | 400    | Validation violation on `proposedDate`                   |
+| Deadline not before kickoff                    | 400    | `confirmationDeadline must be before proposedDate`       |
+| `minPlayersRequired` below the type's minimum  | 400    | `minPlayersRequired (N) cannot be less than the minimum required for <type> (M players)` |
+| First kickoff already past the horizon         | 400    | `The first kickoff is beyond the N-month recurrence horizon; no plan in this run could be created` |
+| Weekly run overruns the horizon                | 400    | `A weekly run of N would reach <instant>, beyond the M-month recurrence horizon. At most K occurrence(s) fit from this start date.` |
+| Creating a run without `MANAGER`               | 403    | —                                                        |
 

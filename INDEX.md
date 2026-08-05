@@ -81,6 +81,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [login](frontend/features/login.md) | Auth flow, change-password |
 | [dashboard](frontend/features/dashboard.md) | Role-based overview |
 | [players](frontend/features/players.md) · [matches](frontend/features/matches.md) | The two main tables |
+| [match-plans](frontend/features/match-plans.md) | The poll, the waitlist, guests — and creating a weekly run |
 | [team-generation](frontend/features/team-generation.md) | Generation UI and balance-at-a-glance |
 | [rankings](frontend/features/rankings.md) | League table and category cards |
 | [motm-voting](frontend/features/motm-voting.md) · [badges](frontend/features/badges.md) | Crowd MOTM and achievements |
