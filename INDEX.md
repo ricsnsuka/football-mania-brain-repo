@@ -34,7 +34,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [MICROSERVICES_ARCHITECTURE](backend/features/MICROSERVICES_ARCHITECTURE.md) | Why it is still one deployable |
 | [CALCULATION_SERVICE](backend/features/CALCULATION_SERVICE.md) | The skill-rating engine — formulas, constants, worked examples |
 | [MATCH_FEATURE](backend/features/MATCH_FEATURE.md) | Match lifecycle, completion, amendment |
-| [MATCH_PLANS_FEATURE](backend/features/MATCH_PLANS_FEATURE.md) ⚠️ | Plans and the availability poll. **Stale since 2026-05-27** |
+| [MATCH_PLANS_FEATURE](backend/features/MATCH_PLANS_FEATURE.md) | Plans, the availability poll, the `timeframe` split and the `from`/`to` kickoff window. Rewritten against the code 2026-08-05 |
 | [PLAYER_FEATURE](backend/features/PLAYER_FEATURE.md) | Roster, aggregates, soft delete |
 | [USERS](backend/features/USERS.md) | Accounts, authentication, roles |
 | [SEASON_FEATURE](backend/features/SEASON_FEATURE.md) | Seasons and the single-current invariant |
@@ -92,7 +92,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [privacy](frontend/features/privacy.md) | Export, deletion, public policy page |
 | [language-switcher](frontend/features/language-switcher.md) · [theme](frontend/features/theme.md) | Locale and light/dark |
 | [groups](frontend/features/groups.md) | Joining, founding, switching — and the two people who hand out access |
-| *payments* ⚠️ | **Missing.** The ledger UI shipped in `a3efac0` with no feature doc |
+| [payments](frontend/features/payments.md) | Your balance, the interleaved ledger, the roster and delegation groups |
 | *guests · payment-delegation* ⚠️ | **Missing.** Both shipped in the UI in `722335c` |
 
 ---

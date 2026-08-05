@@ -232,11 +232,32 @@ this release closes, in a worse form. The platform grant stays flat and separate
 `platform_admins`, behind `PlatformGuard`. `TENANCY-ENFORCEMENT-PLAN` §9 rejected the role form
 once already.
 
-**5. Pushing the frontend's `main` IS a production deploy.** Netlify's production site tracks
-that branch and builds every push; the backend is a **manual** `git push heroku main:master`, and
-the running dyno can lag `main` by hours. Merged is not deployed. Any frontend change that
-depends on backend behaviour ships backend-first — *deployed* first, not merged first. This is how
-the 2026-08-02 partial outage happened.
+**5. Pushing either repo's `main` IS a production deploy.** Netlify's production site tracks that
+branch for the frontend and builds every push; the backend has done the same on Heroku **since
+2026-08-05** — the manual `git push heroku main:master` this hazard used to describe is now only
+the fallback. *Corrected 2026-08-05; `7dc787c` changed the deployment guide and missed this line.*
+
+The ordering survives the change. Merged is not deployed, and automatic is not the same as
+arrived: a build can fail after a merge succeeds. Any frontend change that depends on backend
+behaviour ships backend-first — *deployed* first, confirmed via `heroku releases -a footmania` and
+`/api/version`, not merely merged. This is how the 2026-08-02 partial outage happened.
+
+**7. The visual baselines are Windows-only, and every one of them is now stale.** `e2e/` compares
+screenshots against committed `*-win32.png` files. On Linux or macOS Playwright silently writes a
+*separate* set rather than failing, so a green run on another platform proves nothing about the
+committed baselines — and the 2026-08-05 alignment work changed the navbar, which is on every page.
+
+Regenerate on Windows with `npm run test:visual:update` and **look at the images**. The e2e README
+already warns why: a run once photographed the "you are not in a group yet" screen on all sixteen
+pages and reported green.
+
+**8. The app's service worker bypasses Playwright's API stubs after first load.** `stubApi` routes
+through `page.route`, which the service worker's own fetches do not pass through, so the *second*
+request a test makes reaches the real Next server and 404s. The current visual suite never notices
+because it only screenshots initial loads; the first interaction-driven e2e test will hit it, and
+it presents as the app being broken rather than the harness. `serviceWorkers: 'block'` in
+`playwright.config.ts` fixes it — deliberately not applied yet, because it may shift the baselines
+in hazard 7 and those cannot be regenerated off Windows.
 
 ---
 
@@ -254,7 +275,7 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 | [backend/plans/ORCHESTRATOR_SESSION.md](backend/plans/ORCHESTRATOR_SESSION.md) | Last entry 2026-07-28, though `orchestrator.agent.md` still mandates an entry per session | Resume it, or retire the convention deliberately |
 | ~~Postman collection~~ | Was 60 requests against a 103-operation API, and — the deeper find — **gitignored the whole time**, so every copy lived on one person's disk and none could be diffed | ✅ **Resolved 2026-08-02.** Now *generated* from the running app's `/v3/api-docs` by `postman/generate-collection.mjs`, committed to the repo (103 requests, 17 folders, `X-Group-Id` per the tenancy contract), and regeneration is one command. The hand-maintenance workflow in `postman-engineer.agent.md` is marked historical |
 | ~~[frontend/INDEX.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/INDEX.md)~~ | Omitted seven of its own files | ✅ **Resolved** by the documentation split — the feature docs it failed to link now live here, and what is left there is a pointer plus the seven guides |
-| frontend — missing files | No `features/payments.md`, though `a3efac0` shipped the whole "what you owe" UI; and nothing for guest players or payment delegation (`722335c`) | Write them. Every other frontend feature has a file. ✅ The group dimension is now covered by [frontend/features/groups.md](frontend/features/groups.md) |
+| frontend — missing files | Nothing for guest players or payment delegation (`722335c`) as features in their own right | Write them. ✅ `features/payments.md` **written 2026-08-05** — the balance, the interleaved ledger, the roster and the delegation groups; delegation is covered there rather than separately. ✅ The group dimension is covered by [frontend/features/groups.md](frontend/features/groups.md) |
 | **this repo — no tenancy feature doc** | [architecture/multi-tenancy.md](architecture/multi-tenancy.md) and the plans carry the design, but `backend/features/` has nothing on organizations, memberships or per-membership roles, while nine older features each have a file | Write `backend/features/TENANCY.md`. It is the one thing a new session most needs and currently has to reconstruct from four plans |
 
 A related failure, already fixed: the notification-settings screen rendered `MVP_VOTE_OPEN` and

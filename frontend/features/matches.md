@@ -23,7 +23,18 @@ Changing the page size resets to page 0.
 
 ## Page size selector
 
-A `<select>` rendered inside the pagination bar (`matches-page-size-select`) lets users switch between 3, 5, and 10 matches per page. It is visible whenever the page contains at least one match (`totalElements > 0`).
+A `<select>` inside the shared pagination control (`components/ui/Pagination`, class
+`pagination__size-select`) switches between 3, 5 and 10 matches per page. It is visible whenever the
+page contains at least one match (`totalElements > 0`).
+
+**Three is the default because a match card is tall** — scoreline, both squads, venue — so three of
+them is about a screenful without scrolling. The larger sizes are for scanning back through a
+season rather than reading the last few.
+
+> Corrected 2026-08-05. This page had specified 3 from 3/5/10 since it was written and the code
+> shipped a default of 10 from 5/10/20; the code was changed to match. The class named here was
+> `matches-page-size-select`, which no component had used since pagination became a shared
+> primitive — the rule that was still in `globals.css` has been deleted.
 
 ## Role gates
 
