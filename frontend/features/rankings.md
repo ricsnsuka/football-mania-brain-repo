@@ -60,8 +60,34 @@ unvalidated body, so the boolean is the only thing safe to trust. `src/tests/ran
 | 8 | Assists | `entry.assists` | |
 | 9 | Rating | `entry.skillRating` | Two decimals |
 
+Columns 3–9 are all figures and are **right-aligned, headers included**, so the values line up on
+the units digit. They carried `tabular-nums` from the start, which on its own buys nothing —
+equal-width digits only pay off once the column has an edge, and left-aligned they still put the
+units digit of `5` under the tens digit of `13`. Fixed 2026-08-05; see rule 8 in the frontend
+[styling guide](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/guides/styling.md).
+
 Below 640px the table is replaced by cards (`.rankings-cards`), which show the record as a compact
 `W-D-L` triple.
+
+## Paging
+
+Ten rows a page, from 10 / 25 / 50.
+
+`GET /api/rankings` answers with the **whole** table — one cached document whose ranks are computed
+against the full field — so this is a window onto an array that has already arrived, not a request
+per page. Changing page fetches nothing and the server is never asked for a slice.
+
+**Ranks stay the server's: page two starts at 11.** Renumbering per page would make its first row
+"1", which is a different claim about that player.
+
+The page index is **clamped, not reset**. Switching back to active-only shortens the list under the
+reader, and an index past the end renders an empty table for somebody who has rows. Clamping keeps
+them as close as possible to where they were; the two controls that change *which players exist* —
+the active/inactive filter and the page size — do reset to page 0, because staying on page 4 would
+land them in the middle of a different table.
+
+One control serves both layouts. The table and the mobile cards are the same list at two widths and
+only one of them is ever on screen.
 
 ## Leaderboards
 

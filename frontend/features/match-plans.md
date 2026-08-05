@@ -14,6 +14,7 @@ Backend: [MATCH_PLANS_FEATURE](../../backend/features/MATCH_PLANS_FEATURE.md) ·
 | Available page sizes | 10, 20, 50 |
 | Default timeframe | **Upcoming** |
 | Default status filter | All |
+| Week filter | Off until chosen; opens on the current week |
 
 ## Two filter rows, not one
 
@@ -29,6 +30,55 @@ did not. Changing either resets to page 0.
 cancelled or generated from, and listing it beside next Friday's put dead entries above live ones —
 the longer a group plays, the more of them there are. Ordering is the server's: nearest first in
 both directions, since `1.3.0`.
+
+## The week filter
+
+A third tab beside Upcoming and Past. Choosing it reveals a stepper — `‹`, the week's range, `›`,
+and a disabled-when-you-are-already-there "This week" — and filters the list to one Monday-to-Sunday
+week.
+
+**It is not a timeframe the API knows about.** There is no `timeframe=week`. The page computes the
+window itself and sends two instants:
+
+```
+GET /api/match-plans?from=2026-08-03T00:00:00.000Z&to=2026-08-10T00:00:00.000Z
+```
+
+**Because a week boundary is a local-calendar fact.** "This week" starts at a different instant in
+Lisbon than in São Paulo, and only the browser knows which of them is asking. A server-resolved
+`week` value would hand everybody Lisbon's week. `from` is inclusive and `to` exclusive, so
+consecutive weeks tile exactly — a plan kicking off at the boundary belongs to the week starting
+there and to no other.
+
+**Choosing a week drops `timeframe` rather than combining with it.** The API intersects the two, so
+`upcoming` plus this week would mean *the rest of* this week — quietly hiding the half already
+played, from a control the reader used to ask for the whole of it. Switching back to Upcoming or
+Past drops the window in turn.
+
+### The daylight saving trap
+
+`src/lib/week.ts` steps with `Date#setDate`, **never** by adding 7 × 24 hours. Across a daylight
+saving change a week is 167 or 169 hours long, and the arithmetic version drifts the boundary an
+hour into the neighbouring day — which, at exactly midnight, is a different day.
+
+`src/tests/lib/week.test.ts` pins `Europe/Lisbon` rather than running in the machine's timezone: in
+UTC every one of those assertions passes for the broken version too, so a suite that did not pin a
+DST zone would be green and wrong. One test asserts the spring-forward week spans exactly 167 hours.
+
+### Formatting the range
+
+The label uses `Intl.DateTimeFormat.formatRange` (`formatDateRange` in `src/lib/formatDate.ts`),
+not two formatted dates joined with a dash. Which parts collapse, and in what order, is the
+locale's business: en-GB elides to `3 – 9 Aug 2026` and en-US to `Aug 3 – 9, 2026`. Hand-joining
+produced `3 – Aug 9, 2026` — day-first output spliced into a month-first locale.
+
+The label has a `min-width` so the arrows either side do not shuffle sideways as the range changes
+width — `3–9 Aug 2026` against `28 Dec – 3 Jan 2027`. Rule 8 in the frontend
+[styling guide](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/guides/styling.md).
+
+> ICU separates a range with THIN SPACE + EN DASH + THIN SPACE, not spaces and a hyphen. An
+> assertion written with ordinary spaces fails with `expected '3 – 9 Aug 2026' to be
+> '3 – 9 Aug 2026'`. The tests compare on collapsed whitespace.
 
 ## Role gates
 
@@ -104,6 +154,7 @@ the server's rule.
 | Inline edit form | `src/features/matchPlans/MatchPlanEditForm.tsx` |
 | Guests | `src/features/matchPlans/AddGuestModal.tsx` |
 | Pitch cost | `src/features/matchPlans/PlanCostSection.tsx` |
+| Week arithmetic | `src/lib/week.ts` — `startOfWeek`, `addWeeks`, `endOfWeek`, `weekWindow`, `isSameWeek` |
 | Data hooks | `src/hooks/matchPlan/useMatchPlans.ts` |
 | Service | `src/services/matchPlanService.ts` |
 | Types | `src/types/matchPlan.ts` |
@@ -127,3 +178,5 @@ Notable groups:
   renders those by key: `t('matchPlans.form.errors.' + error.message)`
 - `matchPlans.detail.*` — the detail modal, RSVP and status actions
 - `matchPlans.guests.*` · `matchPlans.waitlist.*` — guests, starters and reserves
+- `matchPlans.timeframeWeek` · `matchPlans.week.*` — the week tab, the stepper labels and the
+  "Monday to Sunday" hint

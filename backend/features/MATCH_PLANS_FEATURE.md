@@ -218,7 +218,7 @@ Base path: `/api/match-plans`
 |---------|-------------------------------------------------|---------------------|----------------------------------------------------------------|
 | `POST`  | `/api/match-plans`                              | `MANAGER`           | Create plan and open poll                                      |
 | `POST`  | `/api/match-plans/recurring`                    | `MANAGER`           | Create a weekly run in one request — `201` with the plans in kickoff order |
-| `GET`   | `/api/match-plans`                              | Any authenticated   | List plans (paginated; optional `status` and `timeframe` filters) |
+| `GET`   | `/api/match-plans`                              | Any authenticated   | List plans (paginated; optional `status`, `timeframe` and `from`/`to` filters) |
 | `GET`   | `/api/match-plans/{id}`                         | Any authenticated   | Get plan by ID                                                 |
 | `PATCH` | `/api/match-plans/{id}`                         | `MANAGER`           | Update plan details (PENDING only)                             |
 | `PATCH` | `/api/match-plans/{id}/status`                  | `MANAGER`           | Transition status                                              |
@@ -250,6 +250,39 @@ Opposite directions, one rule: whatever happens or happened nearest is what some
 The `id` tie-break matters — without it, rows sharing a `proposedDate` reintroduce the pagination
 instability the ordering exists to fix. **Until `1.3.0` the query had no `ORDER BY` at all**, so
 Postgres was free to return any order it liked.
+
+### `from` / `to` — an explicit kickoff window
+
+Two optional ISO-8601 instants bounding `proposedDate`: `from` **inclusive**, `to` **exclusive**.
+They filter in the query for the same reason `timeframe` does — the list is paginated.
+
+**Half-open on purpose.** Consecutive windows tile exactly, so a plan kicking off at the boundary
+belongs to the window starting there and to no other. An inclusive upper bound has to name a last
+representable instant, and whatever it names, a kickoff in the gap after it belongs to no window at
+all.
+
+**There is deliberately no `timeframe=week`.** A week runs Monday to Sunday *in the reader's
+timezone*, and the server has no way to know whose Monday is meant — resolving it here would give
+every caller the server's own zone. The caller computes the window and sends two instants; the
+frontend does exactly this for its "By week" tab.
+
+**The window intersects with `timeframe` rather than replacing it**, so `upcoming` plus this week
+means the rest of this week. The service takes the later of the two lower bounds and the earlier of
+the two upper bounds. An empty intersection — last week's window with `timeframe=upcoming` — is an
+honest empty page.
+
+| Condition | Result |
+|---|---|
+| `from` on or after `to` | `400 from must be before to` |
+| Unparseable instant | `400 Parameter 'from' has an invalid value` (Spring type conversion) |
+| Either omitted | That end is unbounded |
+
+A zero-length window is refused rather than silently matching nothing: `>= from AND < to` with
+`from == to` can never match, so it is a caller mistake rather than a filter that legitimately found
+none.
+
+Ordering is unchanged — a window with no `timeframe` takes the ascending default, which is what
+reading a week Monday-first wants.
 
 ### Authorization Matrix
 
