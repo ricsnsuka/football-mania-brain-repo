@@ -8,8 +8,8 @@ nobody trusts is worse than none.
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
 | `next` head | `358285b` — level with `main`, checked after the release merge | `f343678` — level with `main`, checked after the release merge |
 | Release | **`1.4.1` — merged to `main`** | **`1.4.1` — merged to `main`** |
-| Running in production | `9fa0134` — Heroku release **v56** (1.4.0). **1.4.1 is merged and the Heroku push was not confirmed to this session** — ask `heroku releases` before believing any line about it | `f343678` merged to `main`, which is what Netlify publishes from — **deploy id not verified against the platform** |
-| `main` head | `358285b` — 1.4.1, ahead of the confirmed deploy | `f343678` — 1.4.1 |
+| Running in production | `358285b` — **Heroku deploys automatically from `main`**, so the release merge was the deploy. Release number not read back to this session; `heroku releases` and `/api/version` are the check | `f343678` — Netlify publishes from `main`, so the same is true here. **Deploy id not verified against the platform** |
+| `main` head | `358285b` — 1.4.1 | `f343678` — 1.4.1 |
 | Working tree | clean | clean |
 | Tests | 1104 unit + 76 integration, SpotBugs clean | 677 unit |
 | Latest migration | `V35__platform_admin_exclusivity.sql` | — |
@@ -73,6 +73,16 @@ Place `v1.4.1` at whatever the platforms report rather than at these SHAs if the
 the running process were the same commit on both sides.** Four releases went out in two days:
 `1.2.0` (security), `1.3.0` (the group-less account fix plus password policy and login throttling),
 and `1.3.1` (fixes for accounts that are not players).
+
+🚀 **Both sides now deploy themselves from `main`.** Netlify always did; Heroku does since the owner
+turned on automatic deployment on 2026-08-05. **Merging a release pull request is therefore the
+deploy in both repos** — there is no separate `git push heroku main:master` step to forget, and no
+window where `main` is ahead of production.
+
+What that does *not* remove is the confirmation. A deploy that started is not a deploy that booted
+the right jar, and this project has a release list showing three deploys in an afternoon that a
+status file had recorded as one. Ask `heroku releases -a footmania` and `/api/version`; ask Netlify
+for its deploy id.
 
 🔒 **Work goes to `next`. `main` moves only when a release is cut.** Re-stated by the owner on
 2026-08-04 and both branches re-synced to `f64fa92` / `242841f`, so `main` and `next` now agree at
