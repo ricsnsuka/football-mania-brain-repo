@@ -9,7 +9,7 @@ lives in one place instead of being reconstructed from two codebases every time.
 | Repo | What it is | Where |
 |------|-----------|-------|
 | **Backend** | Java 21 · Spring Boot 3.4.5 · PostgreSQL · Flyway | [`ricsnsuka/FootMania-Back`](https://github.com/ricsnsuka/FootMania-Back) |
-| **Frontend** | Next.js 16 App Router · React 19 · TypeScript · Tailwind 4 | `FootballMania/front/football` |
+| **Frontend** | Next.js 16 App Router · React 19 · TypeScript · Tailwind 4 | [`ricsnsuka/FootMania-Simple-Front`](https://github.com/ricsnsuka/FootMania-Simple-Front) |
 | **Brain** (this) | All documentation, canonical | [`ricsnsuka/football-mania-brain-repo`](https://github.com/ricsnsuka/football-mania-brain-repo) |
 
 ---
