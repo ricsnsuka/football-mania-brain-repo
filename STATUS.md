@@ -12,19 +12,26 @@ nobody trusts is worse than none.
 | `main` head | `15e85c6` — 1.5.1 | `50c68a8` — 1.4.2 |
 | Working tree | clean | clean |
 | Tests | 1104+ unit, SpotBugs clean on `spotbugsMain` | 725 unit |
-| Latest migration | `V35__platform_admin_exclusivity.sql` on `main`; **`V36` in flight**, see below | — |
-| Deployed through | **`V35`** — `V36` is not merged and has never run | — |
+| Latest migration | **`V36__player_positions_and_keeper.sql`** on `next`; `V35` on `main` | — |
+| Deployed through | **`V35`** — `V36` is merged to `next` and CI-verified, but not released | — |
 | Tags | `v1.0.0` → **`v1.5.1`**, contiguous | `v1.1.0` → **`v1.4.2`**, contiguous |
 
 **The two repos are two minor versions apart, and that is correct.** `1.5.0` and `1.5.1` were
 backend-only — a security pass and then a correction to it — and both changelog entries say in as
 many words that no API surface moved and the frontend needs no matching release.
 
-🔄 **In flight: `V36`, on `claude/match-predictor-team-composition-qlenaw` in all three repos.**
-Preferred positions and goalkeeper willingness on a player. Three pull requests open, nothing
-merged, and **the migration has never run against a real database** — the session that wrote it had
-no Docker, so `integrationTest` did not execute. See
-[database-migrations.md](architecture/database-migrations.md).
+✅ **`V36` merged to `next` / `main` on 2026-08-07** — preferred positions and goalkeeper
+willingness on a player. **The migration ran against a real PostgreSQL in CI**
+(`🧪 Integration (Testcontainers)`, green), which is the `ddl-auto: validate` check that confirms
+the migration and the entity agree. It is **not deployed**: `next` carries it, and only a release
+merge to `main` deploys.
+
+🔄 **In flight on the same branch: `OPTIMAL` team generation.** Exhaustive partition search scored
+on `|Δmean| + λ·|Δspread| + κ·keeperPenalty` — the seventh strategy, and the first to consume V36's
+data. Shipped ahead of it in their own commits: the `params[…]` binding defect (so `formWindow` and
+the `CAPTAIN_PICK` captain overrides work for the first time) and a tie-order determinism fix across
+the four strategies that claimed to be deterministic and were not. See
+[OPTIMAL-PARTITION-PLAN](backend/plans/OPTIMAL-PARTITION-PLAN.md), whose §7 records all three.
 
 > The branch name says "match predictor" and the work is nothing of the sort. A match predictor was
 > discussed in the same session and **declined** — nice to have, too much complexity for the value.

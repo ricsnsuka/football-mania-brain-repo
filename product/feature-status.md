@@ -17,7 +17,8 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Matches — create, complete, live stats, amend | ✅ | ✅ | [MATCH_FEATURE](../backend/features/MATCH_FEATURE.md) · [FE matches](../frontend/features/matches.md) |
 | Skill ratings & recalculation | ✅ | — | [CALCULATION_SERVICE](../backend/features/CALCULATION_SERVICE.md) · [recalc contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-RATING-RECALCULATION-API-CONTRACT.md) |
 | Seasons | ✅ | 🟡 | [SEASON_FEATURE](../backend/features/SEASON_FEATURE.md) — season **write** API still deferred |
-| Team generation (6 strategies) | ✅ | ✅ | [TEAM_GENERATION_FEATURE](../backend/features/TEAM_GENERATION_FEATURE.md) · [design](../backend/features/TEAM_GENERATION_DESIGN.md) · [FE](../frontend/features/team-generation.md) |
+| Team generation (7 strategies) | ✅ | ✅ | [TEAM_GENERATION_FEATURE](../backend/features/TEAM_GENERATION_FEATURE.md) · [design](../backend/features/TEAM_GENERATION_DESIGN.md) · [OPTIMAL plan](../backend/plans/OPTIMAL-PARTITION-PLAN.md) · [FE](../frontend/features/team-generation.md) |
+| Player positions & keeper willingness | ✅ V36 | ✅ | [PLAYER_FEATURE](../backend/features/PLAYER_FEATURE.md) · [FE players](../frontend/features/players.md) |
 | Draft sessions (captain pick, SSE) | ✅ | ✅ | [DRAFT_SESSION_FEATURE](../backend/features/DRAFT_SESSION_FEATURE.md) · [SSE guide](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) |
 | Match plans — RSVP, deadline, waitlist | ✅ `57844eb` | ✅ `3e8aa79` | [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md) — rewritten against the code 2026-08-05 · [FE match-plans](../frontend/features/match-plans.md) |
 | Kickoff time + plan lifecycle (V17) | ✅ `4120ad1` | ✅ `eff49bf` | [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md) — the instant kickoff, `GENERATED`, and the derived `expired`/`generatable`/`cancellable` flags |

@@ -36,7 +36,7 @@ identically on every match ever played.
 
 1. **Select a match plan** — Choose a confirmed plan that has not expired or been used.
 2. **See confirmed players** — Shows all players who confirmed attendance with skill ratings.
-3. **Choose generation type** — `BALANCED`, `RANDOM`, or `SNAKE_DRAFT`.
+3. **Choose generation type** — `BALANCED`, `RANDOM`, `SNAKE_DRAFT`, `FORM_BASED` or `OPTIMAL`.
 4. **Generate preview** — API returns a `MatchPreviewDTO` showing proposed team compositions.
 5. **Confirm or regenerate** — Review the preview, then confirm to create the match.
 
@@ -44,8 +44,36 @@ identically on every match ever played.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/match-plans/{id}/generate?generationType=` | Preview team generation |
-| `POST` | `/api/match-plans/{id}/generate/confirm?generationType=` | Create match from preview |
+| `POST` | `/api/match-plans/{id}/generate?generationType=&params[…]=` | Preview team generation |
+| `POST` | `/api/match-plans/{id}/generate/confirm?generationType=&params[…]=` | Create match from preview |
+
+### Per-strategy controls
+
+Two strategies reveal an extra control when chosen. Both are sent as `params[…]` on the query
+string, and **both preview and confirm send the identical query** — the server re-runs the
+algorithm on confirm rather than persisting the preview, so a disagreement between the two calls
+would hand the organiser different teams from the ones they approved. `generationQuery.test.ts`
+pins that.
+
+| Strategy | Control | Sends |
+|---|---|---|
+| `FORM_BASED` | Form window, a number input | `params[formWindow]` |
+| `OPTIMAL` | "Even out team shape", a slider over `[0, 2]` in `0.25` steps | `params[shapeWeight]` |
+
+**λ is a slider, not a number box.** The useful thing about it is "more of this, less of that", not
+the figure — a slider says that without asking anybody what 0.75 means. The exact value is printed
+in the hint underneath for whoever wants it, and the hint changes wording at zero to say the term is
+off rather than showing "0.00".
+
+**There is no metric selector**, though `OPTIMAL` can balance on recent form server-side.
+`FORM_BASED` already sits in the same dropdown, and two overlapping form controls would confuse
+before they help.
+
+> ⚠️ **The form-window control did nothing until 2026-08-07.** The frontend sent
+> `params[formWindow]` faithfully; the server bound every query key literally and the lookup
+> returned null, so `FORM_BASED` always used its default window of 5. Nothing on either side
+> asserted the wire format, so nothing failed — it simply looked like it worked. Both halves are
+> pinned by tests now.
 
 ### Validation Rules
 
