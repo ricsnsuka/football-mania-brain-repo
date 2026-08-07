@@ -40,6 +40,7 @@ summary is stored in `generationNotes` for every non-MANUAL match.
 | `FORM_BASED` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` + match history | Regular groups playing weekly where recent form matters | `formWindow` (int, default 5) |
 | `STREAK_AWARE` | ⚠️ Pending | GROUP_ADMIN / MASTER | `skillRating` + streak data | Preventing momentum clusters — not yet available | None |
 | `CAPTAIN_PICK` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` | Social engagement, when captains are meaningful | `captainAId`, `captainBId` (Long, optional) |
+| `OPTIMAL` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` (+ history for `metric=form`, + `goalkeeperWillingness`) | When the averages matching is not enough — balances team *shape* and goalkeeper cover too | `metric`, `shapeWeight`, `keeperWeight`, `formWindow` |
 
 > **MANUAL** is used via `POST /api/matches` directly (the caller provides `playerIds` per team).
 > All other types use the `POST /api/match-plans/{id}/generate` flow.
@@ -620,6 +621,76 @@ CAPTAIN_PICK: captainA=João Silva captainB=Miguel Santos avgA=7.43 avgB=7.21 Δ
 
 ---
 
+---
+
+### 🟢 OPTIMAL
+
+**Exhaustive partition search with a pluggable objective.** Added 2026-08-07. The full design,
+including the argument for why it exists, is
+[OPTIMAL-PARTITION-PLAN](../plans/OPTIMAL-PARTITION-PLAN.md).
+
+The other six strategies are one algorithm in six costumes: reduce each player to a scalar, sort,
+split. `OPTIMAL` enumerates instead — every legal split, scored, minimum kept.
+
+```
+score = |Δmean| + λ·|Δspread| + κ·keeperPenalty
+```
+
+| Format | Pool | Splits searched | Cost |
+|---|---:|---:|---|
+| `FIVE_A_SIDE` | 10 | 126 | microseconds |
+| `SEVEN_A_SIDE` | 14 | 1,716 | microseconds |
+| `ELEVEN_A_SIDE` | 22 | 352,716 | single-digit ms |
+
+`C(n−1, n/2−1)` — pinning the lowest-id player to Team A removes each split's mirror image.
+
+**It is not here for a better mean.** Greedy on sorted input already finds the exact minimum mean
+gap; a property test over 500 random pools confirms exact search never beats it there. It is here
+for the terms greedy cannot express, because greedy is only justified when the quantity minimised is
+an additive sum over players.
+
+- **`|Δspread|`** — `[9,9,9,4,4]` and `[7,7,7,7,7]` both average 7.00, and `BalanceGauge` calls that
+  perfectly balanced. Three strong players beat five average ones most weeks. Targets the
+  *difference* in shape, so two equally top-heavy teams correctly score zero.
+- **`keeperPenalty`** — each side graded by its **most willing** keeper: `HAPPY_TO` → 1.0,
+  `IF_NEEDED` → 0.5, nobody → 0.0; penalty is `(1 − coverA) + (1 − coverB)`. Best-of rather than
+  count-of, because only one person plays in goal — rewarding the count would pull every keeper onto
+  one team. A penalty and never a constraint: a pool with one willing keeper has no split covering
+  both sides and still has to produce teams, so it returns them and warns in the notes.
+
+Because hundreds of splits tie on the mean to within a hundredth, λ and κ usually decide *among the
+already-optimal set* and cost almost nothing in mean balance — which is exactly what greedy cannot
+do, since it returns one answer and cannot choose among equals.
+
+**Parameters**
+
+| Param | Type | Default | Notes |
+|---|---|---|---|
+| `metric` | `skill` \| `form` | `skill` | Unknown value → **400**. `form` reuses `PlayerMetrics`, shared with `FORM_BASED` |
+| `shapeWeight` | double `[0, 5]` | `0.5` | λ. Out of range clamps; non-numeric → **400** |
+| `keeperWeight` | double `[0, 20]` | `1.0` | κ. `0` disables the term |
+| `formWindow` | int ≥ 1 | `5` | `metric=form` only |
+
+Stricter than `FORM_BASED`, which silently defaults an unparseable window. Silent fallback is how
+the `params[...]` defect stayed invisible; a clamped value is still the value somebody meant, an
+unparseable one is a caller bug.
+
+**Determinism** is a hard requirement here rather than a nicety, because `confirmGeneration`
+re-runs the strategy instead of persisting the approved preview. The pool is sorted by id before
+bits are assigned, masks are visited in ascending order and compared with a strict `<` (no epsilon —
+"within ε" is not transitive and would let visit order back in), and Team A is the side holding the
+lowest id.
+
+**Guard:** a pool above 22 falls back to greedy and says so in the notes. Unreachable today —
+`MatchService` caps at 22 — but that cap lives in another class, and a strategy that hangs a request
+thread is worse than one that degrades.
+
+**Not built:** rotation (avoiding repeat team-mates), pair constraints, position shape. Each is a
+term in the same function rather than a new class, which is the point of the design.
+
+**UI:** offered in the dropdown with a λ slider. No metric selector — `FORM_BASED` already sits in
+the same dropdown and two overlapping form controls would confuse before they help.
+
 ## generationNotes Field Reference
 
 Every generated `MatchDTO` (and `MatchPreviewDTO`) includes a `generationNotes` field
@@ -633,10 +704,22 @@ Every generated `MatchDTO` (and `MatchPreviewDTO`) includes a `generationNotes` 
 | `SNAKE_DRAFT` | `SNAKE_DRAFT: avgA=X avgB=Y Δ=Z` | `SNAKE_DRAFT: avgA=7.06 avgB=7.11 Δ=0.05` |
 | `FORM_BASED` | `FORM_BASED (window=N): avgFormA=X avgFormB=Y Δ=Z` | `FORM_BASED (window=5): avgFormA=7.81 avgFormB=7.78 Δ=0.03` |
 | `CAPTAIN_PICK` | `CAPTAIN_PICK: captainA=<name> captainB=<name> avgA=X avgB=Y Δ=Z` | `CAPTAIN_PICK: captainA=João Silva captainB=Miguel Santos avgA=7.43 avgB=7.21 Δ=0.22` |
+| `OPTIMAL` | `OPTIMAL (metric=…, λ=…, κ=…): N splits searched; avgA=… avgB=… Δmean=…; sdA=… sdB=… Δsd=…; keeper cover …/…; score=…` | `OPTIMAL (metric=skill, λ=0.50, κ=1.00): 1716 splits searched; avgA=7.14 avgB=7.11 Δmean=0.03; sdA=1.22 sdB=1.25 Δsd=0.03; keeper cover happy/if-needed; score=0.295` |
 | `STREAK_AWARE` | N/A — returns 422 | *(not yet active)* |
 
 > **Stored on the Match entity** in the `generation_notes VARCHAR(500)` column (added in V6 Flyway migration).
 > Frontend can display this string directly as an informational label on match cards.
+
+> ⚠️ **`OPTIMAL` echoes the parameters that actually ran**, after defaulting and clamping — not the
+> ones the request asked for. That is deliberate. A parameter silently doing nothing is exactly what
+> went unnoticed here for months (see the `params[...]` binding defect, fixed 2026-08-07), and
+> printing the effective value is the cheapest guard against a repeat. It also appends a warning
+> when a side has nobody willing to go in goal, and when `metric=form` found no rated history and
+> fell back to skill rating for everybody — two things a reader would otherwise misdiagnose.
+
+> ⚠️ **`CAPTAIN_PICK` interpolates two unbounded player names into a 500-character column with no
+> guard.** Not a problem anyone has hit, and not this change's to fix, but it is the one note format
+> here that can in principle overflow. `OPTIMAL`'s is fixed-width by construction.
 
 ---
 

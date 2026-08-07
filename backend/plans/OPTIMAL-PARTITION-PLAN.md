@@ -1,8 +1,13 @@
 # `OPTIMAL` team generation — exact partition search with a pluggable objective
 
-> **Status:** 📋 **Specified, not built.** No code exists for the strategy itself. Written 2026-08-07.
-> **Updated 2026-08-07:** §9.3's prerequisite shipped — V36 records preferred positions and
-> goalkeeper willingness. That section is rewritten; nothing else here has changed.
+> **Status:** ✅ **Built and merged, 2026-08-07.** Written the same day.
+> **What shipped differs from this plan in one way that matters:** goalkeeper coverage (§9.3) went
+> in as a **third term of the v1 objective**, not as a later addition, because V36 landed first and
+> the data was there. §7.1 and §7.2 shipped ahead of it as their own commits, as §11 said they
+> should. Everything else is as written below.
+> **Not built:** rotation (§9.2), pair constraints (§9.1), position shape, and the `metric=form`
+> UI control — the parameter exists server-side but the dropdown offers `OPTIMAL` on skill only,
+> per decision 7.
 > **Repo:** backend (`FootMania-Back`) — one new strategy class, no migration. Frontend follows.
 > **Supersedes nothing.** Ships alongside the six existing strategies; none are removed.
 > **Related:** [TEAM_GENERATION_DESIGN.md](../features/TEAM_GENERATION_DESIGN.md) (the original
@@ -51,10 +56,15 @@ streak separation are each *a term in a function* rather than a new strategy cla
 `OPTIMAL` — enumerate every legal split, score each with
 
 ```
-score = |Δmean| + λ · |Δspread|
+score = |Δmean| + λ · |Δspread| + κ · keeperPenalty
 ```
 
-and keep the minimum. Two terms, one tunable. That is the whole algorithm.
+and keep the minimum.
+
+> **As built, three terms.** This section was written with two; the keeper term arrived because V36
+> shipped before the strategy did and there was no reason to defer it. See §9.3, and
+> `OptimalPartitionStrategy.keeperPenalty` for why it grades each side by its *most willing* keeper
+> rather than counting them.
 
 ### 2.1 Why the spread term is the point
 
@@ -224,7 +234,7 @@ POST /api/match-plans/{id}/generate/confirm?generationType=OPTIMAL&...
 Three pre-existing problems surfaced. Each is independent of `OPTIMAL` and each is worth its own
 commit — but two of them will silently break `OPTIMAL` if shipped around rather than fixed.
 
-### 7.1 🐛 Deterministic strategies are not deterministic on tied ratings
+### 7.1 ✅ ~~Deterministic strategies are not deterministic on tied ratings~~ — fixed 2026-08-07
 
 `playerRepository.findAllByIdInAndTenantId(ids, tenantId)` is a derived query with **no `ORDER BY`**
 (`PlayerRepository.java:50`). Row order is whatever Postgres returns. Every strategy then sorts with
@@ -243,7 +253,13 @@ is allowed to differ.
 **Fix:** add `.thenComparing(Player::getId)` to the comparator in all four. Four lines. It makes the
 sort a total order, after which input order cannot matter.
 
-### 7.2 🐛 `params[...]` never reaches any strategy — `formWindow` has always been ignored
+> ✅ **Shipped.** Five places, not four — `CAPTAIN_PICK` needed it twice, because its
+> auto-selection uses `max()`, which returns the *first* maximum, so tied ratings made the
+> captaincy depend on row order too. `TieOrderDeterminismTest` runs each strategy over 200 seeded
+> shuffles of a deliberately tie-heavy pool, and was checked non-vacuous: with the `BALANCED`
+> tie-break removed it fails on shuffle #0.
+
+### 7.2 ✅ ~~`params[...]` never reaches any strategy~~ — fixed 2026-08-07 (option A)
 
 **Verified empirically**, not inferred. A probe added to `MatchPlanControllerTest`, run and then
 reverted, captured what the controller actually binds:
@@ -281,10 +297,17 @@ correct by construction and the controller is never in the picture. No controlle
 Whichever is chosen, **the fix needs a controller-level test asserting the strategy receives the
 key** — the gap that hid this is the missing test, not the missing line.
 
-> ⚠️ `OPTIMAL` takes `metric` and `shapeWeight` through this same channel. **Ship the fix first, or
-> ship `OPTIMAL` with both parameters permanently stuck at their defaults.**
+> ✅ **Shipped as option A.** The wrapper is stripped server-side in
+> `MatchPlanController.algorithmParams`, so the published contract started being true and no caller
+> changed. `generationType` is dropped on the way through — it selects the strategy and is not one
+> of its parameters. Three controller tests now cover both endpoints, and
+> `generationQuery.test.ts` pins the frontend half of the same contract, which nothing did either.
+> **`formWindow` and the `CAPTAIN_PICK` captain overrides work for the first time.**
 
-### 7.3 🧹 `STREAK_AWARE` is a registered bean that throws
+> ⚠️ `OPTIMAL` takes `metric`, `shapeWeight` and `keeperWeight` through this same channel. This is
+> why it shipped first, as its own commit.
+
+### 7.3 🧹 `STREAK_AWARE` is a registered bean that throws — **still open**
 
 `StreakAwareGenerationStrategy.generate()` unconditionally throws `unprocessable` with the message
 *"will be enabled once CalculationService is live"*. `CalculationService` has been live for a long
@@ -366,17 +389,21 @@ goal every week, or to hide the only person available when the regular keeper do
 There is also a `player_positions` set (`GOALKEEPER` | `DEFENDER` | `MIDFIELDER` | `FORWARD`), which
 this section did not ask for.
 
-**Nothing consumes either yet** — V36 records them and stops there. What it changes for this plan:
+✅ **Now consumed.** V36 recorded them; `OPTIMAL` uses them. What shipped, against what this
+section predicted:
 
-- The **feasibility filter** (§9.1) can require at least one player with willingness ≥ `IF_NEEDED`
-  per side. That is the constraint originally wanted, and it is now expressible.
-- Because willingness is **ordered**, the filter has a better option than a hard rule: a *scoring*
-  term that prefers a `HAPPY_TO` on each side and falls back to an `IF_NEEDED` when a split has
-  nothing better. A boolean could only have refused. Splits with no keeper at all still score worst
-  without being made infeasible — which is right, because a pool with one willing keeper must still
-  produce teams.
-- `player_positions` opens a **shape** term nobody has asked for yet (spreading the forwards). Not
-  in scope; noted so it is not rediscovered as new.
+- **The scoring term was the right call, and it is what shipped.** Each side is graded by its most
+  willing keeper — `HAPPY_TO` → 1.0, `IF_NEEDED` → 0.5, nobody → 0.0 — and the penalty is
+  `(1 − coverA) + (1 − coverB)`, weighted by `κ` (default 1.0, `params[keeperWeight]`).
+- **Best-of, not count-of.** Only one person plays in goal, so a side with three volunteers is no
+  better covered than a side with one — and rewarding the count would have pulled every keeper onto
+  the same team, which is the opposite of the point. This was not in the original sketch and is the
+  one thing worth remembering if the term is ever revisited.
+- **A penalty, never a constraint**, as predicted: a pool with one willing keeper has no split that
+  covers both sides and still has to produce teams. It returns them and warns in
+  `generationNotes`. `κ = 0` switches the term off entirely.
+- `player_positions` opens a **shape** term nobody has asked for yet (spreading the forwards).
+  **Still not built**; noted so it is not rediscovered as new.
 
 One rule to respect when reading the data: a player with `GOALKEEPER` among their positions always
 has willingness `HAPPY_TO`. The server reconciles the pair on write, so the generator can read
@@ -465,14 +492,14 @@ default is a separate decision with its own evidence, not a footnote to this one
 
 | # | Question | Recommendation |
 |---|---|---|
-| 1 | Default λ | `0.5` — mostly a tie-break among mean-equal splits (§2.2) |
-| 2 | Fix §7.2 via A, B or C | **A** — no frontend change, and it makes the published API doc true |
-| 3 | `OPTIMAL` as the default type? | **Not yet.** Ship alongside; revisit with evidence |
-| 4 | Strict param validation, departing from `FORM_BASED`'s silent fallback? | **Yes** — silent fallback is how §7.2 hid |
-| 5 | `STREAK_AWARE`: build, delete, or leave? | **Delete** the class and the enum value; it returns as §9.4 |
-| 6 | Fix §7.1 across the four existing strategies, or only in `OPTIMAL`? | **All four** — they have the same latent bug |
-| 7 | Expose `metric=form` in the UI, given `FORM_BASED` already exists? | Ship `metric=skill` only in the UI at first; two overlapping form controls will confuse before they help |
-| 8 | Batch the `metric=form` reads? | Not now — `n` queries is the existing `FORM_BASED` cost, not a regression. Worth doing when someone complains |
+| 1 | Default λ | ✅ **`0.5`**, as recommended. UI slider spans `[0, 2]` in `0.25` steps; the server clamps to `[0, 5]` |
+| 2 | Fix §7.2 via A, B or C | ✅ **A**, as recommended. No caller changed and the published contract became true |
+| 3 | `OPTIMAL` as the default type? | ✅ **Not yet.** `BALANCED` is still the default; `OPTIMAL` is one option among five in the dropdown |
+| 4 | Strict param validation, departing from `FORM_BASED`'s silent fallback? | ✅ **Yes** for `OPTIMAL`'s own parameters: unknown `metric` and non-numeric weights are 400s, out-of-range clamps. `formWindow` keeps its lenient behaviour, since existing callers and tests depend on it |
+| 5 | `STREAK_AWARE`: build, delete, or leave? | ⬜ **Still open.** Recommendation unchanged — delete it; under a scoring model it is §9.4, a term rather than a class. Left alone here to keep this change to one subject |
+| 6 | Fix §7.1 across the four existing strategies, or only in `OPTIMAL`? | ✅ **All of them** — five places, since `CAPTAIN_PICK` needed it twice |
+| 7 | Expose `metric=form` in the UI, given `FORM_BASED` already exists? | ✅ **Skill only in the UI**, as recommended. The parameter exists server-side and is tested; nothing in the dropdown reaches it |
+| 8 | Batch the `metric=form` reads? | ⬜ **Not done**, as recommended. `n` queries is the existing `FORM_BASED` cost, not a regression, and `PlayerMetrics` is now the one place to change when somebody complains |
 
 ---
 
