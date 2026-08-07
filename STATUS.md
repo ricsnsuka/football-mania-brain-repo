@@ -6,12 +6,12 @@ nobody trusts is worse than none.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `1b29ded` — content-identical to `main`; `next..main` lists the release **merge commit** and no changed file | `ad69c15` — the same |
+| `next` head | `1b29ded` — content-identical to `main`; `next..main` lists the release **merge commit** and no changed file | `f700d07` — the same |
 | Release | **`1.6.0`** — `build.gradle` | **`1.6.0`** — `package.json` |
-| Running in production | **`1.6.0` at `69e4301`**, read back from the platform on 2026-08-07: Heroku **v61** `Deploy 69e43018`, and `/api/version` reporting `1.6.0` | **`e7f4fca`, which calls itself `1.6.0` but is four commits past the `v1.6.0` tag** — see below. Netlify deploy `6a760a4982011c0008ede109`, `ready`, published 16:40:31Z |
-| `main` head | `69e4301` — 1.6.0 | `e7f4fca` — 1.6.0 + the spacing work |
+| Running in production | **`1.6.0` at `69e4301`**, read back from the platform on 2026-08-07: Heroku **v61** `Deploy 69e43018`, and `/api/version` reporting `1.6.0` | **`3d577a7`, which calls itself `1.6.0` but is ten commits past the `v1.6.0` tag** — see below. Netlify deploy `6a762a22e8abd4000849509f`, `ready`, published 18:56:26Z, and the rule the release adds was **read back out of the deployed stylesheet** |
+| `main` head | `69e4301` — 1.6.0 | `3d577a7` — 1.6.0 plus the spacing work and the own-row highlight |
 | Working tree | clean | clean |
-| Tests | 1104+ unit plus 28 new on `OPTIMAL`, SpotBugs clean on `spotbugsMain` | 730 unit passing, 2 failing — see drift |
+| Tests | 1104+ unit plus 28 new on `OPTIMAL`, SpotBugs clean on `spotbugsMain` | **732 unit, all passing** — green on Windows for the first time; 38/38 visual |
 | Latest migration | **`V36__player_positions_and_keeper.sql`** — on `main` and applied | — |
 | Deployed through | **`V36`**, applied on the 1.6.0 deploy | — |
 | Tags | `v1.0.0` → **`v1.6.0`**, contiguous, and the tag is what is deployed | `v1.1.0` → **`v1.4.2`**, then **`v1.6.0`** — `1.5.x` deliberately skipped, and **the tag is now behind production** |
@@ -23,19 +23,28 @@ nobody trusts is worse than none.
 | | |
 |---|---|
 | `v1.6.0` tags | `f3ef62a` |
-| Production runs | `e7f4fca` |
+| Production runs | `3d577a7` |
 
 **The tag was deliberately not moved.** A tag that changes what it points at is worse than one that
 is merely behind: every clone that already fetched it keeps the old target silently, and the whole
 value of step 6 is that a tag is an immutable claim. So **the deployed commit is recorded here
-instead, and this row is the only place it exists.** If the frontend needs a recoverable marker
-again, cut `1.6.1` and tag it — that is the cheap fix, and it is worth doing before the next release
-rather than after.
+instead, and this row is the only place it exists.**
 
-Nothing user-facing changed in behaviour: no API call, no dependency, no string. What shipped is
-44px touch targets on 22 controls that were under the guide's stated minimum, one modal inset
-(`px-6`) instead of four, and 20px on both sides of every rule in every modal. The frontend styling
-guide carries the conventions.
+⚠️ **Two releases have now gone out under the same number, so the gap is no longer a curiosity.**
+`v1.6.0` → production is ten commits and two deploys. **Cut `1.6.1` and tag it before the next
+frontend release**, rather than after: the cost of the shortcut is that "what is in production" has
+exactly one source, this file, and a status document is the thing step 6 exists to not rely on.
+
+What shipped under `1.6.0` after the tag, in order:
+
+1. **The spacing pass** (16:40) — 44px touch targets on 22 controls that were under the guide's
+   stated minimum, one modal inset (`px-6`) instead of four, and 20px on both sides of every rule in
+   every modal.
+2. **The own-row highlight** (18:56) — the signed-in player's row marked in the league table, the
+   scoresheet and the squads; regenerated visual baselines; and a green test suite.
+
+Neither changed an API call, a dependency, or a user-visible string apart from one new `common.you`
+label in all three locales.
 
 ✅ **1.6.0 shipped on 2026-08-07, both halves, backend first.** Production runs it and both platforms
 were asked rather than assumed:
@@ -333,14 +342,22 @@ because `.player-modal-edit-zone` had no horizontal padding at all.
 So the rule is not "regenerate more often", it is **do not let the suite stay red**. Red for a real
 reason and red for a stale reason look identical, and the second kind hides the first.
 
-**9. Two frontend unit tests fail on Windows and pass in CI.** `formatDate.test.ts` expects
-`3 – 9 Aug 2026` and Node's ICU on the owner's machine produces `3–9 Aug 2026` — a different dash and
-no spaces. 730 pass, these 2 fail, on a clean tree, and CI is green.
+**9. ~~Two frontend unit tests fail on Windows and pass in CI.~~ Resolved 2026-08-07.**
+`formatDate.test.ts` expected `3 – 9 Aug 2026`; Node's ICU on the owner's machine produces
+`3–9 Aug 2026`, same EN DASH, no spaces around it. Both are correct — the spacing is CLDR data and
+moves between ICU versions, and `en-US` kept its spaces while `en-GB` lost them.
 
-The test is asserting `Intl.DateTimeFormat#formatRange` output, which is ICU-version-dependent and
-not a property of this code. Left failing rather than papered over: the fix is to assert the parts
-rather than the rendered string, or to pin the expectation to both forms. Until then **a local test
-run is not a clean signal**, and anyone new to the repo will assume they broke something.
+Fixed by widening the test's existing `plain()` normaliser to collapse the separator as well as the
+three invisible space characters it already handled. `src/lib/formatDate.ts` was not touched, and
+the assertions still test what the module decides — the locale's own field order, and a shared month
+and year said once. **Verified non-vacuous**: reverting `formatDateRange` to a hand-built join of two
+`formatDate` calls still fails three of the ten.
+
+**The lesson is the shape, not the dash.** The suite was 730/2 for months, so a local run stopped
+being a signal and every session learned to skip past two red lines — which is the same failure as
+hazard 7 one row up, where a red visual suite went unread until it was accepting a real defect. A
+test that asserts the platform rather than the code will eventually fail on somebody's machine, and
+the cost is not the failure, it is that the suite stops being believed.
 
 **8. The app's service worker bypasses Playwright's API stubs after first load.** `stubApi` routes
 through `page.route`, which the service worker's own fetches do not pass through, so the *second*
