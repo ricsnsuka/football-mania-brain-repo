@@ -20,7 +20,7 @@ nobody trusts is worse than none.
 backend-only — a security pass and then a correction to it — and both changelog entries say in as
 many words that no API surface moved and the frontend needs no matching release.
 
-✅ **`V36` merged to `next` / `main` on 2026-08-07** — preferred positions and goalkeeper
+✅ **`V36` merged to `next` in both code repos on 2026-08-07** — preferred positions and goalkeeper
 willingness on a player. **The migration ran against a real PostgreSQL in CI**
 (`🧪 Integration (Testcontainers)`, green), which is the `ddl-auto: validate` check that confirms
 the migration and the entity agree. It is **not deployed**: `next` carries it, and only a release
