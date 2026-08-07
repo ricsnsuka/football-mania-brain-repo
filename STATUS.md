@@ -6,31 +6,52 @@ nobody trusts is worse than none.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `7e8877b` — content-identical to `main`; `next..main` lists two release **merge commits** and no changed file | `50c68a8` — the same commit as `main` |
-| Release | **`1.5.1`** — `build.gradle` | **`1.4.2`** — `package.json` |
-| Running in production | **`1.5.1`, confirmed by the owner on 2026-08-07.** Heroku deploys automatically from `main`, so the release merge was the deploy | `50c68a8` — Netlify publishes from `main`, so the same is true here. **Version not read back from the platform** |
+| `next` head | `1b29ded` — **ahead of `main` by the whole 1.6.0 release** | `cf57f4e` — the same |
+| Release | **`1.6.0`** — `build.gradle`, **on `next` only** | **`1.6.0`** — `package.json`, **on `next` only** |
+| Running in production | **`1.5.1`** — `main` has not moved | `50c68a8` — 1.4.2. **Version not read back from the platform** |
 | `main` head | `15e85c6` — 1.5.1 | `50c68a8` — 1.4.2 |
 | Working tree | clean | clean |
-| Tests | 1104+ unit, SpotBugs clean on `spotbugsMain` | 725 unit |
+| Tests | 1104+ unit plus 28 new on `OPTIMAL`, SpotBugs clean on `spotbugsMain` | 725 unit |
 | Latest migration | **`V36__player_positions_and_keeper.sql`** on `next`; `V35` on `main` | — |
 | Deployed through | **`V35`** — `V36` is merged to `next` and CI-verified, but not released | — |
-| Tags | `v1.0.0` → **`v1.5.1`**, contiguous | `v1.1.0` → **`v1.4.2`**, contiguous |
+| Tags | `v1.0.0` → **`v1.5.1`**, contiguous — **`v1.6.0` not yet cut** | `v1.1.0` → **`v1.4.2`** — **`v1.6.0` not yet cut** |
 
-**The two repos are two minor versions apart, and that is correct.** `1.5.0` and `1.5.1` were
-backend-only — a security pass and then a correction to it — and both changelog entries say in as
-many words that no API surface moved and the frontend needs no matching release.
+🚢 **1.6.0 is merged to `next` in both code repos and waiting on the release merge.** Two open pull
+requests, `next` → `main`, and **merging either one is the deploy**:
 
-✅ **`V36` merged to `next` in both code repos on 2026-08-07** — preferred positions and goalkeeper
-willingness on a player. **The migration ran against a real PostgreSQL in CI**
-(`🧪 Integration (Testcontainers)`, green), which is the `ddl-auto: validate` check that confirms
-the migration and the entity agree. It is **not deployed**: `next` carries it, and only a release
-merge to `main` deploys.
+| | Pull request | Merging it |
+|---|---|---|
+| Backend | [FootMania-Back#191](https://github.com/ricsnsuka/FootMania-Back/pull/191) | Heroku builds the push. **This one goes first** |
+| Frontend | [FootMania-Simple-Front#51](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/51) | Netlify publishes the push |
 
-🔄 **In flight on the same branch: `OPTIMAL` team generation.** Exhaustive partition search scored
-on `|Δmean| + λ·|Δspread| + κ·keeperPenalty` — the seventh strategy, and the first to consume V36's
-data. Shipped ahead of it in their own commits: the `params[…]` binding defect (so `formWindow` and
-the `CAPTAIN_PICK` captain overrides work for the first time) and a tie-order determinism fix across
-the four strategies that claimed to be deterministic and were not. See
+**The order is load-bearing this time, not a convention.** The frontend's half offers `OPTIMAL` in
+the generation dropdown, and that request is a **400** until the backend *running in production*
+knows the enum value. Merge the backend, confirm the dyno actually booted it — `heroku releases -a
+footmania` for the commit, `/api/version` for what the process says it is — and only then the
+frontend.
+
+**The two repos are one version again.** They were two minors apart because `1.5.0` and `1.5.1` were
+backend-only, a security pass and a correction to it, and neither moved an API surface. 1.6.0 spans
+both halves, so the frontend goes `1.4.2` → `1.6.0` and skips `1.5.x` rather than carrying the offset
+forward. Not `1.5.0`: a frontend `1.5.0` released now would not be the `1.5.0` the backend shipped
+last week, and two different things under one number is worse than a number never used.
+
+### What 1.6.0 carries
+
+✅ **`V36` — preferred positions and goalkeeper willingness on a player.** **The migration ran
+against a real PostgreSQL in CI** (`🧪 Integration (Testcontainers)`, green), which is the
+`ddl-auto: validate` check that confirms the migration and the entity agree. It has still never run
+against production. New table, no backfill, nothing dropped — so this is not one of the contract
+steps that cannot be undone by redeploying the previous jar.
+
+✅ **`OPTIMAL` team generation** — exhaustive partition search scored on
+`|Δmean| + λ·|Δspread| + κ·keeperPenalty`, the seventh strategy and the first to consume V36's data.
+
+✅ **Two defects that had to be fixed first**, each in its own commit. The `params[…]` binding
+defect: every algorithm parameter the API reference documents had been silently discarded since it
+was introduced, so `formWindow` and the `CAPTAIN_PICK` captain overrides work **for the first time**
+in this release. And a tie-order determinism fix across the four strategies that claimed to be
+deterministic and were not. See
 [OPTIMAL-PARTITION-PLAN](backend/plans/OPTIMAL-PARTITION-PLAN.md), whose §7 records all three.
 
 > The branch name says "match predictor" and the work is nothing of the sort. A match predictor was
@@ -284,7 +305,7 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 | ~~[backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md)~~ | Last touched 2026-05-27 — predated kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | ✅ **Resolved 2026-08-05.** Rewritten against the entities, the migrations and `MatchPlanController`: instant kickoff, `GENERATED` and the derived `expired`/`generatable`/`cancellable` flags, the derived waitlist, guests on `players`, `timeframe` and the ordering, pitch cost, post-V33 grants, and the weekly runs `1.3.0` added. The frontend side is now [frontend/features/match-plans.md](frontend/features/match-plans.md) |
 | ~~[backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md)~~ | Header read "DRAFT — not implemented"; it shipped in `828db3b` | ✅ **Resolved.** Corrected here on import, and the stale backend copy went with the documentation split — there is one copy now, and it is this one |
 | [backend/plans/ORCHESTRATOR_SESSION.md](backend/plans/ORCHESTRATOR_SESSION.md) | Last entry 2026-07-28, though `orchestrator.agent.md` still mandates an entry per session | Resume it, or retire the convention deliberately |
-| [API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md) §generate + [backend/features/TEAM_GENERATION_DESIGN.md](backend/features/TEAM_GENERATION_DESIGN.md) §7.3/§7.6 | Both document `params[formWindow]`, `params[captainAId]` and `params[captainBId]` as working generation parameters. **They have never reached a strategy.** `@RequestParam Map<String,String>` binds query keys literally, so the map arrives as `{generationType=…, params[formWindow]=3}` and every `params.get("formWindow")` returns null — `FORM_BASED` always uses the default window of 5 and `CAPTAIN_PICK` always auto-picks its captains. Verified against the running controller on 2026-08-07, not inferred | Fix the binding rather than the documents — the published contract is the sensible one. §7.2 of [OPTIMAL-PARTITION-PLAN](backend/plans/OPTIMAL-PARTITION-PLAN.md) has the three options, the recommendation, and why every existing test missed it |
+| ~~[API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md) §generate + [backend/features/TEAM_GENERATION_DESIGN.md](backend/features/TEAM_GENERATION_DESIGN.md) §7.3/§7.6~~ | Both documented `params[formWindow]`, `params[captainAId]` and `params[captainBId]` as working generation parameters. **They had never reached a strategy.** `@RequestParam Map<String,String>` binds query keys literally, so the map arrived as `{generationType=…, params[formWindow]=3}` and every `params.get("formWindow")` returned null | ✅ **Resolved 2026-08-07**, in `1.6.0`. Fixed the binding rather than the documents, so the published contract starts being true and no caller changed. `MatchPlanControllerTest` pins the server half and `generationQuery.test.ts` the frontend half — the absence of *either* is why this survived, since every strategy test builds its context directly and never involves the controller. **`1.6.0` is the first release in which `formWindow` and the captain overrides do anything** |
 | ~~Postman collection~~ | Was 60 requests against a 103-operation API, and — the deeper find — **gitignored the whole time**, so every copy lived on one person's disk and none could be diffed | ✅ **Resolved 2026-08-02.** Now *generated* from the running app's `/v3/api-docs` by `postman/generate-collection.mjs`, committed to the repo (103 requests, 17 folders, `X-Group-Id` per the tenancy contract), and regeneration is one command. The hand-maintenance workflow in `postman-engineer.agent.md` is marked historical |
 | ~~[frontend/INDEX.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/INDEX.md)~~ | Omitted seven of its own files | ✅ **Resolved** by the documentation split — the feature docs it failed to link now live here, and what is left there is a pointer plus the seven guides |
 | frontend — missing files | Nothing for guest players or payment delegation (`722335c`) as features in their own right | Write them. ✅ `features/payments.md` **written 2026-08-05** — the balance, the interleaved ledger, the roster and the delegation groups; delegation is covered there rather than separately. ✅ The group dimension is covered by [frontend/features/groups.md](frontend/features/groups.md) |
