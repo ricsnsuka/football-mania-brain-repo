@@ -1,6 +1,8 @@
 # `OPTIMAL` team generation — exact partition search with a pluggable objective
 
-> **Status:** 📋 **Specified, not built.** No code exists. Written 2026-08-07.
+> **Status:** 📋 **Specified, not built.** No code exists for the strategy itself. Written 2026-08-07.
+> **Updated 2026-08-07:** §9.3's prerequisite shipped — V36 records preferred positions and
+> goalkeeper willingness. That section is rewritten; nothing else here has changed.
 > **Repo:** backend (`FootMania-Back`) — one new strategy class, no migration. Frontend follows.
 > **Supersedes nothing.** Ships alongside the six existing strategies; none are removed.
 > **Related:** [TEAM_GENERATION_DESIGN.md](../features/TEAM_GENERATION_DESIGN.md) (the original
@@ -347,12 +349,40 @@ The data already exists: `player_stats → match_team → match` gives every pas
 `+ w · Σ(pairs sharing a team) recentTogetherCount`. One query, no migration. It also resolves case
 4 above, turning an arbitrary tie-break into a useful one.
 
-### 9.3 Goalkeeper coverage → one boolean
+### 9.3 Goalkeeper coverage → ~~one boolean~~ **the data now exists**
 
-[TEAM_GENERATION_DESIGN.md §3.G](../features/TEAM_GENERATION_DESIGN.md) scopes `POSITION_BASED` as a
-full GK/DEF/MID/FWD model at "🔴 High" effort. In 5- and 7-a-side almost none of that matters. **One
-`can_keep` boolean on `players`** captures the only positional failure that actually ruins a match —
-both keepers on one side. One-column migration, one line in §9.1's filter.
+> ✅ **Superseded and built, 2026-08-07 — V36.** This section proposed one `can_keep` boolean. What
+> shipped is richer, and the difference matters to the term below.
+
+[TEAM_GENERATION_DESIGN.md §3.G](../features/TEAM_GENERATION_DESIGN.md) scoped `POSITION_BASED` as a
+full GK/DEF/MID/FWD model at "🔴 High" effort, and this section argued that in 5- and 7-a-side
+almost none of that matters — the only positional failure that actually ruins a match is both
+keepers on one side.
+
+That argument stands. The boolean did not. `players.goalkeeper_willingness` is
+**`NEVER` | `IF_NEEDED` | `HAPPY_TO`**, because the honest answer in a kickabout is usually "if
+nobody else will", and a boolean forces those people either to look like volunteers, and be put in
+goal every week, or to hide the only person available when the regular keeper does not turn up.
+There is also a `player_positions` set (`GOALKEEPER` | `DEFENDER` | `MIDFIELDER` | `FORWARD`), which
+this section did not ask for.
+
+**Nothing consumes either yet** — V36 records them and stops there. What it changes for this plan:
+
+- The **feasibility filter** (§9.1) can require at least one player with willingness ≥ `IF_NEEDED`
+  per side. That is the constraint originally wanted, and it is now expressible.
+- Because willingness is **ordered**, the filter has a better option than a hard rule: a *scoring*
+  term that prefers a `HAPPY_TO` on each side and falls back to an `IF_NEEDED` when a split has
+  nothing better. A boolean could only have refused. Splits with no keeper at all still score worst
+  without being made infeasible — which is right, because a pool with one willing keeper must still
+  produce teams.
+- `player_positions` opens a **shape** term nobody has asked for yet (spreading the forwards). Not
+  in scope; noted so it is not rediscovered as new.
+
+One rule to respect when reading the data: a player with `GOALKEEPER` among their positions always
+has willingness `HAPPY_TO`. The server reconciles the pair on write, so the generator can read
+`goalkeeper_willingness` alone and never needs to check the position set to find keepers.
+
+See [PLAYER_FEATURE.md](../features/PLAYER_FEATURE.md#the-invariant-between-them).
 
 ### 9.4 Streak separation → the term that retires §7.3
 
