@@ -6,15 +6,36 @@ nobody trusts is worse than none.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `1b29ded` — content-identical to `main`; `next..main` lists the release **merge commit** and no changed file | `cf57f4e` — the same |
+| `next` head | `1b29ded` — content-identical to `main`; `next..main` lists the release **merge commit** and no changed file | `ad69c15` — the same |
 | Release | **`1.6.0`** — `build.gradle` | **`1.6.0`** — `package.json` |
-| Running in production | **`1.6.0` at `69e4301`**, read back from the platform on 2026-08-07: Heroku **v61** `Deploy 69e43018`, and `/api/version` reporting `1.6.0` | **`1.6.0` at `f3ef62a`**, Netlify deploy `6a75ddc0e859c70008082bc9`, state `ready`, published 13:30:33Z. **Version read back from the platform for the first time** |
-| `main` head | `69e4301` — 1.6.0 | `f3ef62a` — 1.6.0 |
+| Running in production | **`1.6.0` at `69e4301`**, read back from the platform on 2026-08-07: Heroku **v61** `Deploy 69e43018`, and `/api/version` reporting `1.6.0` | **`e7f4fca`, which calls itself `1.6.0` but is four commits past the `v1.6.0` tag** — see below. Netlify deploy `6a760a4982011c0008ede109`, `ready`, published 16:40:31Z |
+| `main` head | `69e4301` — 1.6.0 | `e7f4fca` — 1.6.0 + the spacing work |
 | Working tree | clean | clean |
-| Tests | 1104+ unit plus 28 new on `OPTIMAL`, SpotBugs clean on `spotbugsMain` | 725 unit |
+| Tests | 1104+ unit plus 28 new on `OPTIMAL`, SpotBugs clean on `spotbugsMain` | 730 unit passing, 2 failing — see drift |
 | Latest migration | **`V36__player_positions_and_keeper.sql`** — on `main` and applied | — |
 | Deployed through | **`V36`**, applied on the 1.6.0 deploy | — |
-| Tags | `v1.0.0` → **`v1.6.0`**, contiguous | `v1.1.0` → **`v1.4.2`**, then **`v1.6.0`** — `1.5.x` deliberately skipped |
+| Tags | `v1.0.0` → **`v1.6.0`**, contiguous, and the tag is what is deployed | `v1.1.0` → **`v1.4.2`**, then **`v1.6.0`** — `1.5.x` deliberately skipped, and **the tag is now behind production** |
+
+⚠️ **The frontend's `v1.6.0` tag no longer matches what is deployed.** A spacing pass shipped on
+2026-08-07 at 16:40 **without a version bump, by owner decision** — `package.json` still reads
+`1.6.0`, so production reports a version whose tag points at a different commit.
+
+| | |
+|---|---|
+| `v1.6.0` tags | `f3ef62a` |
+| Production runs | `e7f4fca` |
+
+**The tag was deliberately not moved.** A tag that changes what it points at is worse than one that
+is merely behind: every clone that already fetched it keeps the old target silently, and the whole
+value of step 6 is that a tag is an immutable claim. So **the deployed commit is recorded here
+instead, and this row is the only place it exists.** If the frontend needs a recoverable marker
+again, cut `1.6.1` and tag it — that is the cheap fix, and it is worth doing before the next release
+rather than after.
+
+Nothing user-facing changed in behaviour: no API call, no dependency, no string. What shipped is
+44px touch targets on 22 controls that were under the guide's stated minimum, one modal inset
+(`px-6`) instead of four, and 20px on both sides of every rule in every modal. The frontend styling
+guide carries the conventions.
 
 ✅ **1.6.0 shipped on 2026-08-07, both halves, backend first.** Production runs it and both platforms
 were asked rather than assumed:
@@ -282,6 +303,30 @@ committed baselines — and the 2026-08-05 alignment work changed the navbar, wh
 Regenerate on Windows with `npm run test:visual:update` and **look at the images**. The e2e README
 already warns why: a run once photographed the "you are not in a group yet" screen on all sixteen
 pages and reported green.
+
+**Measured on 2026-08-07: 22 of 38 fail on the owner's Windows machine with no change in the working
+tree.** `maxDiffPixels` is 20 against a 1280×900 screenshot, which is near-exact, so this is font and
+driver drift rather than anything real. Two consequences, and the second is the expensive one:
+
+- **`--update-snapshots` is currently unusable.** Running it accepts those 22 as the new truth in the
+  same commit as whatever you actually changed, and nobody can tell the two apart afterwards. The
+  spacing release below was therefore shipped with the baselines left alone and the one image that
+  mattered opened by hand.
+- **The suite was *accepting* a real defect.** `player-modal-light-win32.png` shows the "Edit details"
+  button flush against the dialog's right edge — `.player-modal-edit-zone` had no horizontal padding
+  at all — and had done since the screenshot was taken. A baseline nobody looks at records bugs as
+  intended behaviour.
+
+Regenerating these is worth doing before the next styling change, not after.
+
+**9. Two frontend unit tests fail on Windows and pass in CI.** `formatDate.test.ts` expects
+`3 – 9 Aug 2026` and Node's ICU on the owner's machine produces `3–9 Aug 2026` — a different dash and
+no spaces. 730 pass, these 2 fail, on a clean tree, and CI is green.
+
+The test is asserting `Intl.DateTimeFormat#formatRange` output, which is ICU-version-dependent and
+not a property of this code. Left failing rather than papered over: the fix is to assert the parts
+rather than the rendered string, or to pin the expectation to both forms. Until then **a local test
+run is not a clean signal**, and anyone new to the repo will assume they broke something.
 
 **8. The app's service worker bypasses Playwright's API stubs after first load.** `stubApi` routes
 through `page.route`, which the service worker's own fetches do not pass through, so the *second*
