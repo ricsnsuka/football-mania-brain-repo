@@ -94,6 +94,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [language-switcher](frontend/features/language-switcher.md) · [theme](frontend/features/theme.md) | Locale and light/dark |
 | [groups](frontend/features/groups.md) | Joining, founding, switching — and the two people who hand out access |
 | [payments](frontend/features/payments.md) | Your balance, the interleaved ledger, the roster and delegation groups |
+| [seasons](frontend/features/seasons.md) 🟡 | Define, start and finalise — and the season write contract, **written before the backend that serves it** |
 | *guests · payment-delegation* ⚠️ | **Missing.** Both shipped in the UI in `722335c` |
 
 ---

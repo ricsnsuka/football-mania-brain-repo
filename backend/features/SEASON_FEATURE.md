@@ -2,7 +2,10 @@
 
 **Added in:** v1.0.0  
 **Date:** May 2026  
-**Status:** ✅ Released (Model + Seed; dedicated API TBD)
+**Status:** ✅ Released (Model + Seed). **Write API specified and built frontend-first, 2026-08-07
+— the backend half is not written.** The contract is
+[frontend/features/seasons.md](../../frontend/features/seasons.md); it needs a controller, a
+service and a DTO, and **no migration**.
 
 ---
 
@@ -17,6 +20,12 @@ There is currently **no dedicated `/api/seasons` CRUD endpoint** — seasons are
 directly via the database seed and future admin tooling. The `seasonId` field on
 `MatchCreateDTO` allows associating matches with a specific season; when omitted,
 the current active season is used automatically.
+
+> **The admin screen for this now exists, and is waiting.** `/seasons` shipped on the frontend on
+> 2026-08-07 against the contract in
+> [frontend/features/seasons.md](../../frontend/features/seasons.md) — define, start, finalise —
+> and renders an explicit "not on this deployment yet" state until these endpoints answer. That
+> document is canonical for the contract until the backend ships one in `docs/api/`.
 
 ---
 
@@ -140,7 +149,14 @@ all history entries for a player during a given season to compute:
    season, which is what the table is mostly full of.
 
 4. **`end_date` is not automatically set** on `endSeason()` — the column exists but the
-   current implementation does not update it. Future improvement.
+   current implementation does not update it. It has been in the schema since V1 and **has never
+   been written by anything.**
+
+   This stops being cosmetic the moment the write API lands: the frontend derives a season's
+   status from `is_current` and `end_date` alone, so without the date a finalised season is
+   indistinguishable from one nobody has started. `POST /api/seasons/{id}/finalise` is specified to
+   set it — the endpoint, not `endSeason()`, which keeps the service method callable from a replay
+   or a test without closing the season underneath it.
 
 ---
 
@@ -148,11 +164,19 @@ all history entries for a player during a given season to compute:
 
 | Feature                      | Notes                                                          |
 |------------------------------|----------------------------------------------------------------|
-| `GET /api/seasons`           | List all seasons with match counts and player stats summary    |
-| `POST /api/seasons`          | Admin creates a new season                                     |
-| `PATCH /api/seasons/{id}/end`| Admin closes a season, triggers rating transition automatically |
+| `GET /api/seasons`           | **Specified** — list, newest `startDate` first, with `matchCount` and `completedMatchCount` optional |
+| `POST /api/seasons`          | **Specified** — admin defines a season; it is created **not current** |
+| `POST /api/seasons/{id}/start` | **Specified** — makes it current. Clear the old flag *before* setting the new one, in one transaction |
+| `POST /api/seasons/{id}/finalise` | **Specified** — runs `endSeason()`, **sets `end_date`** (see limitation 4) and clears `is_current` |
+| ~~`PATCH /api/seasons/{id}/end`~~ | Superseded. Three verbs rather than one patch: only one of them is irreversible, and a shared endpoint gives all three the same shape, audit line and permission |
 | ~~Unique `is_current` constraint on DB~~ | ✅ Done in V10 — see Current Limitations #3     |
-| `GET /api/seasons/{id}/leaderboard`  | Player rankings for a specific season                |
+| `GET /api/seasons/{id}/leaderboard`  | Player rankings for a specific season. Still unspecified — `GET /api/rankings` is all-time by design, and season-scoping it is its own piece of work |
+
+The four **Specified** rows are written up in full — request shapes, failure codes, the derived
+status, and what the client does with each — in
+[frontend/features/seasons.md](../../frontend/features/seasons.md), which the `/seasons` screen was
+built against. **None of them needs a migration**: every field is an existing column or a count over
+`matches.season_id`.
 
 > A season write API must open and close seasons in **one transaction** — the V10 index makes
 > "mark the new season current" fail while the old one still is. Clear the old flag first, or the

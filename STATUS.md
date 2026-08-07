@@ -342,6 +342,20 @@ because `.player-modal-edit-zone` had no horizontal padding at all.
 So the rule is not "regenerate more often", it is **do not let the suite stay red**. Red for a real
 reason and red for a stale reason look identical, and the second kind hides the first.
 
+⚠️ **Six baselines went stale again on 2026-08-07, knowingly, and need a Windows run.** The
+`/seasons` admin screen added a `GROUP_ADMIN`-only navbar link, and the visual suite's session is an
+administrator — `seedSession` seeds the pre-V18 name `'ADMIN'`, which the store's
+`renameLegacyAdmin` upgrades to `GROUP_ADMIN` on rehydrate, so every admin-session capture carries
+the new link. That is `users`, `settings-admin` and `settings-platform`, in both themes.
+
+Verified rather than assumed: the screen was rendered on Linux with and without the change, and the
+only difference is the extra link. It could not be fixed here — regenerating off Windows writes a
+*separate* `-linux` set and proves nothing, which is the permanent half of this hazard. Run
+`npm run test:visual:update` on Windows, and **look at the images**: the same run photographed an
+error boundary on `/users` on Linux, identically with and without the change, which is either
+hazard 8's service-worker/stub interaction or something Linux-only — and a `--update-snapshots`
+that nobody looked at would happily commit it.
+
 **9. ~~Two frontend unit tests fail on Windows and pass in CI.~~ Resolved 2026-08-07.**
 `formatDate.test.ts` expected `3 – 9 Aug 2026`; Node's ICU on the owner's machine produces
 `3–9 Aug 2026`, same EN DASH, no spaces around it. Both are correct — the spacing is CLDR data and
@@ -449,7 +463,17 @@ reason this repo exists.
 7. ~~**Decide what `next` is for.**~~ ✅ Answered 2026-08-04: **revived.** Work goes to `next`;
    `main` moves only when a release is cut. Both branches re-synced to `1.3.1` — see the top of this
    file for the flow.
-8. Then Phase 3's last item — AI match reports. Billing is on hold.
+8. **Write the season endpoints.** The `/seasons` admin screen shipped on the frontend on
+   2026-08-07 and is sitting on an explicit "not on this deployment yet" state, because
+   `GET/POST /api/seasons` and the two lifecycle endpoints do not exist. This is the first time the
+   two repos have been deliberately out of order — see
+   [Deployment order](CONTRIBUTING.md#deployment-order), which permits it and says how — so it is
+   the only outstanding item where **merged frontend is ahead of backend by design**. The contract
+   is written in full at [frontend/features/seasons.md](frontend/features/seasons.md): four
+   endpoints, a controller, a service, a DTO, and **no migration**. Two things it must get right —
+   start clears the old `is_current` before setting the new one in the same transaction (V10's
+   partial index), and finalise sets `end_date`, which `endSeason()` still does not.
+9. Then Phase 3's last item — AI match reports. Billing is on hold.
 
 ---
 

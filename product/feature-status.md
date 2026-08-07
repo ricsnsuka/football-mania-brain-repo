@@ -16,7 +16,8 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Account ↔ player self-link | ✅ | ✅ | [link-me contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PLAYER-LINK-ME-API-CONTRACT.md) · [plan](../backend/plans/PLAYER-LINK-ME-PLAN.md) |
 | Matches — create, complete, live stats, amend | ✅ | ✅ | [MATCH_FEATURE](../backend/features/MATCH_FEATURE.md) · [FE matches](../frontend/features/matches.md) |
 | Skill ratings & recalculation | ✅ | — | [CALCULATION_SERVICE](../backend/features/CALCULATION_SERVICE.md) · [recalc contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-RATING-RECALCULATION-API-CONTRACT.md) |
-| Seasons | ✅ | 🟡 | [SEASON_FEATURE](../backend/features/SEASON_FEATURE.md) — season **write** API still deferred |
+| Seasons — model, seed, `seasonId` filter | ✅ | 🟡 | [SEASON_FEATURE](../backend/features/SEASON_FEATURE.md) |
+| Seasons — define / start / finalise (admin) | ⬜ **the contract exists, the code does not** | ✅ 2026-08-07 | [FE seasons](../frontend/features/seasons.md) — canonical for the contract until the backend ships one. Four endpoints, **no migration**. The screen renders an explicit "not on this deployment yet" state until they answer |
 | Team generation (7 strategies) | ✅ | ✅ | [TEAM_GENERATION_FEATURE](../backend/features/TEAM_GENERATION_FEATURE.md) · [design](../backend/features/TEAM_GENERATION_DESIGN.md) · [OPTIMAL plan](../backend/plans/OPTIMAL-PARTITION-PLAN.md) · [FE](../frontend/features/team-generation.md) |
 | Player positions & keeper willingness | ✅ V36 | ✅ | [PLAYER_FEATURE](../backend/features/PLAYER_FEATURE.md) · [FE players](../frontend/features/players.md) |
 | Draft sessions (captain pick, SSE) | ✅ | ✅ | [DRAFT_SESSION_FEATURE](../backend/features/DRAFT_SESSION_FEATURE.md) · [SSE guide](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/frontend/DRAFT_SESSION_SSE_GUIDE.md) |
