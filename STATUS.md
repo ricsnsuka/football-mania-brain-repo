@@ -6,43 +6,43 @@ nobody trusts is worse than none.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `1b29ded` — **ahead of `main` by the whole 1.6.0 release** | `cf57f4e` — the same |
-| Release | **`1.6.0`** — `build.gradle`, **on `next` only** | **`1.6.0`** — `package.json`, **on `next` only** |
-| Running in production | **`1.5.1`** — `main` has not moved | `50c68a8` — 1.4.2. **Version not read back from the platform** |
-| `main` head | `15e85c6` — 1.5.1 | `50c68a8` — 1.4.2 |
+| `next` head | `1b29ded` — content-identical to `main`; `next..main` lists the release **merge commit** and no changed file | `cf57f4e` — the same |
+| Release | **`1.6.0`** — `build.gradle` | **`1.6.0`** — `package.json` |
+| Running in production | **`1.6.0` at `69e4301`**, read back from the platform on 2026-08-07: Heroku **v61** `Deploy 69e43018`, and `/api/version` reporting `1.6.0` | **`1.6.0` at `f3ef62a`**, Netlify deploy `6a75ddc0e859c70008082bc9`, state `ready`, published 13:30:33Z. **Version read back from the platform for the first time** |
+| `main` head | `69e4301` — 1.6.0 | `f3ef62a` — 1.6.0 |
 | Working tree | clean | clean |
 | Tests | 1104+ unit plus 28 new on `OPTIMAL`, SpotBugs clean on `spotbugsMain` | 725 unit |
-| Latest migration | **`V36__player_positions_and_keeper.sql`** on `next`; `V35` on `main` | — |
-| Deployed through | **`V35`** — `V36` is merged to `next` and CI-verified, but not released | — |
-| Tags | `v1.0.0` → **`v1.5.1`**, contiguous — **`v1.6.0` not yet cut** | `v1.1.0` → **`v1.4.2`** — **`v1.6.0` not yet cut** |
+| Latest migration | **`V36__player_positions_and_keeper.sql`** — on `main` and applied | — |
+| Deployed through | **`V36`**, applied on the 1.6.0 deploy | — |
+| Tags | `v1.0.0` → **`v1.6.0`**, contiguous | `v1.1.0` → **`v1.4.2`**, then **`v1.6.0`** — `1.5.x` deliberately skipped |
 
-🚢 **1.6.0 is merged to `next` in both code repos and waiting on the release merge.** Two open pull
-requests, `next` → `main`, and **merging either one is the deploy**:
+✅ **1.6.0 shipped on 2026-08-07, both halves, backend first.** Production runs it and both platforms
+were asked rather than assumed:
 
-| | Pull request | Merging it |
+| | Deployed commit | Platform says |
 |---|---|---|
-| Backend | [FootMania-Back#191](https://github.com/ricsnsuka/FootMania-Back/pull/191) | Heroku builds the push. **This one goes first** |
-| Frontend | [FootMania-Simple-Front#51](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/51) | Netlify publishes the push |
+| Backend | `69e4301` | Heroku release **v61**, `Deploy 69e43018`, 14:21:51 +0100 — and `/api/version` returns `{"version":"1.6.0","buildTime":"2026-08-07T13:21:32Z"}` |
+| Frontend | `f3ef62a` | Netlify deploy **`6a75ddc0e859c70008082bc9`**, `ready`, `context: production`, published 13:30:33Z, 54s build |
 
-**The order is load-bearing this time, not a convention.** The frontend's half offers `OPTIMAL` in
-the generation dropdown, and that request is a **400** until the backend *running in production*
-knows the enum value. Merge the backend, confirm the dyno actually booted it — `heroku releases -a
-footmania` for the commit, `/api/version` for what the process says it is — and only then the
-frontend.
+Both tags are annotated with that evidence, so the claim each one makes about production can be
+checked without this file. **Heroku's auto-deploy took about ten minutes to create the build, not
+seconds** — long enough that it looked like it had not fired at all, and the builds API showed no
+record for the commit while it was pending. Worth knowing before anybody reaches for
+`git push heroku main:master` on the assumption the webhook is broken.
 
 **The two repos are one version again.** They were two minors apart because `1.5.0` and `1.5.1` were
 backend-only, a security pass and a correction to it, and neither moved an API surface. 1.6.0 spans
-both halves, so the frontend goes `1.4.2` → `1.6.0` and skips `1.5.x` rather than carrying the offset
-forward. Not `1.5.0`: a frontend `1.5.0` released now would not be the `1.5.0` the backend shipped
-last week, and two different things under one number is worse than a number never used.
+both halves, so the frontend went `1.4.2` → `1.6.0` and skipped `1.5.x` rather than carrying the
+offset forward. Not `1.5.0`: a frontend `1.5.0` released now would not be the `1.5.0` the backend
+shipped last week, and two different things under one number is worse than a number never used.
 
 ### What 1.6.0 carries
 
-✅ **`V36` — preferred positions and goalkeeper willingness on a player.** **The migration ran
-against a real PostgreSQL in CI** (`🧪 Integration (Testcontainers)`, green), which is the
-`ddl-auto: validate` check that confirms the migration and the entity agree. It has still never run
-against production. New table, no backfill, nothing dropped — so this is not one of the contract
-steps that cannot be undone by redeploying the previous jar.
+✅ **`V36` — preferred positions and goalkeeper willingness on a player.** **The migration has now
+run against production**, on this deploy. It had already run against a real PostgreSQL in CI
+(`🧪 Integration (Testcontainers)`), which is the `ddl-auto: validate` check that the migration and
+the entity agree. New table, no backfill, nothing dropped — so unlike the V22/V29 contract steps,
+redeploying the previous jar remains a viable rollback.
 
 ✅ **`OPTIMAL` team generation** — exhaustive partition search scored on
 `|Δmean| + λ·|Δspread| + κ·keeperPenalty`, the seventh strategy and the first to consume V36's data.
