@@ -87,6 +87,46 @@ Sortable columns expose `aria-sort`. Name is the only non-numeric sort, so it br
 
 The stat chips render in a `grid-cols-2 sm:grid-cols-3` grid (6 chips, 2 rows on desktop).
 
+### Position and keeper chips
+
+Beside the status and guest chips in the header, a neutral chip per entry in
+`player.preferredPositions`, and — **only when it is not `NEVER`** — one amber chip for
+`player.goalkeeperWillingness`.
+
+A "never" chip on most of the roster would be noise. The question the chip answers is *who can I
+put in goal*, and a row of negatives makes that harder to read, not easier. The willing chip is
+solid and the "if needed" one is outlined, because that difference is the entire reason the field
+is three values and not a boolean.
+
+Positions get neutral slate rather than a colour: they sit next to the status chip (green/grey) and
+the guest chip (violet), and a third colour family in the same row stops any of them meaning
+anything.
+
+## Editing positions and keeper willingness
+
+`PositionFields` renders both controls and is shared by the create and edit modals — one component,
+because the rule below is one thing to get wrong and two copies would be two places to forget it.
+
+**Positions are checkboxes.** A player may prefer several, and a single-choice control would make
+them pick a favourite and quietly lose the fact that they will also play at the back.
+
+**Picking goalkeeper locks the willingness control to "happy to" and disables it.** The server
+overwrites the field in that case whatever the form sends, so an enabled control would silently
+discard the choice — a control that ignores you is worse than one that shows you it is not yours
+to set. The hint text changes to say why. The value is raised in the same handler that ticks the
+box, so the form never submits a stale `NEVER` from under a control that has just gone grey.
+
+Unticking goalkeeper re-enables the control but does **not** lower the value, mirroring the server:
+there is no record of what it was before, and `HAPPY_TO` is not wrong about somebody who was happy
+in goal last week.
+
+**The edit modal sends both fields on every save, even untouched.** `[]` is how the server is told
+to clear the set and an omitted field means "leave alone", so sending only what changed would make
+removing your last position impossible.
+
+Both are editable on the self path as well as the manager one — the same component, the same
+endpoint choice `EditPlayerModal` already makes for name and phone.
+
 ## Role gates
 
 | Action | Roles | Enforced by |
@@ -114,6 +154,8 @@ boundary.
 | Page component | `src/features/players/PlayersPage.tsx` |
 | Player detail modal | `src/features/players/PlayerModal.tsx` |
 | Create modal | `src/features/players/CreatePlayerModal.tsx` |
+| Edit modal (self + manager) | `src/features/players/EditPlayerModal.tsx` |
+| Position / keeper fields | `src/features/players/PositionFields.tsx` |
 | Data hook | `src/hooks/player/usePlayers.ts` |
 | Service | `src/services/playerService.ts` |
 | Types | `src/types/player.ts` |
@@ -123,6 +165,17 @@ boundary.
 All strings live under the `players` key in each `locales/<lang>/common.json`.
 
 **Column keys** (`players.columns.*`): `name`, `status`, `skillRating`, `playedMatches`, `goals`, `assists`, `streak`
+
+**Position and keeper keys**: `players.positions.label`, `players.positions.hint`,
+`players.positions.values.*` (four), `players.keeper.label`, `players.keeper.hint`,
+`players.keeper.lockedHint`, `players.keeper.values.*` (three), `players.keeper.chip.*` (three —
+`NEVER` is present and empty, since that chip is never rendered).
+
+The `t()` fallbacks for both enums are **spelled-out English**, held in `PLAYER_POSITION_LABELS` and
+`GOALKEEPER_WILLINGNESS_LABELS` in `src/types/player.ts`, not the enum value. A runtime-built key
+falling back to itself is exactly how `FEE_CHARGED` and `MVP_VOTE_OPEN` reached production as screen
+text. Writing the first test for `PositionFields` caught it immediately — it asserted `Goalkeeper`
+and got `GOALKEEPER` — which is the argument for the fallbacks existing at all.
 
 There is deliberately no `players.columns.rank`. The identically named `rankings.columns.rank`
 does exist and is in use — they are different keys in different namespaces, so a search hit on

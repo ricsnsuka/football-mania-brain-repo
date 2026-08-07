@@ -32,7 +32,55 @@ Players carry skill ratings, win-streak counters, and an audit trail. The Player
 | `created_by`        | VARCHAR(50)    | No       | **Added in V2** — username of creator                 |
 | `updated_by`        | VARCHAR(50)    | No       | **Added in V2** — username of last updater            |
 | `created_at`        | TIMESTAMP      | No       | Set on INSERT                                         |
+| `goalkeeper_willingness` | VARCHAR(20) | No  | **Added in V36** — `NEVER` \| `IF_NEEDED` \| `HAPPY_TO`, default `NEVER` |
 | `updated_at`        | TIMESTAMP      | No       | Updated on every PATCH                                |
+
+### `player_positions` Table (V36)
+
+An element collection, so it is Hibernate's table entirely — the entity holds a
+`Set<PlayerPosition>` and nothing queries this directly.
+
+| Column      | Type        | Nullable | Notes                                                        |
+|-------------|-------------|----------|--------------------------------------------------------------|
+| `player_id` | BIGINT (FK) | No       | FK → `players.id`, `ON DELETE CASCADE`                        |
+| `position`  | VARCHAR(20) | No       | `GOALKEEPER` \| `DEFENDER` \| `MIDFIELDER` \| `FORWARD`    |
+
+Primary key is `(player_id, position)` — a **set**, so each position appears at most once per
+player and the order carries no meaning. `player_id` leads the key, which is also the FK index.
+
+**No `tenant_id`, deliberately.** The same exception V24 documented for the three
+`draft_session_team_*` tables: Hibernate owns this table through `@ElementCollection` and would
+never populate an extra column, so tenancy comes from the parent `players` row and the cascade ties
+the lifetime to it.
+
+### Why two fields and not one
+
+They answer different questions. *Where do you like to play* is a preference and can have several
+answers at once, which is why it is a set. *Will you go in goal* is a willingness, and in a
+kickabout the honest answer is usually neither yes nor no but "if nobody else will" — a boolean
+forces those people either to look like volunteers, and end up in goal every week, or to hide the
+only person available when the regular keeper does not turn up.
+
+Four positions rather than the eleven-a-side vocabulary: centre-back and holding midfielder describe
+roles that do not exist when there are four outfield players.
+
+### The invariant between them
+
+**A player with `GOALKEEPER` among their positions always has `goalkeeper_willingness = 'HAPPY_TO'`.**
+Somebody who names goalkeeper as a position they like cannot simultaneously be unwilling to play
+there.
+
+It is **not** enforced in the database — the rule spans a table and a column, so only a trigger
+could hold it, and there are exactly three write paths. `Player.reconcileGoalkeeperWillingness()`
+holds it instead, called last by every one of them. It reads the entity's *final* state, so it is
+correct for a PATCH that sets either field, both, or neither, and a request whose two values
+contradict each other gets the position's answer back.
+
+**Removing the position does not lower the willingness again.** There is no record of what it was
+before the position raised it, and `HAPPY_TO` is not a wrong thing to say about somebody who was
+happy in goal last week — so it stands until they lower it. Dropping the position *and* setting a
+lower willingness in the same PATCH does work, because by the time the rule runs the position is
+already gone.
 
 > **Note:** `email` is **not** stored in the `players` table. It is derived at query time from the linked `AppUser.email`. If no user is linked, `email` is `null` in the response.
 
@@ -42,6 +90,7 @@ Players carry skill ratings, win-streak counters, and an audit trail. The Player
 |-----------|------|-------------|
 | V1 | `V1__initial_schema.sql` | Baseline schema — includes `players` table (without audit columns) |
 | V1 | `V1__initial_schema.sql` | Creates `players`, including the `created_by` / `updated_by` audit columns |
+| V36 | `V36__player_positions_and_keeper.sql` | `player_positions` table + `players.goalkeeper_willingness`. No backfill — an existing player has answered neither question, and an empty position set says exactly that |
 
 ---
 

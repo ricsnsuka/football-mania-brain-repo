@@ -66,6 +66,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [PLATFORM-CONSOLE-PLAN](backend/plans/PLATFORM-CONSOLE-PLAN.md) 📝 | DRAFT — operator monitoring. **Rung 0 is a rendering job**: the organization listing and platform counters already exist and have no screen |
 | [MATCH-FEE-LEDGER-PLAN](backend/plans/MATCH-FEE-LEDGER-PLAN.md) | ✅ shipped — §14 covers a future payment integration |
 | [PLAYER-LINK-ME-PLAN](backend/plans/PLAYER-LINK-ME-PLAN.md) | ✅ shipped |
+| [OPTIMAL-PARTITION-PLAN](backend/plans/OPTIMAL-PARTITION-PLAN.md) 📋 | SPECIFIED, not built — exact-search team generation with a pluggable objective. **§7 records three pre-existing defects found while specifying**, including `params[…]` never reaching any strategy (verified), so `formWindow` and the `CAPTAIN_PICK` captain overrides have never worked |
 | [PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM](backend/plans/PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM.md) | 🟡 all done except AI match reports |
 | [PHASE0_FRONTEND_HANDOFF](backend/plans/PHASE0_FRONTEND_HANDOFF.md) | ✅ done |
 | [REVIEW_HANDOFF_2026-07-27](backend/plans/REVIEW_HANDOFF_2026-07-27.md) | ✅ backlog cleared |

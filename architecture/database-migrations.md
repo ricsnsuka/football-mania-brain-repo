@@ -1,9 +1,15 @@
 # Database Migration History
 
-Complete as of **V35**, verified against `src/main/resources/db/migration/` on 2026-08-05.
+Complete as of **V36**, verified against `src/main/resources/db/migration/` on 2026-08-07.
 **Production is applied through V35** — `1.2.0` carried V32–V33 and `1.3.0` carried V34–V35, both on
 2026-08-04. Verify against the platform rather than this line: `heroku pg:psql -c 'select version
 from flyway_schema_history order by installed_rank desc limit 1'`.
+
+⚠️ **V36 is written, not merged and not deployed.** It sits on
+`claude/match-predictor-team-composition-qlenaw` and has **never run against a real database** — the
+session that wrote it had no Docker, so `integrationTest` (the real Flyway chain with
+`ddl-auto: validate`, which is what catches entity/migration drift) did not execute. CI runs it on
+every pull request; treat that run as the first real check.
 
 This supersedes the table in [backend/architecture/ARCHITECTURE.md](../backend/architecture/ARCHITECTURE.md),
 which stops at V13.
@@ -50,6 +56,7 @@ editable — correct it with a new one.
 
 | V34 | `V34__platform_settings.sql` | `platform_settings` — figures that belong to the **deployment**, not to a group, the first being how far ahead a recurring match plan may be scheduled. **No `tenant_id`, deliberately**, which is the whole difference from `app_settings`: there is no tenant to scope to, and a query here carrying a tenant predicate would be the mistake. It sits behind `PlatformGuard`, not `GROUP_ADMIN` — a cap in `app_settings` would have been self-service for exactly the people it constrains. Same shape as pre-V27 `app_settings` (a row exists only where an operator overrode something, the enum default is the fallback, deleting a row is the reset), because re-deriving that differently would mean two things to learn instead of one. **Ships empty.** [Recurring plans](../backend/features/MATCH_PLANS_FEATURE.md#weekly-recurring-runs) |
 | V35 | `V35__platform_admin_exclusivity.sql` | **Comment-only — no schema change, no data change.** States the invariant that an account is *either* a platform operator *or* a member of groups, never both; somebody who needs both holds two logins. Worth a migration rather than a convention because an account that is both is a session sometimes bounded by a tenant and sometimes not, and every "which group is this" branch would carry the ambiguity forever. It has already cost one production bug — `GET /api/users/me` answered 404 to any group-less account, because the read asked "is this user a member of the current group" about a user reading *themselves*. Enforced in `PlatformGuard.assertNotOperator`, called from the only two paths that grant a membership, **before** the single-use token is consumed. [Incident](../backend/fixes/INCIDENT_2026-08-04_Users_Me_404_For_Groupless_Accounts.md) |
+| V36 | `V36__player_positions_and_keeper.sql` | `player_positions` (an `@ElementCollection`) plus `players.goalkeeper_willingness`. **Two fields because they answer two questions** — where somebody likes to play is a preference and can have several answers at once, so it is a set; whether they will go in goal is a willingness, and the honest kickabout answer is usually "if nobody else will", which a boolean cannot hold. **No `tenant_id` on `player_positions`**, following the exception V24 made for the `draft_session_team_*` tables: Hibernate owns the table and the parent `players` row carries tenancy. **No backfill** — an existing player has answered neither question and an empty set says exactly that. One invariant is deliberately *not* in the schema: `GOALKEEPER` among the positions implies `HAPPY_TO`, which spans a table and a column and is held by `Player.reconcileGoalkeeperWillingness()` instead of a trigger. [Players](../backend/features/PLAYER_FEATURE.md) |
 
 ---
 

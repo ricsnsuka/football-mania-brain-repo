@@ -1,20 +1,34 @@
 # Project Status
 
-**Snapshot: 2026-08-05.** Update it when the answers change, not on a schedule — a status page
+**Snapshot: 2026-08-07.** Update it when the answers change, not on a schedule — a status page
 nobody trusts is worse than none.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `358285b` — level with `main`, checked after the release merge | `f343678` — level with `main`, checked after the release merge |
-| Release | **`1.4.1` — merged to `main`** | **`1.4.1` — merged to `main`** |
-| Running in production | `358285b` — **Heroku deploys automatically from `main`**, so the release merge was the deploy. Release number not read back to this session; `heroku releases` and `/api/version` are the check | `f343678` — Netlify publishes from `main`, so the same is true here. **Deploy id not verified against the platform** |
-| `main` head | `358285b` — 1.4.1 | `f343678` — 1.4.1 |
+| `next` head | `7e8877b` — content-identical to `main`; `next..main` lists two release **merge commits** and no changed file | `50c68a8` — the same commit as `main` |
+| Release | **`1.5.1`** — `build.gradle` | **`1.4.2`** — `package.json` |
+| Running in production | **`1.5.1`, confirmed by the owner on 2026-08-07.** Heroku deploys automatically from `main`, so the release merge was the deploy | `50c68a8` — Netlify publishes from `main`, so the same is true here. **Version not read back from the platform** |
+| `main` head | `15e85c6` — 1.5.1 | `50c68a8` — 1.4.2 |
 | Working tree | clean | clean |
-| Tests | 1104 unit + 76 integration, SpotBugs clean | 677 unit |
-| Latest migration | `V35__platform_admin_exclusivity.sql` | — |
-| Deployed through | **`V35`** (2026-08-04) — 1.4.0 carried no migration | — |
-| Tags | `v1.0.0` → `v1.3.1`; **`v1.4.0` and `v1.4.1` both missing** | `v1.1.0` → `v1.3.1`; **`v1.4.0` and `v1.4.1` both missing** |
+| Tests | 1104+ unit, SpotBugs clean on `spotbugsMain` | 725 unit |
+| Latest migration | `V35__platform_admin_exclusivity.sql` on `main`; **`V36` in flight**, see below | — |
+| Deployed through | **`V35`** — `V36` is not merged and has never run | — |
+| Tags | `v1.0.0` → **`v1.5.1`**, contiguous | `v1.1.0` → **`v1.4.2`**, contiguous |
+
+**The two repos are two minor versions apart, and that is correct.** `1.5.0` and `1.5.1` were
+backend-only — a security pass and then a correction to it — and both changelog entries say in as
+many words that no API surface moved and the frontend needs no matching release.
+
+🔄 **In flight: `V36`, on `claude/match-predictor-team-composition-qlenaw` in all three repos.**
+Preferred positions and goalkeeper willingness on a player. Three pull requests open, nothing
+merged, and **the migration has never run against a real database** — the session that wrote it had
+no Docker, so `integrationTest` did not execute. See
+[database-migrations.md](architecture/database-migrations.md).
+
+> The branch name says "match predictor" and the work is nothing of the sort. A match predictor was
+> discussed in the same session and **declined** — nice to have, too much complexity for the value.
+> The branch was already named by then. Read the pull requests, not the branch.
 
 ## 1.4.0, on 2026-08-05
 
@@ -53,21 +67,11 @@ project's own frontend, which shipped in the matching release. The frontend also
 a `204` from an older server, so the two halves no longer have to deploy in a fixed order for
 anything but deleting a completed match.
 
-⚠️ **The `v1.4.0` tags are written and not pushed, and `v1.4.1` has none either.** The session that cut the release could push
-branches but not tags, so both annotations exist only in that session — they name `9fa0134` and
-`4e87ddc`, and the backend one records that the SHA first reported for v56, `9fa0343`, matches no
-object in the repository and is a transposition. **Until somebody pushes them, `v1.3.1` is the
-newest tag in both repos while production runs 1.4.x — two releases of daylight.**
-
-The four that are owed:
-
-```bash
-# backend                                     # frontend
-git tag -a v1.4.0 9fa0134 …                   git tag -a v1.4.0 4e87ddc …
-git tag -a v1.4.1 358285b …                   git tag -a v1.4.1 f343678 …
-```
-
-Place `v1.4.1` at whatever the platforms report rather than at these SHAs if they disagree.
+✅ **The missing `v1.4.0` / `v1.4.1` tags were pushed, and the gap is closed.** This entry used to
+warn that the session cutting the release could push branches but not tags, leaving `v1.3.1` as the
+newest tag in both repos while production ran 1.4.x. Verified against both remotes on 2026-08-07:
+the backend now carries `v1.0.0` → `v1.5.1` and the frontend `v1.1.0` → `v1.4.2`, contiguous in
+both. Nothing is owed.
 
 **Before this, both repos were fully deployed for the first time in a while — `main`, the tag and
 the running process were the same commit on both sides.** Four releases went out in two days:
@@ -273,6 +277,7 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 | ~~[backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md)~~ | Last touched 2026-05-27 — predated kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | ✅ **Resolved 2026-08-05.** Rewritten against the entities, the migrations and `MatchPlanController`: instant kickoff, `GENERATED` and the derived `expired`/`generatable`/`cancellable` flags, the derived waitlist, guests on `players`, `timeframe` and the ordering, pitch cost, post-V33 grants, and the weekly runs `1.3.0` added. The frontend side is now [frontend/features/match-plans.md](frontend/features/match-plans.md) |
 | ~~[backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md)~~ | Header read "DRAFT — not implemented"; it shipped in `828db3b` | ✅ **Resolved.** Corrected here on import, and the stale backend copy went with the documentation split — there is one copy now, and it is this one |
 | [backend/plans/ORCHESTRATOR_SESSION.md](backend/plans/ORCHESTRATOR_SESSION.md) | Last entry 2026-07-28, though `orchestrator.agent.md` still mandates an entry per session | Resume it, or retire the convention deliberately |
+| [API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md) §generate + [backend/features/TEAM_GENERATION_DESIGN.md](backend/features/TEAM_GENERATION_DESIGN.md) §7.3/§7.6 | Both document `params[formWindow]`, `params[captainAId]` and `params[captainBId]` as working generation parameters. **They have never reached a strategy.** `@RequestParam Map<String,String>` binds query keys literally, so the map arrives as `{generationType=…, params[formWindow]=3}` and every `params.get("formWindow")` returns null — `FORM_BASED` always uses the default window of 5 and `CAPTAIN_PICK` always auto-picks its captains. Verified against the running controller on 2026-08-07, not inferred | Fix the binding rather than the documents — the published contract is the sensible one. §7.2 of [OPTIMAL-PARTITION-PLAN](backend/plans/OPTIMAL-PARTITION-PLAN.md) has the three options, the recommendation, and why every existing test missed it |
 | ~~Postman collection~~ | Was 60 requests against a 103-operation API, and — the deeper find — **gitignored the whole time**, so every copy lived on one person's disk and none could be diffed | ✅ **Resolved 2026-08-02.** Now *generated* from the running app's `/v3/api-docs` by `postman/generate-collection.mjs`, committed to the repo (103 requests, 17 folders, `X-Group-Id` per the tenancy contract), and regeneration is one command. The hand-maintenance workflow in `postman-engineer.agent.md` is marked historical |
 | ~~[frontend/INDEX.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/INDEX.md)~~ | Omitted seven of its own files | ✅ **Resolved** by the documentation split — the feature docs it failed to link now live here, and what is left there is a pointer plus the seven guides |
 | frontend — missing files | Nothing for guest players or payment delegation (`722335c`) as features in their own right | Write them. ✅ `features/payments.md` **written 2026-08-05** — the balance, the interleaved ledger, the roster and the delegation groups; delegation is covered there rather than separately. ✅ The group dimension is covered by [frontend/features/groups.md](frontend/features/groups.md) |
