@@ -295,29 +295,43 @@ arrived: a build can fail after a merge succeeds. Any frontend change that depen
 behaviour ships backend-first — *deployed* first, confirmed via `heroku releases -a footmania` and
 `/api/version`, not merely merged. This is how the 2026-08-02 partial outage happened.
 
-**7. The visual baselines are Windows-only, and every one of them is now stale.** `e2e/` compares
-screenshots against committed `*-win32.png` files. On Linux or macOS Playwright silently writes a
-*separate* set rather than failing, so a green run on another platform proves nothing about the
-committed baselines — and the 2026-08-05 alignment work changed the navbar, which is on every page.
+**7. The visual baselines are Windows-only. ~~Every one of them is stale.~~ Regenerated 2026-08-07.**
+`e2e/` compares screenshots against committed `*-win32.png` files. On Linux or macOS Playwright
+silently writes a *separate* set rather than failing, so **a green run on another platform proves
+nothing about the committed baselines** — that half of the hazard is permanent and is why the suite
+went unread long enough for the rest of this entry to happen.
 
 Regenerate on Windows with `npm run test:visual:update` and **look at the images**. The e2e README
 already warns why: a run once photographed the "you are not in a group yet" screen on all sixteen
 pages and reported green.
 
-**Measured on 2026-08-07: 22 of 38 fail on the owner's Windows machine with no change in the working
-tree.** `maxDiffPixels` is 20 against a 1280×900 screenshot, which is near-exact, so this is font and
-driver drift rather than anything real. Two consequences, and the second is the expensive one:
+✅ **Regenerated 2026-08-07** — all 38, on Windows, then re-run against themselves: 38 passed, zero
+differing pixels. Every image was opened and checked for real content before the commit.
 
-- **`--update-snapshots` is currently unusable.** Running it accepts those 22 as the new truth in the
-  same commit as whatever you actually changed, and nobody can tell the two apart afterwards. The
-  spacing release below was therefore shipped with the baselines left alone and the one image that
-  mattered opened by hand.
-- **The suite was *accepting* a real defect.** `player-modal-light-win32.png` shows the "Edit details"
-  button flush against the dialog's right edge — `.player-modal-edit-zone` had no horizontal padding
-  at all — and had done since the screenshot was taken. A baseline nobody looks at records bugs as
-  intended behaviour.
+**The cause was not drift, and this file said it was for a few hours.** The first version of this
+entry reasoned from `maxDiffPixels: 20` that 22 of 38 failing meant font and driver differences. The
+regeneration disproved it: **six baselines came back byte-identical** — `login`, `join` and `privacy`
+in both themes — and those are exactly the pages with no authenticated chrome. Identical bytes mean
+this machine renders text the same as the machine that took the originals, so rendering cannot
+explain the other 32.
 
-Regenerating these is worth doing before the next styling change, not after.
+They were **real changes that had shipped and were never recorded**:
+
+- the rankings table gained a **pagination row**, absent from the old baseline entirely
+- figure columns went from left-aligned to **right-aligned** — the "Columns of figures" rule the
+  frontend styling guide documents
+
+The size deltas agree: rankings and payments moved 7–11%, other authenticated pages 0–1%, the public
+pages not at all.
+
+**The failure mode is the lesson, and it is worse than drift would have been.** A suite that is red
+for long enough stops being read, and a suite nobody reads records whatever was true when someone
+last looked. Two shipped features sat uncaptured, and the committed `player-modal-light` baseline was
+**accepting a real defect** — the "Edit details" button flush against the dialog's right edge,
+because `.player-modal-edit-zone` had no horizontal padding at all.
+
+So the rule is not "regenerate more often", it is **do not let the suite stay red**. Red for a real
+reason and red for a stale reason look identical, and the second kind hides the first.
 
 **9. Two frontend unit tests fail on Windows and pass in CI.** `formatDate.test.ts` expects
 `3 – 9 Aug 2026` and Node's ICU on the owner's machine produces `3–9 Aug 2026` — a different dash and
