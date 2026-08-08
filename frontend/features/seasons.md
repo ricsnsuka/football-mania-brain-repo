@@ -334,6 +334,39 @@ as whole numbers, and only the client knows the locale to say them in. `MOST_IMP
 sign — a season everybody had a bad one still has a winner, and `-0.20` is the honest way to say
 what they won it with.
 
+## The Ballon d'Or
+
+The seventh award, and the only one no query decides. When a season is finalised the group is asked
+who was the best player in it; the poll closes on the **second completed match of the next season**,
+and the winner joins the honours board above.
+
+**The card lives on the dashboard**, and it has to. The window is two matches wide and exists for a
+handful of days a year — by the time somebody thought to go and look for it, it would have closed.
+The dashboard is the one screen everybody opens without deciding to, which is also where the
+notification points.
+
+It renders nothing when there is no poll, which is almost always, and nothing on failure either: a
+card explaining its own absence would be permanent furniture for something temporary, and an error
+banner for a feature that is live twice a year is worse than a missed vote.
+
+**Everybody votes, including people who do not play.** The voter is an account, not a player — this
+is the group's opinion of a season. That is the opposite of
+[MOTM voting](motm-voting.md), which is restricted to the players who appeared, because that vote
+is about one match only they saw. The ballot is the players who *did* appear, from the same query
+the awards use, so the two cannot disagree about who was there.
+
+**There is no running tally, and the absence is the feature.** The server never sends one — a live
+standing turns a vote into a bandwagon, the same rule MOTM follows. The card shows how many people
+have voted, which says the poll is alive without saying who is winning, and how many matches are
+left, because a date would be a guess about when the group next plays.
+
+Voting again changes your vote rather than adding one, and voting for yourself is allowed.
+
+`BALLON_DOR_OPEN` is a new notification category, with strings in all three locales. That is not
+boilerplate: `MVP_VOTE_OPEN` and `FEE_CHARGED` both reached production rendering as their raw enum
+names because a category was added backend-side and the locale keys were not — see the drift note
+in [STATUS](../../STATUS.md).
+
 ## What having seasons changed elsewhere
 
 Closing a season makes an all-time-only app misleading, so the scope of each screen became a
