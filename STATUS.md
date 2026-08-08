@@ -342,19 +342,20 @@ because `.player-modal-edit-zone` had no horizontal padding at all.
 So the rule is not "regenerate more often", it is **do not let the suite stay red**. Red for a real
 reason and red for a stale reason look identical, and the second kind hides the first.
 
-⚠️ **Six baselines went stale again on 2026-08-07, knowingly, and need a Windows run.** The
-`/seasons` admin screen added a `GROUP_ADMIN`-only navbar link, and the visual suite's session is an
-administrator — `seedSession` seeds the pre-V18 name `'ADMIN'`, which the store's
-`renameLegacyAdmin` upgrades to `GROUP_ADMIN` on rehydrate, so every admin-session capture carries
-the new link. That is `users`, `settings-admin` and `settings-platform`, in both themes.
+⚠️ **Two baselines went stale on 2026-08-07, knowingly, and need a Windows run.** Season
+administration became a section of the settings group tab, so `settings-admin-light` and
+`settings-admin-dark` gain it. `e2e/fixtures.ts` stubs `/api/seasons` with one season of each state
+so the capture shows the section rather than its empty state.
 
-Verified rather than assumed: the screen was rendered on Linux with and without the change, and the
-only difference is the extra link. It could not be fixed here — regenerating off Windows writes a
-*separate* `-linux` set and proves nothing, which is the permanent half of this hazard. Run
-`npm run test:visual:update` on Windows, and **look at the images**: the same run photographed an
-error boundary on `/users` on Linux, identically with and without the change, which is either
-hazard 8's service-worker/stub interaction or something Linux-only — and a `--update-snapshots`
-that nobody looked at would happily commit it.
+It was briefly worse. The same feature first shipped as `/seasons` with a `GROUP_ADMIN` navbar
+entry, which would have moved **six** baselines — the suite's session is an administrator, because
+`seedSession` seeds the pre-V18 name `'ADMIN'` and the store's `renameLegacyAdmin` upgrades it to
+`GROUP_ADMIN` on rehydrate. Moving the screen into settings for product reasons took `users` and
+`settings-platform` back out of scope.
+
+Not fixable here: regenerating off Windows writes a *separate* `-linux` set and proves nothing,
+which is the permanent half of this hazard. Run `npm run test:visual:update` on Windows and **look
+at the images** — see hazard 8 below, which the Linux runs made newly concrete.
 
 **9. ~~Two frontend unit tests fail on Windows and pass in CI.~~ Resolved 2026-08-07.**
 `formatDate.test.ts` expected `3 – 9 Aug 2026`; Node's ICU on the owner's machine produces
@@ -380,6 +381,19 @@ because it only screenshots initial loads; the first interaction-driven e2e test
 it presents as the app being broken rather than the harness. `serviceWorkers: 'block'` in
 `playwright.config.ts` fixes it — deliberately not applied yet, because it may shift the baselines
 in hazard 7 and those cannot be regenerated off Windows.
+
+⚠️ **Observed for the first time on 2026-08-07, and it is not confined to interaction.** Two visual
+tests were run on Linux while moving the seasons screen. `/api/me/memberships` was stubbed
+correctly — the navbar carried the group's name — and **every subsequent stub was ignored**: the
+System figures rendered as dashes, Competition rules came back empty, the linked-player block stayed
+a skeleton, and `/users` rendered the error boundary outright. Identical with and without the change
+under test, so it is the harness, not the app.
+
+That makes accepting a regenerated baseline riskier than hazard 7 already says. If this reproduces
+on Windows, `--update-snapshots` would commit a set of screenshots of empty states and report
+green — which is the same failure that let the rankings pagination row and the `player-modal`
+padding defect sit in the baselines unnoticed. **Look at the images**, and if they show empty
+sections, fix this hazard before regenerating rather than after.
 
 ---
 
@@ -463,16 +477,15 @@ reason this repo exists.
 7. ~~**Decide what `next` is for.**~~ ✅ Answered 2026-08-04: **revived.** Work goes to `next`;
    `main` moves only when a release is cut. Both branches re-synced to `1.3.1` — see the top of this
    file for the flow.
-8. **Write the season endpoints.** The `/seasons` admin screen shipped on the frontend on
-   2026-08-07 and is sitting on an explicit "not on this deployment yet" state, because
-   `GET/POST /api/seasons` and the two lifecycle endpoints do not exist. This is the first time the
-   two repos have been deliberately out of order — see
-   [Deployment order](CONTRIBUTING.md#deployment-order), which permits it and says how — so it is
-   the only outstanding item where **merged frontend is ahead of backend by design**. The contract
-   is written in full at [frontend/features/seasons.md](frontend/features/seasons.md): four
-   endpoints, a controller, a service, a DTO, and **no migration**. Two things it must get right —
-   start clears the old `is_current` before setting the new one in the same transaction (V10's
-   partial index), and finalise sets `end_date`, which `endSeason()` still does not.
+8. ~~**Write the season endpoints.**~~ ✅ Done 2026-08-07, in the same change set as the screen —
+   `SeasonController`, `SeasonService`, `SeasonDTOs`, no migration.
+   [Contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/SEASONS-API-CONTRACT.md).
+   What remains is a **deployment ordering job, not a coding one**: the backend is released and
+   confirmed first, and the frontend degrades to a named "not deployed yet" state in the window
+   between. Worth naming as a win: `SeasonCurrentConstraintIT` now pins the season rollover both
+   ways round against real PostgreSQL, and it had to — a partial unique index is not expressible in
+   the JPA entity, so an implementation that flushed both `is_current` updates together would pass
+   every unit test in the build and fail on the first group to own two seasons.
 9. Then Phase 3's last item — AI match reports. Billing is on hold.
 
 ---

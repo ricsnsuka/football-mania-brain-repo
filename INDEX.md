@@ -37,7 +37,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [MATCH_PLANS_FEATURE](backend/features/MATCH_PLANS_FEATURE.md) | Plans, the availability poll, the `timeframe` split and the `from`/`to` kickoff window. Rewritten against the code 2026-08-05 |
 | [PLAYER_FEATURE](backend/features/PLAYER_FEATURE.md) | Roster, aggregates, soft delete |
 | [USERS](backend/features/USERS.md) | Accounts, authentication, roles |
-| [SEASON_FEATURE](backend/features/SEASON_FEATURE.md) | Seasons and the single-current invariant |
+| [SEASON_FEATURE](backend/features/SEASON_FEATURE.md) | Seasons, the single-current invariant, and the write API added 2026-08-07 |
 | [TEAM_GENERATION_FEATURE](backend/features/TEAM_GENERATION_FEATURE.md) · [DESIGN](backend/features/TEAM_GENERATION_DESIGN.md) | The six strategies, and how they were evaluated |
 | [DRAFT_SESSION_FEATURE](backend/features/DRAFT_SESSION_FEATURE.md) | Interactive captain pick |
 | [PRIVACY_AND_DATA_PROTECTION](backend/features/PRIVACY_AND_DATA_PROTECTION.md) | What personal data exists, and both GDPR paths |
@@ -94,7 +94,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [language-switcher](frontend/features/language-switcher.md) · [theme](frontend/features/theme.md) | Locale and light/dark |
 | [groups](frontend/features/groups.md) | Joining, founding, switching — and the two people who hand out access |
 | [payments](frontend/features/payments.md) | Your balance, the interleaved ledger, the roster and delegation groups |
-| [seasons](frontend/features/seasons.md) 🟡 | Define, start and finalise — and the season write contract, **written before the backend that serves it** |
+| [seasons](frontend/features/seasons.md) | Define, start and finalise, on the settings group tab — and why starting is not finalising |
 | *guests · payment-delegation* ⚠️ | **Missing.** Both shipped in the UI in `722335c` |
 
 ---

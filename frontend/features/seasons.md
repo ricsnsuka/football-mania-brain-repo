@@ -1,16 +1,14 @@
 # Seasons — the group admin's screen
 
-**Status:** 🟡 Frontend written 2026-08-07, **shipped against a backend that does not have the
-endpoints yet.** The screen degrades to an explicit "not on this deployment" state until it does.
-See [The un-deployed state](#the-un-deployed-state).
+**Status:** ✅ Both halves written 2026-08-07. The backend endpoints exist; deploy them first.
 
-Route `/seasons`, `GROUP_ADMIN` only. Nav entry last in the row, and role-gated, so nobody else's
-navbar grows by an item.
+**A section of the group tab in Settings**, `GROUP_ADMIN` only. It was briefly a page at `/seasons`
+with a navbar entry — see [Why settings and not a page](#why-settings-and-not-a-page).
 
-> This document is the **canonical contract** for `GET/POST /api/seasons` and the two lifecycle
-> endpoints, because the frontend was written first and there is no backend code to carry it yet.
-> When the backend ships, its `docs/api/SEASONS-API-CONTRACT.md` becomes canonical per
-> [CONTRIBUTING rule 2](../../CONTRIBUTING.md), and this page keeps the UI half.
+> The contract is
+> [`docs/api/SEASONS-API-CONTRACT.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/SEASONS-API-CONTRACT.md)
+> in the backend repo, per [CONTRIBUTING rule 2](../../CONTRIBUTING.md) — it ships in the same
+> commit as the endpoints. This page keeps the UI half and the reasoning behind the shape.
 
 ---
 
@@ -28,6 +26,30 @@ founded — "Season 1", `is_current = true`, `start_date` the day the group was 
 null — and nothing in the product could create a second one, switch to it, or close the first. A
 group's ratings therefore never had a season boundary, which is the one thing the rating model was
 designed to have.
+
+---
+
+## Why settings and not a page
+
+This shipped first as `/seasons`, a route of its own with a `GROUP_ADMIN` navbar entry, and that was
+the wrong shape twice over.
+
+**The navbar is for places you move between during a session.** It was already eight items long for
+an administrator, and a season is touched a handful of times a year — the row is the most expensive
+real estate in the app and this is close to its least frequent destination.
+
+**More to the point, a season belongs to the active group.** It changes when you switch groups,
+which is precisely what the group tab in Settings is: the tab *titled with the group's name*,
+holding the things that are true of that group rather than of your account. The competition's rules
+already lived there. Its calendar being on the navbar instead made two halves of one subject sit in
+two different places, and only one of them moved when you switched groups.
+
+It sits immediately above the System section, so the two administrative blocks that describe how the
+group actually competes — its calendar, then its rules — read as one thing.
+
+The one cost is discoverability, and it is smaller than it looks: the warning that matters (no
+current season) is only ever *caused* by finalising, which happens on this screen, so anybody who
+can create the state is standing in the place that reports it.
 
 ---
 
@@ -89,11 +111,11 @@ needs a schema change needs a deploy window and a place in
 [database-migrations](../../architecture/database-migrations.md); this one needs neither, so the
 backend half is a controller, a service and a DTO.
 
-**`matchCount` and `completedMatchCount` are optional on the wire.** They are the two fields a
-first backend cut is most likely to leave out — they need a count query nothing else on the
-endpoint does. The frontend declares them `nullableField` and renders an em dash when they are
-absent, because *a season with no matches* and *a backend that does not report matches* are
-different facts and "0" would be a claim the screen cannot make.
+**`matchCount` and `completedMatchCount` are always sent** — the backend answers both from one
+`GROUP BY` over `matches.season_id` for the whole list. The frontend still declares them
+`nullableField` and renders an em dash when absent, which is not dead code: it is what makes the
+screen readable against a backend one release behind, and *a season with no matches* and *a backend
+that does not report matches* are different facts that "0" would collapse into one.
 
 ### Status is derived, not sent
 
@@ -134,34 +156,45 @@ table does not — there is no qualification threshold to undo here — but beca
 claim about `start_date` the client cannot make: the dates are `YYYY-MM-DD` strings, and two
 seasons beginning on the same day have only their insertion order to separate them.
 
-### Two things the backend implementation must get right
+### Two things the backend had to get right, and did
 
 1. **Start clears before it sets, in one transaction.** `ux_seasons_tenant_single_current` (V10,
    rescoped per group by V26) is a partial unique index over the `is_current = true` rows. Setting
    the new flag while the old one still stands violates it, and the request fails having changed
-   nothing. SEASON_FEATURE has carried this warning since before there was an endpoint to apply it
-   to.
-2. **Finalise sets `end_date`.** `endSeason()` does not — that is limitation 4 in SEASON_FEATURE,
-   and it is still true of the service method. The column has existed since V1 and has never been
-   written by anything. Without it there is no way to tell a finalised season from a planned one,
-   and the derivation above collapses.
+   nothing. `SeasonService.start` clears with `saveAndFlush` first — Hibernate orders updates of one
+   entity type by its own action queue, not by how the code reads — and
+   `SeasonCurrentConstraintIT` pins **both** directions against real PostgreSQL, because a partial
+   index is not expressible in the JPA entity and the unit tier's generated schema therefore has
+   no such constraint to violate.
+2. **Finalise sets `end_date`.** `endSeason()` still does not — limitation 4 in SEASON_FEATURE, and
+   deliberately still true, so the method stays callable from a replay without closing the season
+   underneath it. The endpoint sets it. The column has existed since V1 and until now nothing had
+   ever written it; without it there is no way to tell a finalised season from a planned one and
+   the derivation above collapses.
+
+One rule the frontend does **not** encode, because the server does: **only the current season can
+be finalised**, 409 otherwise. The transition weights each player against the group mean by
+participation, so run over a season with no history it re-rates everybody for no reason and leaves
+nothing pointing back at the request that did it.
 
 ---
 
-## The un-deployed state
+## The un-deployed state, which outlives the backend being written
 
-The backend has no `/api/seasons`. [CONTRIBUTING](../../CONTRIBUTING.md#deployment-order) is
-explicit about what to do when the usual order cannot hold:
+Both halves ship together, so **the backend must be released and confirmed first** —
+[Deployment order](../../CONTRIBUTING.md#deployment-order). The 404 branch is what the screen does
+in the window where that has not happened yet.
 
-> When the order genuinely cannot hold, ship the frontend so it tolerates both shapes — feature
-> detection or a graceful empty state that says so — rather than shipping something that assumes a
-> backend that is not there yet.
+That window is not hypothetical. On 2026-08-02 the frontend went live against a backend that was
+merged and undeployed; every authenticated request failed preflight, every screen degraded to its
+empty state, and the outage was reported as *"the competition rules section is empty"* — the
+section immediately below this one.
 
-So a 404 from `GET /api/seasons` renders its own state: *"Seasons cannot be managed on this
-deployment yet — this screen is ready, the server side is not"*, naming the endpoint it is waiting
-on, with the "Define a season" button disabled. It is not the error state, and the difference is
-the point. "Failed to load data" against a backend that has simply not shipped sends somebody to
-check their connection, the deployment and their group, in that order, and all three are fine.
+So a 404 from `GET /api/seasons` renders its own state: *"Seasons are not available on this
+deployment yet — the backend does not have the season endpoints"*, naming the endpoint, with the
+"Define a season" button disabled. It is not the error state, and the difference is the point.
+"Failed to load data" sends somebody to check their connection, the deployment and their group, in
+that order, and only one of the three is wrong.
 
 **A 404 here is unambiguous** because the list path carries no id. There is no season it could be
 failing to find. Every other failure gets the ordinary `DataStateMessage` with a retry.
@@ -172,7 +205,7 @@ defeats a state whose whole value is being immediate.
 
 ---
 
-## No current season is the loudest thing on the page
+## No current season is the loudest thing this section can say
 
 A group without one is a group where **four separate backend services throw**: `POST /api/matches`,
 match-plan confirmation and draft-session creation all resolve `is_current` when no `seasonId` is
@@ -183,8 +216,8 @@ Finalising is the first thing in the product that can *cause* that state — the
 `is_current` and there is nothing to replace it. So:
 
 - The finalise confirmation lists it as a consequence, in the warning treatment, before the click.
-- The page shows a standing amber banner above the list whenever the group has no current season,
-  whether or not the person came here to look at it.
+- The section shows a standing amber banner above the list whenever the group has no current
+  season, whether or not the person came here to look at it.
 - The banner waits for the list to arrive. Announcing it mid-request would be a warning about the
   network dressed up as a warning about the group.
 
@@ -228,16 +261,29 @@ at all.
 
 ## Files
 
+### Frontend
+
 | | |
 |---|---|
-| Route | `src/app/(app)/seasons/page.tsx` — `AuthGuard requiredRole="GROUP_ADMIN"` |
-| Page | `src/features/seasons/SeasonsPage.tsx` |
+| Section | `src/features/seasons/SeasonSettings.tsx`, composed by `features/settings/SettingsPage.tsx` on the group tab, lazily and `GROUP_ADMIN`-gated |
 | Card | `src/features/seasons/SeasonCard.tsx` — one control per state, never two |
 | Modals | `CreateSeasonModal` · `StartSeasonModal` · `FinaliseSeasonModal` |
 | Hooks | `src/hooks/season/useSeasons.ts` |
 | Service | `src/services/seasonService.ts` |
 | Types | `src/types/season.ts` — the DTO, the schemas and `seasonStatus()` |
-| Tests | `src/tests/seasons/` — 18 across the three files |
+| Tests | `src/tests/seasons/` — 18 across three files, plus the group-tab composition in `tests/settings/SettingsPage.test.tsx` |
+| Visual | `e2e/fixtures.ts` stubs `/api/seasons` with one season of each state — a fixture with only the current one would screenshot a third of the section |
+
+### Backend
+
+| | |
+|---|---|
+| Controller | `SeasonController` — `/api/seasons`, reads open to the group, writes `GROUP_ADMIN` |
+| Service | `SeasonService` — the three verbs, the rollover order, the cache evictions |
+| DTOs | `SeasonDTOs` — `SeasonCreateDTO`, `SeasonDTO` |
+| Repositories | `SeasonRepository` (list, name check) · `MatchRepository.countMatchesPerSeason` |
+| Tests | `SeasonServiceTest`, `SeasonControllerTest`, and the rollover in `SeasonCurrentConstraintIT` |
+| Contract | [`docs/api/SEASONS-API-CONTRACT.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/SEASONS-API-CONTRACT.md) |
 
 Cards rather than a table, which is the opposite choice to the draft-session admin next door. That
 page lists dozens of near-identical rows and the reader is scanning for one; this one lists a
@@ -249,8 +295,6 @@ card layout to fix.
 
 ## Still open
 
-- **The backend half.** Four endpoints, no migration. Everything it must get right is in
-  [Two things the backend implementation must get right](#two-things-the-backend-implementation-must-get-right).
 - **Deleting a planned season.** There is no endpoint and no control. A season defined by mistake
   can be renamed around but not removed. Left out deliberately rather than forgotten: deleting one
   that has matches is a data question nobody has answered, and the gate would have to know.

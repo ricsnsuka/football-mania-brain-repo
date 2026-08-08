@@ -2,10 +2,10 @@
 
 **Added in:** v1.0.0  
 **Date:** May 2026  
-**Status:** ✅ Released (Model + Seed). **Write API specified and built frontend-first, 2026-08-07
-— the backend half is not written.** The contract is
-[frontend/features/seasons.md](../../frontend/features/seasons.md); it needs a controller, a
-service and a DTO, and **no migration**.
+**Status:** ✅ Released (Model + Seed). **Write API added 2026-08-07** — `SeasonController`,
+`SeasonService`, `SeasonDTOs`, and **no migration**. Contract:
+[SEASONS-API-CONTRACT](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/SEASONS-API-CONTRACT.md).
+The screen that drives it is [frontend/features/seasons.md](../../frontend/features/seasons.md).
 
 ---
 
@@ -16,16 +16,14 @@ Every match belongs to a season. When a season ends, an admin triggers the
 **season-end skill-rating transition** which adjusts all players' ratings based on
 their performance across the season.
 
-There is currently **no dedicated `/api/seasons` CRUD endpoint** — seasons are managed
-directly via the database seed and future admin tooling. The `seasonId` field on
-`MatchCreateDTO` allows associating matches with a specific season; when omitted,
-the current active season is used automatically.
+~~There is currently **no dedicated `/api/seasons` CRUD endpoint**~~ — **there is, as of
+2026-08-07.** For the first eighteen months there was not, and seasons were managed via the
+database seed alone: every group ran on the "Season 1" `GroupService` creates at founding, current
+forever, never closed. `GET`/`POST /api/seasons` and the two lifecycle endpoints close that.
 
-> **The admin screen for this now exists, and is waiting.** `/seasons` shipped on the frontend on
-> 2026-08-07 against the contract in
-> [frontend/features/seasons.md](../../frontend/features/seasons.md) — define, start, finalise —
-> and renders an explicit "not on this deployment yet" state until these endpoints answer. That
-> document is canonical for the contract until the backend ships one in `docs/api/`.
+The `seasonId` field on `MatchCreateDTO` still associates a match with a specific season; when
+omitted, the current season is resolved automatically — which is the flag
+`POST /api/seasons/{id}/start` moves.
 
 ---
 
@@ -98,18 +96,21 @@ compute average and starting ratings for each player, then adjusts `skillRating`
                   SkillRatingHistory entries accumulate
                               │
                               ▼
-               Admin calls CalculationService.endSeason()
+          Admin: POST /api/seasons/{id}/finalise
                               │
                               │  1. Compute season-end ratings for all players
                               │  2. Persist SkillRatingHistory entries
                               │     (reason = "Season end: {name}")
                               │  3. Player skillRating values updated
+                              │  4. end_date set, is_current cleared (the endpoint,
+                              │     not endSeason — see limitation 4)
                               │
                               ▼
                        [ SEASON CLOSED ]
                         end_date set, is_current set to FALSE
 
-               New season created with is_current = TRUE
+        The group now has NO current season, and four paths
+        refuse to work until POST /api/seasons/{id}/start
 ```
 
 ---
@@ -131,11 +132,15 @@ all history entries for a player during a given season to compute:
 
 ## Current Limitations
 
-1. **No `/api/seasons` REST API** — there is no endpoint to list, create, or close seasons.
-   Season management is done directly via DB or programmatic service calls.
+1. ~~**No `/api/seasons` REST API**~~ — **resolved 2026-08-07.** Four endpoints: list, define,
+   start, finalise. Reads are open to any member, writes are `GROUP_ADMIN`. See
+   [SEASONS-API-CONTRACT](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/SEASONS-API-CONTRACT.md).
 
-2. **No automatic season-end trigger** — `endSeason()` must be called manually by an
-   admin (programmatic call). There is no scheduled job.
+2. **No automatic season-end trigger** — and deliberately still none. `endSeason()` runs when an
+   administrator calls `POST /api/seasons/{id}/finalise`, not on `end_date` and not on a schedule.
+   A job that closed a season by the calendar would re-rate a whole group at midnight on a date
+   somebody typed weeks earlier, with nobody watching; the irreversible step stays a decision
+   somebody makes.
 
 3. ~~**`is_current` is not enforced to be unique**~~ — **fixed in V10**
    (`ux_seasons_single_current`, a partial unique index over the `is_current = TRUE` rows).
@@ -152,11 +157,13 @@ all history entries for a player during a given season to compute:
    current implementation does not update it. It has been in the schema since V1 and **has never
    been written by anything.**
 
-   This stops being cosmetic the moment the write API lands: the frontend derives a season's
-   status from `is_current` and `end_date` alone, so without the date a finalised season is
-   indistinguishable from one nobody has started. `POST /api/seasons/{id}/finalise` is specified to
-   set it — the endpoint, not `endSeason()`, which keeps the service method callable from a replay
-   or a test without closing the season underneath it.
+   **`POST /api/seasons/{id}/finalise` now sets it** — the endpoint, not `endSeason()`, which
+   keeps the service method callable from a replay or a test without closing the season underneath
+   it. That endpoint is the only thing in any version that has ever written this column.
+
+   It stopped being cosmetic when the write API landed: a season's state is derived from
+   `is_current` and `end_date` alone, so without the date a finalised season is indistinguishable
+   from one nobody has started.
 
 ---
 
@@ -164,18 +171,19 @@ all history entries for a player during a given season to compute:
 
 | Feature                      | Notes                                                          |
 |------------------------------|----------------------------------------------------------------|
-| `GET /api/seasons`           | **Specified** — list, newest `startDate` first, with `matchCount` and `completedMatchCount` optional |
-| `POST /api/seasons`          | **Specified** — admin defines a season; it is created **not current** |
-| `POST /api/seasons/{id}/start` | **Specified** — makes it current. Clear the old flag *before* setting the new one, in one transaction |
-| `POST /api/seasons/{id}/finalise` | **Specified** — runs `endSeason()`, **sets `end_date`** (see limitation 4) and clears `is_current` |
+| ~~`GET /api/seasons`~~ | ✅ **Done 2026-08-07** — newest `startDate` first, tie-broken by id, with both match counts from one `GROUP BY` |
+| ~~`POST /api/seasons`~~ | ✅ **Done** — defines a season **not current**. Duplicate name is 409, checked case-insensitively because the index is not |
+| ~~`POST /api/seasons/{id}/start`~~ | ✅ **Done** — clears the old flag with `saveAndFlush` before setting the new one. Idempotent when already current |
+| ~~`POST /api/seasons/{id}/finalise`~~ | ✅ **Done** — runs `endSeason()`, **sets `end_date`** (see limitation 4), clears `is_current`, evicts the rating caches. Refuses a season that was never started |
 | ~~`PATCH /api/seasons/{id}/end`~~ | Superseded. Three verbs rather than one patch: only one of them is irreversible, and a shared endpoint gives all three the same shape, audit line and permission |
 | ~~Unique `is_current` constraint on DB~~ | ✅ Done in V10 — see Current Limitations #3     |
 | `GET /api/seasons/{id}/leaderboard`  | Player rankings for a specific season. Still unspecified — `GET /api/rankings` is all-time by design, and season-scoping it is its own piece of work |
 
-The four **Specified** rows are written up in full — request shapes, failure codes, the derived
-status, and what the client does with each — in
-[frontend/features/seasons.md](../../frontend/features/seasons.md), which the `/seasons` screen was
-built against. **None of them needs a migration**: every field is an existing column or a count over
+All four are written up in full — request shapes, failure codes, the derived status and what the
+client does with each — in
+[SEASONS-API-CONTRACT](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/SEASONS-API-CONTRACT.md),
+with the screen's half in [frontend/features/seasons.md](../../frontend/features/seasons.md).
+**None of them needed a migration**: every field is an existing column or a count over
 `matches.season_id`.
 
 > A season write API must open and close seasons in **one transaction** — the V10 index makes
