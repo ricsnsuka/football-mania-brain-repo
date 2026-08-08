@@ -293,6 +293,25 @@ card layout to fix.
 
 ---
 
+## What having seasons changed elsewhere
+
+Closing a season makes an all-time-only app misleading, so the scope of each screen became a
+decision rather than an accident. The rule is that **the default matches the question the screen
+answers**:
+
+| Screen | Default | Why |
+|---|---|---|
+| [Rankings](rankings.md#the-season-scope) | **Current season**, selector for any season or all time | Answers "where do I stand", and "now" is a season |
+| Dashboard — your card | **Current season**, toggle to all time | Same question, about you. It was titled "Your season" over career totals from the day it was written |
+| [Matches](matches.md) | **All time**, filter for one season | The group's record of what happened. People come to it to find a particular game, and hiding two thirds of the list makes that harder |
+| [Players](players.md) | **All time only** | The roster and its career figures. There is no season question here |
+| Settings — your linked player | **All time only** | It shows a rating and a streak, and both are all-time by definition |
+
+**The streaks are all-time everywhere, in every scope.** A run of wins is a fact about a player and
+a season boundary is an administrative act; ending one because a season closed would take away
+something nothing on the pitch did. Where a season-scoped view shows a streak, it says so beside
+the figure.
+
 ## Still open
 
 - **Deleting a planned season.** There is no endpoint and no control. A season defined by mistake
