@@ -293,6 +293,47 @@ card layout to fix.
 
 ---
 
+## The honours board
+
+Finalising a season used to produce a rating adjustment and nothing anybody would want to read. It
+now also writes six awards — **player of the season** (best mean per-match performance rating),
+**golden boot**, **playmaker**, **iron man**, **most improved** (biggest rating gain) and **crowd
+favourite** (most crowd MOTM wins, from the vote rather than an administrator's pick).
+
+They render on the **rankings page**, above the table, for whichever season the selector has
+chosen. That is where they belong: the awards are the season's story and the table is its detail,
+so reading them anywhere else would mean only one of the two changed when you picked a different
+season — and the selector already establishes which season is being talked about, so the section
+costs no extra control.
+
+**Computed once when the season is finalised, then stored** —
+[contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/SEASONS-API-CONTRACT.md#get-apiseasonsidawards).
+Deriving them on read would be a second aggregation that disagrees with the first the moment a
+completed match is amended, and a golden boot that quietly changes hands two months later is worse
+than no medal. The winning figure is stored with the winner, because "top scorer" without the
+number is a claim nobody can check.
+
+Three states, and the empty one is the interesting one:
+
+| State | What renders |
+|---|---|
+| Season still running | "Awards are decided when the season is finalised" — they do not exist yet, and an empty strip would read as a failed fetch |
+| Finished, no awards | "No awards this season" — a season nobody scored in genuinely has no golden boot |
+| Finished, awards | The board |
+
+**Joint winners share a line.** Two players on five goals both won it; two rows both labelled
+"Golden boot" would read as two awards. The client groups by award and renders one figure.
+
+**An unknown award still renders**, labelled with its raw key — the same rule `PlayerBadges`
+follows. A backend that adds a seventh ships before the frontend that names it, and a dropped row
+is worse than an untranslated one.
+
+**Counts and ratings are formatted differently and by the client.** Everything arrives on one
+`numeric(6,2)` column, so `5.00` is a goal count and `7.42` is a rating; four of the six should read
+as whole numbers, and only the client knows the locale to say them in. `MOST_IMPROVED` keeps its
+sign — a season everybody had a bad one still has a winner, and `-0.20` is the honest way to say
+what they won it with.
+
 ## What having seasons changed elsewhere
 
 Closing a season makes an all-time-only app misleading, so the scope of each screen became a
