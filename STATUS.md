@@ -342,6 +342,21 @@ because `.player-modal-edit-zone` had no horizontal padding at all.
 So the rule is not "regenerate more often", it is **do not let the suite stay red**. Red for a real
 reason and red for a stale reason look identical, and the second kind hides the first.
 
+⚠️ **Two baselines went stale on 2026-08-07, knowingly, and need a Windows run.** Season
+administration became a section of the settings group tab, so `settings-admin-light` and
+`settings-admin-dark` gain it. `e2e/fixtures.ts` stubs `/api/seasons` with one season of each state
+so the capture shows the section rather than its empty state.
+
+It was briefly worse. The same feature first shipped as `/seasons` with a `GROUP_ADMIN` navbar
+entry, which would have moved **six** baselines — the suite's session is an administrator, because
+`seedSession` seeds the pre-V18 name `'ADMIN'` and the store's `renameLegacyAdmin` upgrades it to
+`GROUP_ADMIN` on rehydrate. Moving the screen into settings for product reasons took `users` and
+`settings-platform` back out of scope.
+
+Not fixable here: regenerating off Windows writes a *separate* `-linux` set and proves nothing,
+which is the permanent half of this hazard. Run `npm run test:visual:update` on Windows and **look
+at the images** — see hazard 8 below, which the Linux runs made newly concrete.
+
 **9. ~~Two frontend unit tests fail on Windows and pass in CI.~~ Resolved 2026-08-07.**
 `formatDate.test.ts` expected `3 – 9 Aug 2026`; Node's ICU on the owner's machine produces
 `3–9 Aug 2026`, same EN DASH, no spaces around it. Both are correct — the spacing is CLDR data and
@@ -366,6 +381,19 @@ because it only screenshots initial loads; the first interaction-driven e2e test
 it presents as the app being broken rather than the harness. `serviceWorkers: 'block'` in
 `playwright.config.ts` fixes it — deliberately not applied yet, because it may shift the baselines
 in hazard 7 and those cannot be regenerated off Windows.
+
+⚠️ **Observed for the first time on 2026-08-07, and it is not confined to interaction.** Two visual
+tests were run on Linux while moving the seasons screen. `/api/me/memberships` was stubbed
+correctly — the navbar carried the group's name — and **every subsequent stub was ignored**: the
+System figures rendered as dashes, Competition rules came back empty, the linked-player block stayed
+a skeleton, and `/users` rendered the error boundary outright. Identical with and without the change
+under test, so it is the harness, not the app.
+
+That makes accepting a regenerated baseline riskier than hazard 7 already says. If this reproduces
+on Windows, `--update-snapshots` would commit a set of screenshots of empty states and report
+green — which is the same failure that let the rankings pagination row and the `player-modal`
+padding defect sit in the baselines unnoticed. **Look at the images**, and if they show empty
+sections, fix this hazard before regenerating rather than after.
 
 ---
 
@@ -449,7 +477,16 @@ reason this repo exists.
 7. ~~**Decide what `next` is for.**~~ ✅ Answered 2026-08-04: **revived.** Work goes to `next`;
    `main` moves only when a release is cut. Both branches re-synced to `1.3.1` — see the top of this
    file for the flow.
-8. Then Phase 3's last item — AI match reports. Billing is on hold.
+8. ~~**Write the season endpoints.**~~ ✅ Done 2026-08-07, in the same change set as the screen —
+   `SeasonController`, `SeasonService`, `SeasonDTOs`, no migration.
+   [Contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/SEASONS-API-CONTRACT.md).
+   What remains is a **deployment ordering job, not a coding one**: the backend is released and
+   confirmed first, and the frontend degrades to a named "not deployed yet" state in the window
+   between. Worth naming as a win: `SeasonCurrentConstraintIT` now pins the season rollover both
+   ways round against real PostgreSQL, and it had to — a partial unique index is not expressible in
+   the JPA entity, so an implementation that flushed both `is_current` updates together would pass
+   every unit test in the build and fail on the first group to own two seasons.
+9. Then Phase 3's last item — AI match reports. Billing is on hold.
 
 ---
 
