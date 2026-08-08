@@ -40,9 +40,18 @@ plus a threshold; the frontend needs a locale key only if it should be translate
 | `FIRST_GOAL` / `TEN_GOALS` / `FIFTY_GOALS` | 1 / 10 / 50 career goals |
 | `FIRST_ASSIST` | 1 career assist |
 | `WIN_STREAK_5` | `longestStreak` reaches 5 |
-| `FIRST_MVP` | Named MVP by an **admin** at least once (not the crowd MOTM result) |
+| `FIRST_MVP` | Voted **Man of the Match by the crowd** at least once — or named MVP by the organiser on a match that never ran a poll |
 
 Declaration order in the backend enum is the display order.
+
+**`FIRST_MVP` is the one badge that is not earned at completion.** (Written 2026-08-08, **not yet
+released** — until the backend change ships it is still the organiser's pick alone, earned at
+completion like every other badge.) It counts the crowd's MOTM result, and a poll closes on its own
+window — so it can arrive up to a day after the
+match, when `MvpResolutionScheduler` re-runs the sweep for it. Nothing in the UI needs to do
+anything about that beyond not being surprised by it. The organiser's `isMvp` still counts on
+pre-voting matches, which is the only reason old players hold it; see
+[motm-voting](motm-voting.md).
 
 ## Two things to expect
 
