@@ -128,6 +128,25 @@ changes everyone's rank and looks like a bug rather than a fix.
 
 ### Keep the crowd result separate from `isMvp`
 
+> **Superseded in part, 2026-08-08 — read this before acting on the section below.**
+> *(The reversing change is written and tested but **not yet released**; see
+> [RETIRE-ORGANISER-MVP-PICK-PLAN.md](RETIRE-ORGANISER-MVP-PICK-PLAN.md) §1.)*
+>
+> The *storage* decision stands and is still right: two columns, two authorities, and the analysis
+> below is why. What was reversed is its last consequence — **which column the counts read.**
+>
+> The owner settled it: Man of the Match is decided by the crowd, not by an algorithm or an admin
+> decision. `mostMvps` and `FIRST_MVP` now count `crowd_mvp_player_id`. `is_mvp` counts only on
+> matches that never ran a poll, so the board keeps the years that predate the vote; a tie counts
+> for nobody and does not fall back to the organiser's pick.
+>
+> See `LEADERBOARDS-API-CONTRACT.md`, `MOTM-API-CONTRACT.md` and `BADGES-API-CONTRACT.md` in the
+> backend repo for the rule as it now stands, and
+> [RETIRE-ORGANISER-MVP-PICK-PLAN.md](RETIRE-ORGANISER-MVP-PICK-PLAN.md) for the control this left
+> stranded on the match form.
+>
+> The original analysis follows unchanged, as the record of why the columns are separate.
+
 The roadmap raises this and the answer is: **do not merge**.
 
 `isMvp` lives on `PlayerStat` and is admin intent. A crowd vote is a different fact with

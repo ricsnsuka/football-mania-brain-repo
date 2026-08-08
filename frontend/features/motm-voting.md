@@ -3,14 +3,33 @@
 Players who appeared in a match vote for one of their own, for 24 hours after it completes. Lives
 as a panel inside the completed-match modal (`MotmVotePanel`), not on its own route.
 
-## Not the same thing as the MVP star
+## Not the same thing as the MVP star — and now the one that counts
 
-`player_stats.isMvp` is the **administrator's** pick and is untouched by any of this. The crowd's
+> **Written 2026-08-08, not yet released.** The counting change described here is backend-only and
+> is still awaiting a release. Until it ships, "Most MVPs" counts the organiser's pick as it always
+> did. Nothing in this file needs a frontend change either way.
+
+`player_stats.isMvp` is the **organiser's** pick and is untouched by any of this. The crowd's
 answer is `matches.crowd_mvp_player_id`, delivered through `GET /api/matches/{id}/mvp-vote`.
 
-Two facts, two authorities. Merging them would make *"the admin picked X, the players picked Y"*
-unsayable, and revising one would destroy the other. The leaderboards' "Most MVPs" card still
-counts `isMvp` only.
+Two facts, two authorities, two columns — still. Merging the *storage* would make *"the organiser
+picked X, the players picked Y"* unsayable, and revising one would destroy the other.
+
+**What changed is which one is counted.** Man of the Match is decided by the players who played it,
+so the leaderboards' "Most MVPs" card and the `FIRST_MVP` badge read `crowd_mvp_player_id`.
+`isMvp` counts only on matches that never ran a poll — everything completed before crowd voting
+shipped, which has no crowd answer and never will.
+
+Two consequences that are visible on screen:
+
+- **The MVP card does not move when a match completes.** It moves when the voting window closes, up
+  to a day later, on the hourly resolver. A freshly completed match adding nothing is correct —
+  nobody has been voted Man of the Match yet.
+- **A tie adds nothing, ever**, and does not fall back to the organiser's pick. "The players could
+  not agree" is the answer, and that match has no MVP.
+
+The organiser's toggle is still on the record form and now feeds no total. Retiring it is specified
+in [RETIRE-ORGANISER-MVP-PICK-PLAN.md](../../backend/plans/RETIRE-ORGANISER-MVP-PICK-PLAN.md).
 
 ## Three states that look alike and are not
 
