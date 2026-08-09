@@ -1,20 +1,98 @@
 # Project Status
 
-**Snapshot: 2026-08-07.** Update it when the answers change, not on a schedule — a status page
-nobody trusts is worse than none.
+**Snapshot: 2026-08-09, after the 1.8.0 release.** Update it when the answers change, not on a
+schedule — a status page nobody trusts is worse than none.
+
+⚠️ **Two claims below are weaker than the rest, and both are marked where they appear.** The
+backend's running version was **not** read back from the platform this release, and the `v1.8.0`
+tags **do not exist on the remotes**. Neither is a guess dressed as a fact here; both are recorded
+as unknown/outstanding, which is the only honest thing a status page can do with them.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `1b29ded` — content-identical to `main`; `next..main` lists the release **merge commit** and no changed file | `f700d07` — the same |
-| Release | **`1.6.0`** — `build.gradle` | **`1.6.0`** — `package.json` |
-| Running in production | **`1.6.0` at `69e4301`**, read back from the platform on 2026-08-07: Heroku **v61** `Deploy 69e43018`, and `/api/version` reporting `1.6.0` | **`3d577a7`, which calls itself `1.6.0` but is ten commits past the `v1.6.0` tag** — see below. Netlify deploy `6a762a22e8abd4000849509f`, `ready`, published 18:56:26Z, and the rule the release adds was **read back out of the deployed stylesheet** |
-| `main` head | `69e4301` — 1.6.0 | `3d577a7` — 1.6.0 plus the spacing work and the own-row highlight |
+| `next` head | `7560d6a` — identical to `main`; `git log next..main` prints nothing | `9770ad0` — the same, and the same check passes |
+| Release | **`1.8.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.8.0`** — `package.json` and both `package-lock.json` self-references |
+| Running in production | ⚠️ **`1.8.0` at `7560d6a` was pushed to `main`, and nothing has confirmed it booted.** Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back, because this release was cut from an environment whose egress proxy blocks the production hosts and which has no Heroku CLI. **Treat as unconfirmed until somebody asks the platform.** | **`1.8.0` at `9770ad0`**, confirmed against Netlify: deploy `6a781638dd38fd000850b3b9`, `ready`, context `production`, `commit_ref` `9770ad018ff79fe6…`, published `2026-08-09T05:55:59Z` |
+| `main` head | `7560d6a` — 1.8.0 | `9770ad0` — 1.8.0 |
 | Working tree | clean | clean |
-| Tests | 1104+ unit plus 28 new on `OPTIMAL`, SpotBugs clean on `spotbugsMain` | **732 unit, all passing** — green on Windows for the first time; 38/38 visual |
-| Latest migration | **`V36__player_positions_and_keeper.sql`** — on `main` and applied | — |
-| Deployed through | **`V36`**, applied on the 1.6.0 deploy | — |
-| Tags | `v1.0.0` → **`v1.6.0`**, contiguous, and the tag is what is deployed | `v1.1.0` → **`v1.4.2`**, then **`v1.6.0`** — `1.5.x` deliberately skipped, and **the tag is now behind production** |
+| Tests | **1328 unit**, SpotBugs clean, and the **Testcontainers tier green in CI** — the whole matrix passed on the release commit | **826 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines are **stale**, see below |
+| Latest migration | **`V39__api_tokens.sql`** — on `main` | — |
+| Deployed through | **`V39` was pushed**; that it applied is ⚠️ unconfirmed for the same reason the running version is. The full `V1`–`V39` chain *was* applied and validated against the entity mappings on a real PostgreSQL 16 before release — see below | — |
+| Tags | `v1.0.0` → **`v1.7.0`**. ⚠️ **`v1.8.0` does not exist on the remote** — see below | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`. ⚠️ **`v1.8.0` does not exist on the remote** — see below |
+
+## 1.8.0 — the two tags that were not pushed
+
+**`v1.8.0` was created in both repos and neither could be published.** `git push origin
+refs/tags/v1.8.0` returned `HTTP 403` in both, repeatedly, while a branch push to the same remote in
+the same session succeeded seconds earlier — the credentials the release was cut with allow
+`refs/heads/*` and not `refs/tags/*`.
+
+**Somebody with tag-push rights needs to create these two tags.** The commits are settled and the
+evidence is below, so this is a mechanical step, not a decision. The annotations matter: a release
+tag is a claim about production, and CONTRIBUTING step 6 asks for the evidence to travel with it.
+
+### Frontend — tag `9770ad018ff79fe6fdee9085f324a397fcf45053`
+
+Confirmed against the platform:
+
+```
+Netlify deploy 6a781638dd38fd000850b3b9
+state         ready
+context       production, branch main
+commit_ref    9770ad018ff79fe6fdee9085f324a397fcf45053
+published_at  2026-08-09T05:55:59Z
+```
+
+The `commit_ref` on the published deploy *is* that commit, so the tag names what production serves
+rather than the branch tip.
+
+### Backend — tag `7560d6a6aee5d84963da2c909291ef25bdd88a7d`, but check first
+
+This one is **weaker than the rule asks for and should not be placed on trust**. What is known is
+that the commit was pushed to `main` and that Heroku builds every push. What was never done is the
+part that makes a tag a fact: `heroku releases -a footmania` for the commit that landed, and
+`/api/version` for what the process says it is.
+
+Ask the platform, then tag. If the deploy failed, or booted a different jar, the tag belongs
+somewhere else — placing `v1.1.0` from a status document once put it three deploys early, and this
+is exposed to exactly that.
+
+## 1.8.0 — what the release contains, and the two things it leaves behind
+
+**Scoped API tokens**, carrying **V39** (`api_tokens`). A long-lived, narrowly-scoped, revocable
+credential for something that is not a browser — the prerequisite for every automation route,
+including the watch shortcut that motivated it. Backend `FootMania-Back#197`, frontend
+`FootMania-Simple-Front#64`, release PRs `#198` and `#65`.
+
+**V39 is a create-table with no backfill**, which makes it the mildest kind of migration: nothing
+existed to migrate and the previous jar runs against the new schema unchanged. The one-way-door
+caution still applies to the chain as a whole because of V37 and V38.
+
+### The migration chain has now been run against real PostgreSQL
+
+The caveat V37, V38 and V39 were all carrying is **cleared**. There is no Docker in the environment
+the work was done in, so the Testcontainers tier could not run locally — but the PostgreSQL 16
+server binaries turned out to be installed, so a throwaway cluster on a spare port was enough to run
+it for real: all 39 migrations apply to an empty database, `ddl-auto: validate` passes, and the
+application boots and serves.
+
+**That is also what caught the release's one real bug.** V39 originally declared `token_hash` as
+`CHAR(64)`, straight out of the plan. PostgreSQL's `char(n)` is `bpchar` and Hibernate maps `String`
+to `varchar`, so `ddl-auto: validate` refused to build the `EntityManagerFactory` and **all 86
+integration tests failed without ever reaching what they test**. It was the only `CHAR` in the whole
+schema. `VARCHAR(64)` is also the right column irrespective of the mapping — `char(n)` blank-pads,
+which for a column that exists to be looked up by equality is a latent correctness hazard rather
+than a style question.
+
+### Stale visual baselines, shipped knowingly
+
+`settings-light` and `settings-dark` are **out of date on `main`**. The new API token section is on
+the settings account tab, which is exactly what those two capture. They were not regenerated because
+the baselines are `win32` and the work was done on Linux, where `--update-snapshots` adds a second
+platform's snapshots rather than updating the existing ones. CI is green because the visual suite
+does not run there. **The next person to run it locally on Windows will see two diffs, and both are
+expected** — regenerate rather than investigate.
 
 ⚠️ **The frontend's `v1.6.0` tag no longer matches what is deployed.** A spacing pass shipped on
 2026-08-07 at 16:40 **without a version bump, by owner decision** — `package.json` still reads
