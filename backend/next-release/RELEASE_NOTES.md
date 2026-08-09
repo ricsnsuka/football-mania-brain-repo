@@ -22,6 +22,7 @@
 | `1.3.1` | 2026-08-04 | CHANGELOG `[1.3.1]` — fixes for accounts that are not players, plus `GET /api/matches?playerId=` |
 | `1.4.0` | 2026-08-05 | CHANGELOG `[1.4.0]` — the last-administrator guard, [lineup swap/replace](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-LINEUP-API-CONTRACT.md) and the reversal fix under them; frontend: the match modal rebuilt and match/scoresheet/lineup editing. **No migration** |
 | `1.4.1` | 2026-08-05 | CHANGELOG `[1.4.1]` — [deleting a match unwinds it](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-DELETION-API-CONTRACT.md), including a completed one; `DELETE` answers `200` with a report. Frontend: the delete control, and the cost stated before it. **No migration** |
+| `1.9.2` | 2026-08-09 | CHANGELOG `[1.9.2]` — [Rating Model v2.2](../features/CALCULATION_SERVICE.md), the escalating goal/assist ladder, plus the goal-type breakdown on match reads (which had shipped unversioned the same day and folds in here). Backend-only; the frontend stays `1.9.1`. **No migration** |
 
 The CHANGELOG lives at
 [FootMania-Back/CHANGELOG.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/CHANGELOG.md).
