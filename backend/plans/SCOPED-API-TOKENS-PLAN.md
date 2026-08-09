@@ -1,15 +1,17 @@
 # Scoped API Tokens — Technical Specification
 
-**Date:** 2026-08-08
-**Status:** 📋 **SPECIFIED, not built.** Nothing in this document exists yet.
+**Date:** 2026-08-08 (specified), 2026-08-09 (built)
+**Status:** ✅ **BUILT, awaiting release.** Backend `FootMania-Back#197`, frontend
+`FootMania-Simple-Front#64`. Not yet deployed — see "What was actually built" below for the two
+places the implementation departed from this document.
 **Priority:** MEDIUM — nothing is blocked on it today, and everything automation-shaped is blocked
 behind it
 **Estimated Effort:** M (≈1–1½ days backend including the filter and its tests, ≈½ day frontend)
-**Migration:** **V39** `api_tokens` — the next free number after V38
+**Migration:** **V39** `api_tokens` — applied in `FootMania-Back#197`
 **Depends on:** nothing
 **Depended on by:** any wrist, watch, shortcut or third-party automation. See §2.
-**Contract:** `docs/api/API-TOKENS-API-CONTRACT.md`, to be written in the same commit as the code
-per [CONTRIBUTING rule 2](../../CONTRIBUTING.md)
+**Contract:** `docs/api/API-TOKENS-API-CONTRACT.md` — written, in the same commit as the code, per
+[CONTRIBUTING rule 2](../../CONTRIBUTING.md)
 
 ---
 
@@ -389,6 +391,37 @@ UI.
 The four unit rows in bold territory are the ones worth writing first: each describes a failure that
 **authenticates successfully and does the wrong thing**, which is the only class of bug in this
 feature that would not announce itself.
+
+---
+
+## 12a. What was actually built
+
+Everything above shipped as specified, with two departures worth recording — both discovered while
+writing the code rather than while writing this document.
+
+**The scope→endpoint mapping became an allow-list, and the deny-list stayed anyway.** §5 described
+scopes as granting named endpoints and the deny-list as a separate check. Implemented literally,
+that leaves a question this document never answered: what happens to an endpoint that no scope
+names and no deny rule covers? The answer had to be *refused* — otherwise every endpoint written
+after the feature would be reachable by every existing token on the day it merged. So
+`ApiTokenScope.requiredFor` returns empty for anything unlisted and the filter treats empty as a
+refusal.
+
+That makes the deny-list redundant **today**: none of those paths appear in the allow-list, so all
+four are already refused. It is kept, and still checked first, because the allow-list is the thing
+that grows. A scope added in two years to cover "read the group's members" must not be one careless
+pattern away from also opening password changes.
+
+**The live-membership check lives in the service, not the filter.** §7 said the membership is
+verified live and did not say where. It went into `ApiTokenService.ownerIsStillAMember` so the
+filter keeps one collaborator and no repository of its own — the same shape `JwtAuthenticationFilter`
+has with `TenantResolver`. The practical reason was narrower: the filter is a `Filter` bean, so
+every `@WebMvcTest` slice in the codebase scans it and needs its dependencies mocked, and each
+dependency is a line added to thirteen existing test files.
+
+**One item from §12 has not run.** The integration tier needs Docker, which the build environment
+did not have. `V39` has never been applied against real PostgreSQL — as is also true of `V37` and
+`V38`. Three unverified migrations is the one outstanding risk on this feature.
 
 ---
 
