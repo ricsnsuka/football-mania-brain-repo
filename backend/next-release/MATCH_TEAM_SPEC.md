@@ -416,7 +416,15 @@ public record PlayerStatUpdateDTO(
 When `completeMatch` is called, `CalculationService` must be invoked for each player to
 update `Player.skillRating` and insert a `SkillRatingHistory` record.
 
-The formula (from project rules):
+> ⚠️ **The formula below is the original v1 model and has not been true since Rating Model v2.**
+> It has no goal typing, no goal timing, no scarcity, and no match-wide normalization, all of
+> which the service has done for two model versions. It is kept because this section documents
+> *when* `CalculationService` is invoked, which is still accurate.
+> **[CALCULATION_SERVICE.md](../features/CALCULATION_SERVICE.md) is canonical for the formula** —
+> as of v2.2 goals and assists climb an escalating per-match ladder rather than carrying flat
+> weights.
+
+The formula (from project rules — **superseded**, see above):
 ```
 matchRating = BASE_MATCH_RATING
             + (goals × GOAL_WEIGHT)
@@ -427,7 +435,7 @@ matchRating = BASE_MATCH_RATING
             + goalDiffBonus
 ```
 
-Own goals are penalised — they reduce the player's `matchRating`.
+Own goals are penalised — they reduce the player's `matchRating`. (Still true in v2.2.)
 
 ---
 
