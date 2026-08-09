@@ -1,25 +1,27 @@
 # Project Status
 
-**Snapshot: 2026-08-09, after 1.8.0, 1.9.0, 1.9.1 — and one deliberate unversioned ship on top.** Update it when the answers change, not on a
+**Snapshot: 2026-08-09, after 1.8.0, 1.9.0, 1.9.1, the deliberate unversioned ship, and 1.9.2 (backend-only).** Update it when the answers change, not on a
 schedule — a status page nobody trusts is worse than none.
 
 ⚠️ **Two claims below are weaker than the rest, and both are marked where they appear.** The
-backend's running version was **not** read back from the platform in either release, and **none of
-the three tags** — `v1.8.0` in both repos, `v1.9.0` in the backend — exists on a remote. Neither is a guess dressed as a fact here; both are recorded
-as unknown/outstanding, which is the only honest thing a status page can do with them.
+backend's running version was **not** read back from the platform in any of these releases
+(1.9.2 included — the release environment's egress proxy still blocks the production hosts), and
+**six tags** — `v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend — exist on no
+remote. Neither is a guess dressed as a fact here; both are recorded as unknown/outstanding,
+which is the only honest thing a status page can do with them.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `7f1dc96` — identical to `main`; `git log next..main` prints nothing | `17213a9` — the same, and the same check passes |
-| Release | **`1.9.1`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.9.1`** — `package.json` and both `package-lock.json` self-references. **Jumped from `1.8.0`**; `1.8.x` and `1.9.0` are deliberately skipped so both repos carry one number again |
-| Running in production | ⚠️ **`7f1dc96` was pushed to `main`, and nothing has confirmed it booted** — though the owner's production test of the shortcut flow passing end-to-end is itself evidence the chain deployed. Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back, because this release was cut from an environment whose egress proxy blocks the production hosts and which has no Heroku CLI. **Treat as unconfirmed until somebody asks the platform.** | **`17213a9`**, confirmed against Netlify: deploy `6a78d8910023d00008ea4252`, `ready`, context `production`, `commit_ref` matching, published `2026-08-09T19:45:10Z` — reporting `1.9.1` while running past it, see below |
-| `main` head | `7f1dc96` — **1.9.1 plus the live-sync fixes, unversioned by owner decision** | `17213a9` — the same |
+| `next` head | `7c42f91` — identical to `main`; `git log next..main` prints nothing | `17213a9` — the same, and the same check passes |
+| Release | **`1.9.2`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.9.1`** — `package.json` and both `package-lock.json` self-references. **The numbers diverge again, deliberately**: `1.9.2` is backend-only (like `1.9.0`), so the frontend skips it rather than shipping an empty bump |
+| Running in production | ⚠️ **`7c42f91` was pushed to `main` (2026-08-09 evening), and nothing has confirmed it booted.** Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back: this release was cut from the same kind of environment as `1.9.1`, and the egress proxy answered `403` on the CONNECT to the production host when it was actually tried this time. **Treat as unconfirmed until somebody asks the platform.** | **`17213a9`**, confirmed against Netlify: deploy `6a78d8910023d00008ea4252`, `ready`, context `production`, `commit_ref` matching, published `2026-08-09T19:45:10Z` — reporting `1.9.1` while running past it, see below |
+| `main` head | `7c42f91` — **1.9.2** (Rating Model v2.2 + the goal-type breakdown, now versioned) | `17213a9` — 1.9.1 plus the frontend live-sync fixes, still unversioned by owner decision |
 | Working tree | clean | clean |
-| Tests | **1342 unit**, SpotBugs clean, and the **Testcontainers tier green in CI** — the whole matrix passed on the release commit | **826 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines are **stale**, see below |
-| Latest migration | **`V39__api_tokens.sql`** — on `main` | — |
+| Tests | **1356 unit**, SpotBugs clean, and the **Testcontainers tier green in CI** — the whole matrix passed on both `1.9.2` PR heads (`#205`, `#206`) | **826 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines are **stale**, see below |
+| Latest migration | **`V39__api_tokens.sql`** — on `main`; `1.9.2` carries none | — |
 | Deployed through | **`V39` was pushed**; that it applied is ⚠️ unconfirmed for the same reason the running version is. The full `V1`–`V39` chain *was* applied and validated against the entity mappings on a real PostgreSQL 16 before release — see below | — |
-| Tags | `v1.0.0` → **`v1.7.0`**. ⚠️ **None of `v1.8.0`, `v1.9.0`, `v1.9.1` exists on the remote** — see below | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`. ⚠️ **Neither `v1.8.0` nor `v1.9.1` exists on the remote** — see below. There will never be a `v1.9.0` here, and that is correct |
+| Tags | `v1.0.0` → **`v1.7.0`**. ⚠️ **None of `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` exists on the remote** — see below | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`. ⚠️ **Neither `v1.8.0` nor `v1.9.1` exists on the remote** — see below. There will never be a `v1.9.0` or `v1.9.2` here, and that is correct |
 
 ## The unversioned ship on top of 1.9.1 — deliberate, owner's call
 
@@ -38,10 +40,16 @@ overwrite, the form's zero-seeded absolute live-saves.
 **The owner tested the flow in production and confirmed it good.** These commits fold into whatever
 release is cut next; `v1.9.1` stays pointing where it points.
 
-## 1.8.0, 1.9.0 and 1.9.1 — the five tags that were not pushed
+**The backend half has since folded into `1.9.2`** — the goal-type breakdown (`#204`) is inside
+that release's CHANGELOG section and version number. The frontend half (`#68`) remains unversioned:
+`1.9.2` is backend-only, so the frontend still reports `1.9.1` while running past it.
 
-**Five tags are outstanding: `v1.8.0` and `v1.9.1` in both repos, and `v1.9.0` in the backend.**
-None could be published, and the cause is settled rather than intermittent — see below.
+## 1.8.0 through 1.9.2 — the six tags that were not pushed
+
+**Six tags are outstanding: `v1.8.0` and `v1.9.1` in both repos, and `v1.9.0` and `v1.9.2` in the
+backend.** None could be published, and the cause is settled rather than intermittent — see below.
+`v1.9.2` re-confirmed it on 2026-08-09: the annotated tag exists locally in the release
+environment, the push was refused, and `git ls-remote origin 'refs/tags/v1.9.*'` returns nothing.
 
 **`v1.8.0` was created in both repos and neither could be published**, `v1.9.0` hit the same wall an
 hour later, and `v1.9.1` hit it again.
@@ -75,6 +83,14 @@ published_at  2026-08-09T05:55:59Z
 The `commit_ref` on the published deploy *is* that commit, so the tag names what production serves
 rather than the branch tip.
 
+### Backend, 1.9.2 — tag `7c42f9109325510376efcded727aa58b8763f465`
+
+The merge of `next` into `main` on 2026-08-09 evening (fast-forward, `7f1dc96..7c42f91`). Same
+weakness as the backend tags below: pushed to `main`, never read back — the `/api/version` read
+was attempted this time and the egress proxy refused the CONNECT with `403`. CI was green on both
+PR heads including the Testcontainers tier, but a green pipeline is a claim about the code, not
+about the dyno. Ask the platform, then tag.
+
 ### 1.9.1 — backend `52411a6700021d24119abe8f3fd3de0e09b38df1`, frontend `e95da154fe59e479d782dd45d39f9d14aabc849a`
 
 The frontend one is **confirmed**: Netlify deploy `6a7861c40cf3f30008e54006`, `ready`, production,
@@ -97,6 +113,23 @@ part that makes a tag a fact: `heroku releases -a footmania` for the commit that
 Ask the platform, then tag. If the deploy failed, or booted a different jar, the tag belongs
 somewhere else — placing `v1.1.0` from a status document once put it three deploys early, and this
 is exposed to exactly that.
+
+## 1.9.2 — the escalating contribution ladder
+
+**Backend only, no migration, and the frontend does not move.** Rating Model v2.2 replaces the
+flat per-goal weights with a ladder that resets each match, per player: a first goal is worth
+`0.70`, a second `1.40`, a third `1.50` — a brace is three singles, a hat-trick five. A penalty is
+a third of a goal, an assisted goal `0.20` below a solo one. Timing, scarcity and decisiveness are
+untouched. [CALCULATION_SERVICE.md](backend/features/CALCULATION_SERVICE.md) is canonical.
+
+Two things to know operationally. **Existing ratings are not rewritten** — matches completed from
+now on rate under v2.2; replaying history is the admin recalculation endpoints, an explicit action
+somebody takes or does not. And **non-contributors drift up ~0.2–0.3** relative to v2.1 — a
+documented consequence of the ratio normalization, with `STAT_POINTS_GAIN` named as the dial, not
+a bug to hunt.
+
+Model `FootMania-Back#205`, release `#206`; docs `football-mania-brain-repo#39`. The release also
+carries the goal-type breakdown on match reads (`#204`), which had shipped unversioned — see above.
 
 ## 1.9.0 — the other half of the watch shortcut
 
