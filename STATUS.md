@@ -1,6 +1,6 @@
 # Project Status
 
-**Snapshot: 2026-08-09, after the 1.8.0 and 1.9.0 releases.** Update it when the answers change, not on a
+**Snapshot: 2026-08-09, after the 1.8.0, 1.9.0 and 1.9.1 releases.** Update it when the answers change, not on a
 schedule — a status page nobody trusts is worse than none.
 
 ⚠️ **Two claims below are weaker than the rest, and both are marked where they appear.** The
@@ -11,23 +11,30 @@ as unknown/outstanding, which is the only honest thing a status page can do with
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `648ab94` — identical to `main`; `git log next..main` prints nothing | `9770ad0` — the same, and the same check passes |
-| Release | **`1.9.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.8.0`** — `package.json` and both `package-lock.json` self-references |
-| Running in production | ⚠️ **`1.9.0` at `648ab94` was pushed to `main`, and nothing has confirmed it booted.** Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back, because this release was cut from an environment whose egress proxy blocks the production hosts and which has no Heroku CLI. **Treat as unconfirmed until somebody asks the platform.** | **`1.8.0` at `9770ad0`**, confirmed against Netlify: deploy `6a781638dd38fd000850b3b9`, `ready`, context `production`, `commit_ref` `9770ad018ff79fe6…`, published `2026-08-09T05:55:59Z` |
-| `main` head | `648ab94` — 1.9.0 | `9770ad0` — 1.8.0 |
+| `next` head | `52411a6` — identical to `main`; `git log next..main` prints nothing | `e95da15` — the same, and the same check passes |
+| Release | **`1.9.1`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.9.1`** — `package.json` and both `package-lock.json` self-references. **Jumped from `1.8.0`**; `1.8.x` and `1.9.0` are deliberately skipped so both repos carry one number again |
+| Running in production | ⚠️ **`1.9.1` at `52411a6` was pushed to `main`, and nothing has confirmed it booted.** Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back, because this release was cut from an environment whose egress proxy blocks the production hosts and which has no Heroku CLI. **Treat as unconfirmed until somebody asks the platform.** | **`1.9.1` at `e95da15`**, confirmed against Netlify: deploy `6a7861c40cf3f30008e54006`, `ready`, context `production`, `commit_ref` `e95da154fe59e479…`, published `2026-08-09T11:18:09Z` |
+| `main` head | `52411a6` — 1.9.1 | `e95da15` — 1.9.1 |
 | Working tree | clean | clean |
 | Tests | **1342 unit**, SpotBugs clean, and the **Testcontainers tier green in CI** — the whole matrix passed on the release commit | **826 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines are **stale**, see below |
 | Latest migration | **`V39__api_tokens.sql`** — on `main` | — |
 | Deployed through | **`V39` was pushed**; that it applied is ⚠️ unconfirmed for the same reason the running version is. The full `V1`–`V39` chain *was* applied and validated against the entity mappings on a real PostgreSQL 16 before release — see below | — |
-| Tags | `v1.0.0` → **`v1.7.0`**. ⚠️ **Neither `v1.8.0` nor `v1.9.0` exists on the remote** — see below | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`. ⚠️ **`v1.8.0` does not exist on the remote** — see below |
+| Tags | `v1.0.0` → **`v1.7.0`**. ⚠️ **None of `v1.8.0`, `v1.9.0`, `v1.9.1` exists on the remote** — see below | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`. ⚠️ **Neither `v1.8.0` nor `v1.9.1` exists on the remote** — see below. There will never be a `v1.9.0` here, and that is correct |
 
-## 1.8.0 and 1.9.0 — the three tags that were not pushed
+## 1.8.0, 1.9.0 and 1.9.1 — the five tags that were not pushed
 
-**Three tags are outstanding: `v1.8.0` in both repos and `v1.9.0` in the backend.** None could be
-published.
+**Five tags are outstanding: `v1.8.0` and `v1.9.1` in both repos, and `v1.9.0` in the backend.**
+None could be published, and the cause is settled rather than intermittent — see below.
 
-**`v1.8.0` was created in both repos and neither could be published**, and `v1.9.0` hit the same
-wall an hour later. `git push origin
+**`v1.8.0` was created in both repos and neither could be published**, `v1.9.0` hit the same wall an
+hour later, and `v1.9.1` hit it again.
+
+**Every route was tried and every one is closed.** `git push origin refs/tags/…` returns `403` on
+the `POST git-receive-pack`, while the preceding `GET info/refs?service=git-receive-pack` returns
+`200` — write access is granted, the tag ref specifically is refused. The REST fallback,
+`POST /repos/{owner}/{repo}/git/tags`, answers
+`"Write access to this GitHub API path is not permitted through this proxy"`. No MCP tool creates
+tags or releases. This is a permission ceiling, not something to retry. `git push origin
 refs/tags/v1.8.0` returned `HTTP 403` in both, repeatedly, while a branch push to the same remote in
 the same session succeeded seconds earlier — the credentials the release was cut with allow
 `refs/heads/*` and not `refs/tags/*`.
@@ -50,6 +57,12 @@ published_at  2026-08-09T05:55:59Z
 
 The `commit_ref` on the published deploy *is* that commit, so the tag names what production serves
 rather than the branch tip.
+
+### 1.9.1 — backend `52411a6700021d24119abe8f3fd3de0e09b38df1`, frontend `e95da154fe59e479d782dd45d39f9d14aabc849a`
+
+The frontend one is **confirmed**: Netlify deploy `6a7861c40cf3f30008e54006`, `ready`, production,
+`commit_ref` matching, published `2026-08-09T11:18:09Z`. The backend one carries the same weakness
+as the two below — pushed to `main`, never read back.
 
 ### Backend, 1.9.0 — tag `648ab94077fc3f543352f8c1eceaf4687556a3c9`
 
