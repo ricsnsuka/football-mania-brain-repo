@@ -1,9 +1,9 @@
 # Scoped API Tokens — Technical Specification
 
 **Date:** 2026-08-08 (specified), 2026-08-09 (built)
-**Status:** ✅ **BUILT, awaiting release.** Backend `FootMania-Back#197`, frontend
-`FootMania-Simple-Front#64`. Not yet deployed — see "What was actually built" below for the two
-places the implementation departed from this document.
+**Status:** ✅ **SHIPPED in 1.8.0**, 2026-08-09. Backend `FootMania-Back#197`, frontend
+`FootMania-Simple-Front#64`. See §12a for the two places the implementation departed from this
+document, and [STATUS.md](../../STATUS.md) for what the release did and did not confirm.
 **Priority:** MEDIUM — nothing is blocked on it today, and everything automation-shaped is blocked
 behind it
 **Estimated Effort:** M (≈1–1½ days backend including the filter and its tests, ≈½ day frontend)
