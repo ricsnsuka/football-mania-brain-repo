@@ -37,7 +37,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [MATCH_PLANS_FEATURE](backend/features/MATCH_PLANS_FEATURE.md) | Plans, the availability poll, the `timeframe` split and the `from`/`to` kickoff window. Rewritten against the code 2026-08-05 |
 | [PLAYER_FEATURE](backend/features/PLAYER_FEATURE.md) | Roster, aggregates, soft delete |
 | [USERS](backend/features/USERS.md) | Accounts, authentication, roles |
-| [SEASON_FEATURE](backend/features/SEASON_FEATURE.md) | Seasons and the single-current invariant |
+| [SEASON_FEATURE](backend/features/SEASON_FEATURE.md) | Seasons, the single-current invariant, and the write API added 2026-08-07 |
 | [TEAM_GENERATION_FEATURE](backend/features/TEAM_GENERATION_FEATURE.md) · [DESIGN](backend/features/TEAM_GENERATION_DESIGN.md) | The six strategies, and how they were evaluated |
 | [DRAFT_SESSION_FEATURE](backend/features/DRAFT_SESSION_FEATURE.md) | Interactive captain pick |
 | [PRIVACY_AND_DATA_PROTECTION](backend/features/PRIVACY_AND_DATA_PROTECTION.md) | What personal data exists, and both GDPR paths |
@@ -68,7 +68,8 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [MATCH-FEE-LEDGER-PLAN](backend/plans/MATCH-FEE-LEDGER-PLAN.md) | ✅ shipped — §14 covers a future payment integration |
 | [PLAYER-LINK-ME-PLAN](backend/plans/PLAYER-LINK-ME-PLAN.md) | ✅ shipped |
 | [OPTIMAL-PARTITION-PLAN](backend/plans/OPTIMAL-PARTITION-PLAN.md) 📋 | SPECIFIED, not built — exact-search team generation with a pluggable objective. **§7 records three pre-existing defects found while specifying**, including `params[…]` never reaching any strategy (verified), so `formWindow` and the `CAPTAIN_PICK` captain overrides have never worked |
-| [PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM](backend/plans/PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM.md) | 🟡 all done except AI match reports |
+| [PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM](backend/plans/PHASE3_HANDOFF_LEADERBOARDS_AND_MOTM.md) | 🟡 all done except AI match reports. ⚠️ **"Keep the crowd result separate from `isMvp`" is superseded in part (2026-08-08)** — the two columns stay separate, but the MVP counts now read the crowd's |
+| [RETIRE-ORGANISER-MVP-PICK-PLAN](backend/plans/RETIRE-ORGANISER-MVP-PICK-PLAN.md) 📋 | SPECIFIED, not built — the MVP counts become the crowd's (written 2026-08-08, **not yet released**), leaving the organiser's toggle on the match form feeding no total. **§2 is the trap**: `is_mvp` is the only MVP record for every pre-voting match and the board now depends on it, so any plan starting with the migration has the order backwards. Rung 1 needs no migration; §5 is an open owner decision |
 | [PHASE0_FRONTEND_HANDOFF](backend/plans/PHASE0_FRONTEND_HANDOFF.md) | ✅ done |
 | [REVIEW_HANDOFF_2026-07-27](backend/plans/REVIEW_HANDOFF_2026-07-27.md) | ✅ backlog cleared |
 | [ORCHESTRATOR_SESSION](backend/plans/ORCHESTRATOR_SESSION.md) ⚠️ | Session log — **no entries since 2026-07-28** |
@@ -95,6 +96,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [language-switcher](frontend/features/language-switcher.md) · [theme](frontend/features/theme.md) | Locale and light/dark |
 | [groups](frontend/features/groups.md) | Joining, founding, switching — and the two people who hand out access |
 | [payments](frontend/features/payments.md) | Your balance, the interleaved ledger, the roster and delegation groups |
+| [seasons](frontend/features/seasons.md) | Define, start and finalise, on the settings group tab — and why starting is not finalising |
 | *guests · payment-delegation* ⚠️ | **Missing.** Both shipped in the UI in `722335c` |
 
 ---

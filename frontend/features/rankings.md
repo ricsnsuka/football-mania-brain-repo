@@ -17,6 +17,37 @@ leaderboards. Route `/rankings`, any authenticated user.
 They are separate calls with separate cache entries because they change at different rates. See
 `docs/api/LEADERBOARDS-API-CONTRACT.md` in the backend repo.
 
+## The season scope
+
+**The default is the current season, not all-time**, and this is the only screen where that is the
+right default: the table answers *"where do I stand"*, and "now" is a season. The selector offers
+every season plus All time, and it is rendered only once there is more than one season to choose
+between — a group in its first season has one answer, and a control with two identical outcomes is
+clutter.
+
+`GET /api/rankings?seasonId=` does the bounding; the response echoes `seasonId` back and that is
+what the page branches on, because the two tables are the same shape.
+
+**The streak columns stay all-time in every scope**, and the modal says so. A run of wins is a fact
+about a player and closing a season is an administrative act — ending a streak because of one would
+take away something nothing on the pitch did. This is the single place the season table disagrees
+with its own heading, deliberately, and it is labelled rather than silent.
+
+The query waits for the season list before firing. Without that the page fetches the all-time table
+and then immediately replaces it with the current season's: two requests, and a visible switch
+between two tables that look identical.
+
+### The modal shows what the table showed
+
+Clicking a row opens the player modal on **the row's own figures**, passed through as a
+`PlayerStatsScope` rather than re-fetched. A modal that always showed career totals contradicted
+the table the reader had just clicked — the same name with different goals beside it, one row
+apart. The players page passes no scope and gets all-time, which is all that page has ever had.
+
+Only four fields are scope-dependent: rating, appearances, goals, assists. Positions, keeper
+willingness and the link state are properties of the person, and the streaks are all-time, so none
+of them are in the scope.
+
 ## The order comes from the server and is never re-sorted
 
 **There are no sortable columns, and that is the feature.** The backend returns qualified players

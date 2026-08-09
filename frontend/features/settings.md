@@ -15,7 +15,9 @@
 | | Appearance | All | `AppearanceSettings` |
 | | Notifications | All | `NotificationSettings` |
 | | Your data | All | `PrivacySettings` |
-| **{group name}** | Your player | All | `LinkedPlayerSettings` |
+| **{group name}** | Group name | `GROUP_ADMIN` | `GroupSettings` |
+| | Your player | All | `LinkedPlayerSettings` |
+| | Seasons | `GROUP_ADMIN` | `SeasonSettings` — from `features/seasons/` |
 | | System | `GROUP_ADMIN` | `SystemSettings` |
 | **Platform** | Creation codes | operator only — the tab does not render otherwise | `PlatformSettings` |
 
@@ -24,6 +26,11 @@ The tabs are the scopes tenancy created. Account settings follow the person acro
 group). The group tab is **titled with the active group's name**, like the Navbar brand and the
 members page, so what "these settings" means changes legibly when you switch groups. Platform is
 gated on the operator grant alone, which group `GROUP_ADMIN` deliberately does not imply.
+
+**Seasons joined the group tab on 2026-08-07**, and the reasoning is the tab's own: a season belongs
+to the active group and changes when you switch, which is what this tab is for. It shipped first as
+a `/seasons` route with a navbar entry and was moved — [seasons](seasons.md#why-settings-and-not-a-page)
+records why. It sits immediately above System, so the calendar and the rules read as one subject.
 
 **The page was stacked before it was tabbed, and the stacking's reason survived the change.**
 Stacking existed so the destructive GDPR section could not hide behind a click nobody knows to
@@ -124,7 +131,8 @@ and had no route to an account behind it.
 |-------|------|
 | Route | `src/app/(app)/settings/page.tsx` |
 | Page | `src/features/settings/SettingsPage.tsx` |
-| Sections | `ProfileSettings.tsx`, `LinkedPlayerSettings.tsx`, `AppearanceSettings.tsx`, `NotificationSettings.tsx`, `SystemSettings.tsx`, `PrivacySettings.tsx` |
+| Sections | `ProfileSettings.tsx`, `GroupSettings.tsx`, `LinkedPlayerSettings.tsx`, `AppearanceSettings.tsx`, `NotificationSettings.tsx`, `SystemSettings.tsx`, `PrivacySettings.tsx` |
+| Composed from elsewhere | `features/seasons/SeasonSettings.tsx` — see [seasons](seasons.md). A feature with its own service, hooks and three modals lives with the feature; this page decides who sees it |
 | Admin data | `src/hooks/admin/useAdmin.ts`, `src/services/adminService.ts`, `src/types/admin.ts` |
 | Account menu | `src/components/layout/AccountMenu.tsx` |
 
