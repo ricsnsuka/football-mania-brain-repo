@@ -14,6 +14,7 @@
 | **My account** (default) | Profile | All | `ProfileSettings` |
 | | Appearance | All | `AppearanceSettings` |
 | | Notifications | All | `NotificationSettings` |
+| | API tokens | All | `ApiTokenSettings` — from `features/apiTokens/` |
 | | Your data | All | `PrivacySettings` |
 | **{group name}** | Group name | `GROUP_ADMIN` | `GroupSettings` |
 | | Your player | All | `LinkedPlayerSettings` |
@@ -26,6 +27,14 @@ The tabs are the scopes tenancy created. Account settings follow the person acro
 group). The group tab is **titled with the active group's name**, like the Navbar brand and the
 members page, so what "these settings" means changes legibly when you switch groups. Platform is
 gated on the operator grant alone, which group `GROUP_ADMIN` deliberately does not imply.
+
+**API tokens joined the account tab on 2026-08-09**, and unlike seasons they went to the tab that
+does *not* match their scope. Every token belongs to exactly one group and cannot leave it, which
+argues for the group tab. They are here anyway, because the moment this section matters is the
+moment a phone goes missing — and somebody in that state needs every credential they hold in one
+list, not three lists behind three group switches. Revoking is an account-security act. Each row
+names its own group, which is what keeps the exception legible. See
+[api-tokens.md](api-tokens.md).
 
 **Seasons joined the group tab on 2026-08-07**, and the reasoning is the tab's own: a season belongs
 to the active group and changes when you switch, which is what this tab is for. It shipped first as

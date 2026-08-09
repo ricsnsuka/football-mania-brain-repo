@@ -63,6 +63,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [TENANT-PRIVACY-PLAN](backend/plans/TENANT-PRIVACY-PLAN.md) | ✅ shipped — 5a-3: leave-group vs erase-platform, two-tier export, controller/processor split. **Live 2026-08-02** |
 | [GROUP-ONBOARDING-PLAN](backend/plans/GROUP-ONBOARDING-PLAN.md) | ✅ shipped — 5a-4: creation codes, invites, picker/switcher, join page (V30–V31). **Live 2026-08-02**. ⚠️ **The visibility flip is not the deploy** — no code has been issued, so nothing is self-serve yet |
 | [GROUP-BILLING-PLAN](backend/plans/GROUP-BILLING-PLAN.md) | ⛔ **ON HOLD (owner decision, 2026-08-01)** — design reference only, **do not implement** until the owner lifts the hold |
+| [SCOPED-API-TOKENS-PLAN](backend/plans/SCOPED-API-TOKENS-PLAN.md) | ✅ built, awaiting release (V39) — a revocable, group-bound, narrowly-scoped personal token. **The prerequisite for every automation route**, including "Hey Siri, record a goal" from an Apple Watch, which needs no app changes and only a credential a shortcut can hold. Scopes *intersect* live grants rather than replacing them. ⚠️ **V39 has never been applied to real PostgreSQL** |
 | [PLATFORM-CONSOLE-PLAN](backend/plans/PLATFORM-CONSOLE-PLAN.md) 📝 | DRAFT — operator monitoring. **Rung 0 is a rendering job**: the organization listing and platform counters already exist and have no screen |
 | [MATCH-FEE-LEDGER-PLAN](backend/plans/MATCH-FEE-LEDGER-PLAN.md) | ✅ shipped — §14 covers a future payment integration |
 | [PLAYER-LINK-ME-PLAN](backend/plans/PLAYER-LINK-ME-PLAN.md) | ✅ shipped |
@@ -96,6 +97,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [groups](frontend/features/groups.md) | Joining, founding, switching — and the two people who hand out access |
 | [payments](frontend/features/payments.md) | Your balance, the interleaved ledger, the roster and delegation groups |
 | [seasons](frontend/features/seasons.md) | Define, start and finalise, on the settings group tab — and why starting is not finalising |
+| [api-tokens](frontend/features/api-tokens.md) | Minting, showing once and revoking the credential a shortcut carries — and why a per-group token is listed per account |
 | *guests · payment-delegation* ⚠️ | **Missing.** Both shipped in the UI in `722335c` |
 
 ---
