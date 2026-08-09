@@ -1,6 +1,6 @@
 # Project Status
 
-**Snapshot: 2026-08-09, after the 1.8.0, 1.9.0 and 1.9.1 releases.** Update it when the answers change, not on a
+**Snapshot: 2026-08-09, after 1.8.0, 1.9.0, 1.9.1 — and one deliberate unversioned ship on top.** Update it when the answers change, not on a
 schedule — a status page nobody trusts is worse than none.
 
 ⚠️ **Two claims below are weaker than the rest, and both are marked where they appear.** The
@@ -11,15 +11,32 @@ as unknown/outstanding, which is the only honest thing a status page can do with
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `52411a6` — identical to `main`; `git log next..main` prints nothing | `e95da15` — the same, and the same check passes |
+| `next` head | `7f1dc96` — identical to `main`; `git log next..main` prints nothing | `17213a9` — the same, and the same check passes |
 | Release | **`1.9.1`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.9.1`** — `package.json` and both `package-lock.json` self-references. **Jumped from `1.8.0`**; `1.8.x` and `1.9.0` are deliberately skipped so both repos carry one number again |
-| Running in production | ⚠️ **`1.9.1` at `52411a6` was pushed to `main`, and nothing has confirmed it booted.** Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back, because this release was cut from an environment whose egress proxy blocks the production hosts and which has no Heroku CLI. **Treat as unconfirmed until somebody asks the platform.** | **`1.9.1` at `e95da15`**, confirmed against Netlify: deploy `6a7861c40cf3f30008e54006`, `ready`, context `production`, `commit_ref` `e95da154fe59e479…`, published `2026-08-09T11:18:09Z` |
-| `main` head | `52411a6` — 1.9.1 | `e95da15` — 1.9.1 |
+| Running in production | ⚠️ **`7f1dc96` was pushed to `main`, and nothing has confirmed it booted** — though the owner's production test of the shortcut flow passing end-to-end is itself evidence the chain deployed. Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back, because this release was cut from an environment whose egress proxy blocks the production hosts and which has no Heroku CLI. **Treat as unconfirmed until somebody asks the platform.** | **`17213a9`**, confirmed against Netlify: deploy `6a78d8910023d00008ea4252`, `ready`, context `production`, `commit_ref` matching, published `2026-08-09T19:45:10Z` — reporting `1.9.1` while running past it, see below |
+| `main` head | `7f1dc96` — **1.9.1 plus the live-sync fixes, unversioned by owner decision** | `17213a9` — the same |
 | Working tree | clean | clean |
 | Tests | **1342 unit**, SpotBugs clean, and the **Testcontainers tier green in CI** — the whole matrix passed on the release commit | **826 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines are **stale**, see below |
 | Latest migration | **`V39__api_tokens.sql`** — on `main` | — |
 | Deployed through | **`V39` was pushed**; that it applied is ⚠️ unconfirmed for the same reason the running version is. The full `V1`–`V39` chain *was* applied and validated against the entity mappings on a real PostgreSQL 16 before release — see below | — |
 | Tags | `v1.0.0` → **`v1.7.0`**. ⚠️ **None of `v1.8.0`, `v1.9.0`, `v1.9.1` exists on the remote** — see below | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`. ⚠️ **Neither `v1.8.0` nor `v1.9.1` exists on the remote** — see below. There will never be a `v1.9.0` here, and that is correct |
+
+## The unversioned ship on top of 1.9.1 — deliberate, owner's call
+
+**Both repos shipped the live-sync fixes on 2026-08-09 evening without a version bump**, so
+production reports `1.9.1` while running code past the `v1.9.1` commits. The owner chose this to
+test the watch shortcut flow in production immediately; it is the same call as the 2026-08-07
+spacing pass, recorded here for the same reason — a version that does not name its code is only
+tolerable when something says so.
+
+What shipped: `FootMania-Back#204` (the goal-type breakdown on match reads) and
+`FootMania-Simple-Front#68` (the scoresheet seeds from the server, live-saves become deltas, the
+live score renders, and match queries refetch on focus and poll while live). Together they are the
+fix for "the shortcut writes, the database is right, the app says 0-0" — and for the second silent
+overwrite, the form's zero-seeded absolute live-saves.
+
+**The owner tested the flow in production and confirmed it good.** These commits fold into whatever
+release is cut next; `v1.9.1` stays pointing where it points.
 
 ## 1.8.0, 1.9.0 and 1.9.1 — the five tags that were not pushed
 
