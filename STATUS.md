@@ -1,29 +1,33 @@
 # Project Status
 
-**Snapshot: 2026-08-09, after the 1.8.0 release.** Update it when the answers change, not on a
+**Snapshot: 2026-08-09, after the 1.8.0 and 1.9.0 releases.** Update it when the answers change, not on a
 schedule — a status page nobody trusts is worse than none.
 
 ⚠️ **Two claims below are weaker than the rest, and both are marked where they appear.** The
-backend's running version was **not** read back from the platform this release, and the `v1.8.0`
-tags **do not exist on the remotes**. Neither is a guess dressed as a fact here; both are recorded
+backend's running version was **not** read back from the platform in either release, and **none of
+the three tags** — `v1.8.0` in both repos, `v1.9.0` in the backend — exists on a remote. Neither is a guess dressed as a fact here; both are recorded
 as unknown/outstanding, which is the only honest thing a status page can do with them.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `7560d6a` — identical to `main`; `git log next..main` prints nothing | `9770ad0` — the same, and the same check passes |
-| Release | **`1.8.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.8.0`** — `package.json` and both `package-lock.json` self-references |
-| Running in production | ⚠️ **`1.8.0` at `7560d6a` was pushed to `main`, and nothing has confirmed it booted.** Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back, because this release was cut from an environment whose egress proxy blocks the production hosts and which has no Heroku CLI. **Treat as unconfirmed until somebody asks the platform.** | **`1.8.0` at `9770ad0`**, confirmed against Netlify: deploy `6a781638dd38fd000850b3b9`, `ready`, context `production`, `commit_ref` `9770ad018ff79fe6…`, published `2026-08-09T05:55:59Z` |
-| `main` head | `7560d6a` — 1.8.0 | `9770ad0` — 1.8.0 |
+| `next` head | `648ab94` — identical to `main`; `git log next..main` prints nothing | `9770ad0` — the same, and the same check passes |
+| Release | **`1.9.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.8.0`** — `package.json` and both `package-lock.json` self-references |
+| Running in production | ⚠️ **`1.9.0` at `648ab94` was pushed to `main`, and nothing has confirmed it booted.** Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back, because this release was cut from an environment whose egress proxy blocks the production hosts and which has no Heroku CLI. **Treat as unconfirmed until somebody asks the platform.** | **`1.8.0` at `9770ad0`**, confirmed against Netlify: deploy `6a781638dd38fd000850b3b9`, `ready`, context `production`, `commit_ref` `9770ad018ff79fe6…`, published `2026-08-09T05:55:59Z` |
+| `main` head | `648ab94` — 1.9.0 | `9770ad0` — 1.8.0 |
 | Working tree | clean | clean |
-| Tests | **1328 unit**, SpotBugs clean, and the **Testcontainers tier green in CI** — the whole matrix passed on the release commit | **826 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines are **stale**, see below |
+| Tests | **1342 unit**, SpotBugs clean, and the **Testcontainers tier green in CI** — the whole matrix passed on the release commit | **826 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines are **stale**, see below |
 | Latest migration | **`V39__api_tokens.sql`** — on `main` | — |
 | Deployed through | **`V39` was pushed**; that it applied is ⚠️ unconfirmed for the same reason the running version is. The full `V1`–`V39` chain *was* applied and validated against the entity mappings on a real PostgreSQL 16 before release — see below | — |
-| Tags | `v1.0.0` → **`v1.7.0`**. ⚠️ **`v1.8.0` does not exist on the remote** — see below | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`. ⚠️ **`v1.8.0` does not exist on the remote** — see below |
+| Tags | `v1.0.0` → **`v1.7.0`**. ⚠️ **Neither `v1.8.0` nor `v1.9.0` exists on the remote** — see below | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`. ⚠️ **`v1.8.0` does not exist on the remote** — see below |
 
-## 1.8.0 — the two tags that were not pushed
+## 1.8.0 and 1.9.0 — the three tags that were not pushed
 
-**`v1.8.0` was created in both repos and neither could be published.** `git push origin
+**Three tags are outstanding: `v1.8.0` in both repos and `v1.9.0` in the backend.** None could be
+published.
+
+**`v1.8.0` was created in both repos and neither could be published**, and `v1.9.0` hit the same
+wall an hour later. `git push origin
 refs/tags/v1.8.0` returned `HTTP 403` in both, repeatedly, while a branch push to the same remote in
 the same session succeeded seconds earlier — the credentials the release was cut with allow
 `refs/heads/*` and not `refs/tags/*`.
@@ -47,7 +51,13 @@ published_at  2026-08-09T05:55:59Z
 The `commit_ref` on the published deploy *is* that commit, so the tag names what production serves
 rather than the branch tip.
 
-### Backend — tag `7560d6a6aee5d84963da2c909291ef25bdd88a7d`, but check first
+### Backend, 1.9.0 — tag `648ab94077fc3f543352f8c1eceaf4687556a3c9`
+
+Same gap as `v1.8.0` below: pushed to `main`, never read back. CI *was* green on this commit
+including the Testcontainers tier, which is what exercises the new `SELECT … FOR UPDATE` against a
+real PostgreSQL — but a green pipeline is a claim about the code, not about the dyno.
+
+### Backend, 1.8.0 — tag `7560d6a6aee5d84963da2c909291ef25bdd88a7d`, but check first
 
 This one is **weaker than the rule asks for and should not be placed on trust**. What is known is
 that the commit was pushed to `main` and that Heroku builds every push. What was never done is the
@@ -57,6 +67,28 @@ part that makes a tag a fact: `heroku releases -a footmania` for the commit that
 Ask the platform, then tag. If the deploy failed, or booted a different jar, the tag belongs
 somewhere else — placing `v1.1.0` from a status document once put it three deploys early, and this
 is exposed to exactly that.
+
+## 1.9.0 — the other half of the watch shortcut
+
+**Backend only, no migration, and the frontend does not move.** Every field added is optional and
+additive, so a client that has never heard of them behaves exactly as before; the frontend stays on
+`1.8.0`. That also means the deploy-order rule had nothing to bite on this time — there is no
+frontend half waiting.
+
+`PATCH /api/matches/{id}/stats/live` gained `soloGoalsDelta` and its four siblings beside the
+absolute fields. **`1.8.0` shipped the credential a watch shortcut carries; this ships the request
+shape that lets it record a goal at all.** A caller with no screen cannot use the absolute form: it
+would have to read the current value first, which races with anybody else recording the same
+passage of play, and could not be done correctly anyway because the read side returns a
+denormalised `goals` total rather than the three-way breakdown the write side needs.
+
+**A delta request takes a row lock**, so the race is removed rather than relocated to the server.
+Absolute-only requests take no lock, so the scoresheet path is untouched. Pessimistic rather than an
+optimistic version column, because two people recording in the same minute is normal, and the
+optimistic answer to normal contention is an error somebody has to retry on a watch at a pitch.
+
+Contract: `docs/api/MATCH-LIVE-STATS-API-CONTRACT.md` in the backend repo. `FootMania-Back#199`,
+release `#200`.
 
 ## 1.8.0 — what the release contains, and the two things it leaves behind
 
