@@ -1,27 +1,68 @@
 # Project Status
 
-**Snapshot: 2026-08-09, after 1.8.0, 1.9.0, 1.9.1, the deliberate unversioned ship, and 1.9.2 (backend-only).** Update it when the answers change, not on a
-schedule — a status page nobody trusts is worse than none.
+**Snapshot: 2026-08-20, after 1.10.0 — both halves, backend first, every claim read back from the
+platform.** Update it when the answers change, not on a schedule — a status page nobody trusts is
+worse than none.
 
-⚠️ **Two claims below are weaker than the rest, and both are marked where they appear.** The
-backend's running version was **not** read back from the platform in any of these releases
-(1.9.2 included — the release environment's egress proxy still blocks the production hosts), and
-**six tags** — `v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend — exist on no
-remote. Neither is a guess dressed as a fact here; both are recorded as unknown/outstanding,
-which is the only honest thing a status page can do with them.
+✅ **The two weak claims that headed this file since 2026-08-09 are both resolved.** The backend's
+running version *was* read back from Heroku and `/api/version` this time, and the migration was
+confirmed in `flyway_schema_history` rather than inferred from a booting dyno. Tag pushes also
+worked — see [the six outstanding tags](#18-through-192--the-six-tags-that-were-not-pushed), whose
+cause is now known to be the release environment rather than the repository.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `7c42f91` — identical to `main`; `git log next..main` prints nothing | `17213a9` — the same, and the same check passes |
-| Release | **`1.9.2`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.9.1`** — `package.json` and both `package-lock.json` self-references. **The numbers diverge again, deliberately**: `1.9.2` is backend-only (like `1.9.0`), so the frontend skips it rather than shipping an empty bump |
-| Running in production | ⚠️ **`7c42f91` was pushed to `main` (2026-08-09 evening), and nothing has confirmed it booted.** Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back: this release was cut from the same kind of environment as `1.9.1`, and the egress proxy answered `403` on the CONNECT to the production host when it was actually tried this time. **Treat as unconfirmed until somebody asks the platform.** | **`17213a9`**, confirmed against Netlify: deploy `6a78d8910023d00008ea4252`, `ready`, context `production`, `commit_ref` matching, published `2026-08-09T19:45:10Z` — reporting `1.9.1` while running past it, see below |
-| `main` head | `7c42f91` — **1.9.2** (Rating Model v2.2 + the goal-type breakdown, now versioned) | `17213a9` — 1.9.1 plus the frontend live-sync fixes, still unversioned by owner decision |
+| `next` head | `3c85245` — **identical to `main`**, fast-forwarded after the release merge; `git log next..main` prints nothing | `3be25f3` — the same, and the same check passes |
+| Release | **`1.10.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.10.0`** — `package.json` and both `package-lock.json` self-references |
+| Running in production | ✅ **`3c85245`, confirmed by asking the platform**: Heroku release **v68** `Deploy 3c852454` (2026-08-20T18:00:59Z), `/api/version` returning `{"version":"1.10.0","buildTime":"2026-08-20T18:00:37.887Z"}`, and `Started FootballApplication in 25.563 seconds` in the dyno log | ✅ **`3be25f3`, confirmed against Netlify**: deploy `6a8746786327930008609c94`, `ready`, context `production`, `commit_ref` matching, published `2026-08-20T18:25:50Z` — and the operator email this release introduced was **read back off the live `/privacy` page** |
+| `main` head | `3c85245` — 1.10.0 | `3be25f3` — 1.10.0 |
 | Working tree | clean | clean |
-| Tests | **1356 unit**, SpotBugs clean, and the **Testcontainers tier green in CI** — the whole matrix passed on both `1.9.2` PR heads (`#205`, `#206`) | **826 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines are **stale**, see below |
-| Latest migration | **`V39__api_tokens.sql`** — on `main`; `1.9.2` carries none | — |
-| Deployed through | **`V39` was pushed**; that it applied is ⚠️ unconfirmed for the same reason the running version is. The full `V1`–`V39` chain *was* applied and validated against the entity mappings on a real PostgreSQL 16 before release — see below | — |
-| Tags | `v1.0.0` → **`v1.7.0`**. ⚠️ **None of `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` exists on the remote** — see below | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`. ⚠️ **Neither `v1.8.0` nor `v1.9.1` exists on the remote** — see below. There will never be a `v1.9.0` or `v1.9.2` here, and that is correct |
+| Tests | **1375 unit**, and the **whole CI matrix green including Testcontainers** on the release PR (`#208`) | **852 unit**. ⚠️ Full-suite runs are flaky under parallel load — see below |
+| Latest migration | **`V40__match_plan_drop_description_and_backfill_deadlines.sql`** — on `main` and applied | — |
+| Deployed through | ✅ **`V40`, confirmed applied**: `flyway_schema_history` shows version `40`, `success = t`, read from the production database after the deploy | — |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`** — pushed and annotated with its production evidence. ⚠️ `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` are still missing | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`, **`v1.10.0`**. ⚠️ `v1.8.0` and `v1.9.1` are still missing |
+
+**The two repos are one version again, and this time both halves shipped together.** The frontend
+was on `1.9.1`, having correctly skipped the backend-only `1.9.0` and `1.9.2`; `1.10.0` spans both.
+
+### What 1.10.0 carries
+
+⚠️ **`V40` closed the rollback door, and it is the first migration since `V29` to do so.** It drops
+`match_plans.description`, so redeploying any earlier jar fails at startup — `ddl-auto: validate`
+refuses a mapped column that no longer exists. Restoring the column brings it back empty. This is
+why the migration was confirmed in `flyway_schema_history` rather than inferred: a dyno that boots
+does not by itself prove the schema step ran.
+
+✅ **Scheduling moved from `MANAGER` to `ORGANIZER`**, with `GROUP_ADMIN` as an escape hatch for a
+group whose organiser leaves. Booking the pitch and running the match were the same grant, so a
+manager could put a plan in the calendar for a slot nobody had reserved.
+
+✅ **Every plan now has a deadline.** An omitted `confirmationDeadline` used to mean *no* deadline,
+and `MatchPlanMapper` reads null as "poll open" — so those polls never closed, taking confirmations
+past the final whistle and moving the headcount teams had already been drawn from. `V40` backfills
+existing nulls, past plans included, because those are the rows still wrongly open.
+
+✅ **`status` accepts a comma-separated list**, so the Confirmed tab can be `CONFIRMED,GENERATED`.
+Client-side narrowing is not an option on a paginated list.
+
+✅ **The Ballon d'Or ballot carries season form and totals** — it listed names only, so voting for
+player of the season meant voting on memory.
+
+✅ **The group picker always shows at sign-in.** A single membership used to auto-select, which meant
+the one screen offering to join or found another group was reachable only by typing its URL.
+
+✅ **Two locale/role defects that predated this work.** Generation notes were formatted through the
+JVM default locale, so the same algorithm wrote `λ=0.50` or `λ=0,50` depending on where it ran — into
+a persisted column. And `TeamGenerationPage` returned the draft-session screen for anyone holding
+`GROUP_ADMIN`, so administrators who also manage — most of them — had no route to team generation.
+
+⚠️ **A CI gate was failing open before this release.** The backend's `🔍 Version Check` job is a hard
+barrier: when it fails, every downstream job is **skipped**, including all six test tiers and the
+Testcontainers integration run. It failed on the first `1.10.0` push (the `Procfile` jar name still
+said `1.9.2`), and the PR showed one red gate and eleven skipped jobs rather than a red test suite.
+Worth knowing: a PR in that state has no test signal at all, and it does not look like one that has
+not been tested.
 
 ## The unversioned ship on top of 1.9.1 — deliberate, owner's call
 
@@ -45,6 +86,25 @@ that release's CHANGELOG section and version number. The frontend half (`#68`) r
 `1.9.2` is backend-only, so the frontend still reports `1.9.1` while running past it.
 
 ## 1.8.0 through 1.9.2 — the six tags that were not pushed
+
+✅ **The cause is now known, and it is the release environment rather than the repository.** Both
+`v1.10.0` tags were created and pushed without incident on 2026-08-20, from a local checkout, using
+ordinary `git push origin v1.10.0` — the exact command recorded below as returning `403`. Nothing
+about either repository refuses tag writes. **The ceiling described below belongs to the sandboxed
+environments the earlier releases were cut from, and does not generalise.**
+
+⚠️ **The six tags are still missing, and this did not fix them.** They exist only in the release
+environments that created them, so they cannot simply be pushed from here — they would have to be
+**recreated at the commits those releases actually deployed**, and establishing which commit each
+one was is the work. `v1.9.2` is the tractable one: `main` was at `7c42f91`, and Heroku release
+**v67** `Deploy 7c42f910` confirms it. The others need the same evidence assembled before anybody
+tags, because a release tag placed from a status document rather than from the platform is how
+`v1.1.0` landed three deploys early.
+
+**Left outstanding deliberately rather than guessed at.** Recreating them is a decision with a
+prerequisite, not a chore.
+
+The original diagnosis follows, kept because it is accurate about those environments:
 
 **Six tags are outstanding: `v1.8.0` and `v1.9.1` in both repos, and `v1.9.0` and `v1.9.2` in the
 backend.** None could be published, and the cause is settled rather than intermittent — see below.
