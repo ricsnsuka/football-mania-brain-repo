@@ -12,8 +12,9 @@ cause is now known to be the release environment rather than the repository.
 
 | | Backend | Frontend |
 |---|---|---|
-| Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
+| Branch | `main` (production), `next` (**frozen**), `release/2.0.0` (integration — every PR bases here) | `main` (production), `next` (**frozen**), `release/2.0.0` (integration — every PR bases here) |
 | `next` head | `3c85245` — **identical to `main`**, fast-forwarded after the release merge; `git log next..main` prints nothing | `3be25f3` — the same, and the same check passes |
+| `release/2.0.0` head | `3c85245` — cut from `origin/next` 2026-08-21, no commits on it yet | `3be25f3` — the same |
 | Release | **`1.10.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.10.0`** — `package.json` and both `package-lock.json` self-references |
 | Running in production | ✅ **`3c85245`, confirmed by asking the platform**: Heroku release **v68** `Deploy 3c852454` (2026-08-20T18:00:59Z), `/api/version` returning `{"version":"1.10.0","buildTime":"2026-08-20T18:00:37.887Z"}`, and `Started FootballApplication in 25.563 seconds` in the dyno log | ✅ **`3be25f3`, confirmed against Netlify**: deploy `6a8746786327930008609c94`, `ready`, context `production`, `commit_ref` matching, published `2026-08-20T18:25:50Z` — and the operator email this release introduced was **read back off the live `/privacy` page** |
 | `main` head | `3c85245` — 1.10.0 | `3be25f3` — 1.10.0 |
@@ -25,6 +26,13 @@ cause is now known to be the release environment rather than the repository.
 
 **The two repos are one version again, and this time both halves shipped together.** The frontend
 was on `1.9.1`, having correctly skipped the backend-only `1.9.0` and `1.9.2`; `1.10.0` spans both.
+
+🧊 **`next` is frozen from 2026-08-21, and 2.0.0 is being assembled on `release/2.0.0` in both
+repos.** No pull request bases on `next` or `main` until the freeze lifts. Both integration branches
+were cut from `origin/next` at the 1.10.0 merge, where `next` and `main` were identical — so the
+row above that says the two agree is also the point 2.0.0 starts from. The rule is in
+[CONTRIBUTING.md](CONTRIBUTING.md#branches-and-releases); the watch item is divergence, since a
+branch collecting features for weeks drifts from `next` silently and pays for it all at merge.
 
 ### What 1.10.0 carries
 
@@ -647,6 +655,7 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 | ~~[frontend/INDEX.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/INDEX.md)~~ | Omitted seven of its own files | ✅ **Resolved** by the documentation split — the feature docs it failed to link now live here, and what is left there is a pointer plus the seven guides |
 | frontend — missing files | Nothing for guest players or payment delegation (`722335c`) as features in their own right | Write them. ✅ `features/payments.md` **written 2026-08-05** — the balance, the interleaved ledger, the roster and the delegation groups; delegation is covered there rather than separately. ✅ The group dimension is covered by [frontend/features/groups.md](frontend/features/groups.md) |
 | **this repo — no tenancy feature doc** | [architecture/multi-tenancy.md](architecture/multi-tenancy.md) and the plans carry the design, but `backend/features/` has nothing on organizations, memberships or per-membership roles, while nine older features each have a file | Write `backend/features/TENANCY.md`. It is the one thing a new session most needs and currently has to reconstruct from four plans |
+| **the two code repos — the branch rule copy** ([frontend `AGENTS.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/AGENTS.md), [backend `.github/copilot-instructions.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/.github/copilot-instructions.md)) | Both still say every pull request bases on `next`. Since 2026-08-21 that is wrong — `next` is frozen and `release/2.0.0` is the base. These are the copies read *inside* the code repo at the moment somebody opens a pull request, which is the whole reason they exist, so this is the drift that will actually mislead | Add the freeze to both copies. Until then [CONTRIBUTING.md](CONTRIBUTING.md#branches-and-releases) governs, and it says so |
 
 A related failure, already fixed: the notification-settings screen rendered `MVP_VOTE_OPEN` and
 `FEE_CHARGED` as raw enum names because both categories were added backend-side without anyone
