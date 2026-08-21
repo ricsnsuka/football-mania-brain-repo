@@ -45,12 +45,34 @@ many links.
 
 ## Branches and releases
 
+> **⚠️ FREEZE — `next` is closed while 2.0.0 is assembled.** In force from 2026-08-21 until it is
+> explicitly lifted. **No pull request bases on `next`, and none bases on `main`.** Both code repos
+> carry a `release/2.0.0` integration branch, cut from `origin/next` at the 1.10.0 merge — backend
+> [`3c85245`](https://github.com/ricsnsuka/FootMania-Back/tree/release/2.0.0), frontend
+> [`3be25f3`](https://github.com/ricsnsuka/FootMania-Simple-Front/tree/release/2.0.0), a point where
+> `next` and `main` were identical in both. Every 2.0.0 feature branches off it and bases its pull
+> request on it. `next` moves once, at the end, when the whole set goes in together — and then the
+> release proceeds exactly as described below, from `next`.
+>
+> **Why a version in a branch name, here.** The rule two sections down says the version never lives
+> in a branch name, and it stands — it was written against *permanent* branches, the default branch
+> called `v1.0.0` that was shipping `1.1.0` for two months. `release/2.0.0` is temporary and dies at
+> the release, so it cannot drift: the version it names is the only version it will ever hold. It is
+> also **not** the `release/X.Y.x` patch branch in the table below, which is cut from a tag *after* a
+> release ships and exists for a different reason.
+>
+> **The hazard this introduces is the long-lived branch itself.** A branch collecting several
+> features across weeks diverges from `next` silently, and the cost lands all at once at merge time.
+> If anything does land on `next` while the freeze holds — a hotfix that could not wait — merge it
+> down into `release/2.0.0` the same day rather than discovering it at the end.
+
 Both code repos use the same two permanent branches, and nothing else is permanent.
 
 | Branch | Means |
 |---|---|
 | `main` | production. For the frontend, pushing it **is** a deploy |
-| `next` | integration. Every pull request bases here |
+| `next` | integration. Every pull request bases here — **frozen while 2.0.0 is assembled, see above** |
+| `release/2.0.0` | temporary, and the base for every pull request **while the freeze holds**. Dies at the 2.0.0 release |
 | `vX.Y.Z` | a tag, not a branch — immutable, one per release |
 | `release/X.Y.x` | cut from a tag **only** when a shipped release needs a patch and `next` has moved on |
 
@@ -128,6 +150,12 @@ Both code repos now carry a short copy of this pointing back here — frontend
 That is a deliberate exception to "link, don't copy": the rule governs the moment somebody is inside
 one of those repos about to open a pull request, and a rule they have to leave the repo to read is
 one they will not read. Each copy is four sentences and names this file as canonical.
+
+**Both copies still say every pull request bases on `next`, and the freeze has not been written into
+them yet.** That is the copy tax the exception buys, and it matters most exactly now: the rule is
+read inside the code repo, at the moment somebody opens a pull request, and what they will read
+there is the pre-freeze rule. Until they are updated, the freeze note above is the one that governs.
+Tracked in the drift table in [STATUS.md](STATUS.md).
 
 **Step 6 is the one that goes wrong.** A release tag is a claim about production, so it is only as
 good as the evidence behind it. Placing `v1.1.0` from a status document put it three deploys early;
