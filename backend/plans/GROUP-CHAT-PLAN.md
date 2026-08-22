@@ -1,13 +1,15 @@
 # Ephemeral Group Chat & Presence — Technical Specification
 
 **Date:** 2026-08-21, updated 2026-08-22
-**Status:** **IN PROGRESS — steps 1–3 of 7 in review.** The eight questions in §7 are answered.
-Schema in [FootMania-Back#210](https://github.com/ricsnsuka/FootMania-Back/pull/210);
-send-and-read plus `docs/api/CHAT-API-CONTRACT.md` in
-[#211](https://github.com/ricsnsuka/FootMania-Back/pull/211); retention in
-[#212](https://github.com/ricsnsuka/FootMania-Back/pull/212). The three are **stacked in that
-order** and must merge in it. **Nothing is merged and nothing is deployed.** §4 carries the fifth
-table the moderation answer required; §7 records the answers rather than the questions.
+**Status:** **IN PROGRESS — steps 1–4 of 7 in review.** The eight questions in §7 are answered, and
+so are §6's two privacy questions. Schema in
+[FootMania-Back#210](https://github.com/ricsnsuka/FootMania-Back/pull/210); send-and-read plus
+`docs/api/CHAT-API-CONTRACT.md` in [#211](https://github.com/ricsnsuka/FootMania-Back/pull/211);
+retention in [#212](https://github.com/ricsnsuka/FootMania-Back/pull/212); reporting and the
+moderation surface in [#213](https://github.com/ricsnsuka/FootMania-Back/pull/213). The four are
+**stacked in that order** and must merge in it. **Nothing is merged and nothing is deployed.** §4
+carries the fifth table the moderation answer required; §7 records the answers rather than the
+questions.
 **Target release:** `2.0.0` — branches off `release/2.0.0` in both repos, per the freeze in
 [CONTRIBUTING.md](../../CONTRIBUTING.md#branches-and-releases)
 **Estimated effort:** L — the largest single feature since tenancy. Backend ≈3–4 days, frontend
@@ -271,10 +273,24 @@ than the original six: answering §7.1's moderation question added the reporting
    - Also worth keeping: the cron had to become a property (`app.chat.retention.cron`, `-` to
      disable) because the sweep is global and absolute and would delete rows a test had just
      seeded — a flake that would have read as a bad assertion rather than as the scheduler working.
-4. ⬜ **Reporting and the moderation surface** — the report endpoint for participants, and the
-   queue for administrators. Kept off `/api/chat` by construction; this is where "who reads the
-   queue" and "how long is a report kept" get answered, and where `PRIVACY-API-CONTRACT.md` gains
-   the GDPR-export decision from §6.
+4. ✅ **Reporting and the moderation surface** —
+   [FootMania-Back#213](https://github.com/ricsnsuka/FootMania-Back/pull/213), stacked on #212.
+   36 tests. Filing lives on the chat surface (a participant's act, participation-authorized);
+   reading the queue is `ModerationController` under `/api/moderation`, `GROUP_ADMIN` only. The
+   payload carries **no conversation id, message id or participant list** — useless to an
+   administrator anyway, but a conversation id would be a handle saying two reports came from the
+   same private conversation. `ChatModerationIT` asserts the pair: the report arrives *and* the
+   conversation is still a 404 to that administrator.
+   - **§6's two open privacy answers, now decided.** *Nothing from chat is in a data export* —
+     messages because nothing survives to export, reports under **Article 15(4)**, since in a
+     twelve-person group disclosing that a report exists identifies the reporter about as reliably
+     as naming them. *The reporter is shown* to the administrator rather than anonymised: among
+     people who know each other, an anonymous report is easier to abuse than to hide behind.
+   - **A gap chat had introduced:** `leaveGroup` left every chat row behind, because the `V41`
+     foreign keys only fire on account *deletion*. Not an access hole — `TenantResolver` only binds
+     a group the caller actively belongs to — but the participant rows would have restored old
+     conversations to anybody who rejoined. Now cleared, direct threads first; reports about the
+     departing member are deliberately kept.
 5. ⬜ **SSE** — the per-user registry, the event on commit, a frontend hook modelled on `useDraft`.
 6. ⬜ **Presence** — heartbeat, roster endpoint, the online/offline view.
 7. ⬜ **Push** — the new category with all three locales in the same commit.
