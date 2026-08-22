@@ -1,9 +1,11 @@
 # Ephemeral Group Chat & Presence — Technical Specification
 
-**Date:** 2026-08-21
-**Status:** **DRAFT — not implemented.** Nothing has been built. This document exists so the work
-can be picked up on another machine; it records the request verbatim, what the codebase already
-provides, a proposed design, and the questions that must be answered before code is written.
+**Date:** 2026-08-21, updated 2026-08-22
+**Status:** **IN PROGRESS — step 1 of 7 in review.** The eight questions in §7 are answered, and
+the schema, entities and repositories are in
+[FootMania-Back#210](https://github.com/ricsnsuka/FootMania-Back/pull/210) against
+`release/2.0.0`. Nothing is merged and nothing is deployed. §4 has been amended to carry the fifth
+table the moderation answer required; §7 now records the answers rather than the questions.
 **Target release:** `2.0.0` — branches off `release/2.0.0` in both repos, per the freeze in
 [CONTRIBUTING.md](../../CONTRIBUTING.md#branches-and-releases)
 **Estimated effort:** L — the largest single feature since tenancy. Backend ≈3–4 days, frontend
@@ -62,31 +64,53 @@ consume it, and chat is the same shape of problem the draft screen already solve
 
 ⚠️ **The SSE registry is per-JVM.** Its own javadoc says so — multi-instance deployments need
 sticky sessions or a broker. Chat makes that limitation matter far more than draft sessions did,
-because chat is always-on rather than opened for one draft. **Confirm the dyno count before
-building**: on a single dyno this is fine; on two, half the messages never arrive and nothing
-errors.
+because chat is always-on rather than opened for one draft.
+
+**Checked 2026-08-22: production is `web=1:Basic`,** and Heroku's Basic tier cannot scale
+horizontally at all — so the design holds by construction rather than by luck. The thing to watch
+is not the current count but the tier: moving to Standard or Performance makes a second dyno
+possible, and on two dynos half the messages never arrive and nothing errors. See §7.7.
 
 ## 4. Proposed data model
 
-Four tables, one migration (`V41`). All tenant-owned.
+**Five** tables, one migration (`V41`), as built. All tenant-owned. The fifth was not in the
+original four: it is what answering §7's moderation question required.
 
 ```
 chat_conversations
   id, tenant_id, kind (DIRECT | GROUP | EVERYONE), name, created_by_user_id,
   created_at, last_activity_at
+  UNIQUE (tenant_id) WHERE kind = 'EVERYONE'      -- partial: one channel per group
+  INDEX (tenant_id, last_activity_at DESC)
+  INDEX (last_activity_at) WHERE kind = 'GROUP'   -- the 12-hour retention scan
 
 chat_participants
-  id, conversation_id, user_id, joined_at, last_read_at
-  UNIQUE (conversation_id, user_id)
+  id, tenant_id, conversation_id, user_id, joined_at, last_read_at
+  UNIQUE (conversation_id, user_id), INDEX (user_id, tenant_id)
 
 chat_messages
-  id, conversation_id, sender_user_id, body, created_at, expires_at
-  INDEX (conversation_id, created_at), INDEX (expires_at)
+  id, tenant_id, conversation_id, sender_user_id, body, created_at, expires_at
+  INDEX (conversation_id, created_at DESC), INDEX (expires_at)
+
+chat_message_reports                              -- the only durable table
+  id, tenant_id, message_id, conversation_id, conversation_kind,
+  reported_by_user_id, reported_user_id, body_snapshot, message_created_at,
+  reason, created_at, reviewed_at, reviewed_by_user_id
+  INDEX (tenant_id, created_at) WHERE reviewed_at IS NULL
 
 user_presence
   user_id, tenant_id, last_seen_at
-  INDEX (tenant_id, last_seen_at)
+  PRIMARY KEY (user_id, tenant_id), INDEX (tenant_id, last_seen_at DESC)
 ```
+
+`created_by_user_id` is `ON DELETE SET NULL`, not `CASCADE`: one person erasing their account must
+not destroy a conversation belonging to everyone else in it. What is lost is the delete-my-own-chat
+right, which nobody is left to exercise; the 12-hour clock still collects it.
+
+**The group-wide channel's membership is not stored.** `chat_participants` is the authority for
+`DIRECT` and `GROUP` only. For `EVERYONE` the authority is an ACTIVE `Membership` in the tenant —
+the one definition that stays correct as people join, are suspended and leave. Participant rows
+still appear for it, carrying `last_read_at` and nothing that grants anything.
 
 **`expires_at` is a stored column, not `created_at + 24h` computed at read time.** The retention
 window is a product decision that may change; rows written under the old window should keep the
@@ -148,47 +172,94 @@ The part most likely to be got wrong by accident, so it is written as a rule wit
 - **Tests must include a negative one**: a `GROUP_ADMIN` who is not a participant gets `404`, not
   `403` — `403` confirms the conversation exists.
 
-⚠️ **The moderation trade-off is real and should be an explicit decision.** A group chat with no
-administrator visibility and 24-hour deletion means harassment inside a group leaves no evidence and
-no lever: the group admin cannot read it, cannot remove it, and cannot prove it happened. That is
-the direct consequence of the privacy requirement as stated, and it may well be the right call for a
-five-a-side app between people who know each other. It should be a decision somebody made, not a
-property nobody noticed. A middle option exists: participants can *report* a message, which copies
-that one message out of the ephemeral store into a moderation record.
+### The moderation trade-off — decided 2026-08-22: reporting is in
 
-## 7. Open questions — answer before building
+The trade-off was real: a group chat with no administrator visibility and 24-hour deletion means
+harassment leaves no evidence and no lever — the group admin cannot read it, cannot remove it, and
+cannot prove it happened. **The answer chosen is the middle option**, and it holds administrator
+visibility at exactly zero. A participant can *report* one message, which copies that message out
+of the ephemeral store into `chat_message_reports`. The decision moves to the only person entitled
+to make it: someone who was in the conversation and read it.
 
-1. **Does the 12-hour inactivity death apply to direct chats too?** The request attaches it to group
-   chats only. Assumed: direct conversations persist as empty containers; their messages still
-   expire at 24h.
-2. **What is "all"?** A permanent group-wide channel that always exists (`EVERYONE`, one per
-   organization, undeletable), or an ad-hoc chat that happens to contain everyone? Assumed the
-   former — it is the one people expect to find rather than create.
-3. **Is the interaction in §4 intended** — a quiet group chat destroying 12-hour-old messages that
-   were promised 24?
-4. **Presence scope and visibility.** Online within *this group* to *its members*, or globally?
-   Assumed per-group, visible to that group's members only. Is an "invisible" opt-out needed?
-5. **Push notifications on new messages?** The infrastructure exists, including per-category mutes.
-   A new `NotificationCategory` needs locale strings in **en, pt and es** — a missing key reaches
-   production looking like `CHAT_MESSAGE`.
-6. **Read receipts and typing indicators** — assumed out of scope for 2.0.0. `last_read_at` is in
-   the schema for unread counts, which is a different thing.
-7. **How many dynos?** See the warning in §3. This decides whether SSE is sufficient as designed.
-8. **Message body limits** — length cap, and whether anything but plain text is allowed. Assumed
-   plain text, 2000 characters, escaped through the OWASP encoder already on the dependency list.
+Two consequences the schema had to be built around, both shipped in `V41`:
 
-## 8. Suggested build order
+- **A report must outlive everything it points at.** Its foreign keys are `ON DELETE SET NULL`
+  where the rest of chat cascades, and it carries `body_snapshot` rather than a reference. A report
+  whose keys cascaded would be destroyed by the same retention job that collects the message it
+  preserves — always before anybody read it, and silently. `ChatSchemaIT` asserts survival against
+  deletion of the message, the conversation and the reporter.
+- **The one cascade is the reported account.** Once that person is erased under GDPR the record's
+  purpose is spent, and keeping their words in a table they can no longer reach is the retention an
+  erasure request exists to stop.
 
-Each step is a pull request into `release/2.0.0`, and each leaves the app working.
+**Reports are not reachable from chat.** No `/api/chat` endpoint reads them; they belong to a
+separate moderation surface, because the rule that no chat endpoint may consult a `Role` has to
+survive the arrival of a feature whose whole point is that an administrator acts on it. Who may
+read the queue, and how long a report is kept, are decided in the PR that builds that surface —
+`V41` deliberately does not answer either.
 
-1. **Schema and model** — `V41`, the four entities, repositories, tenancy annotations.
-2. **Send and read, no realtime** — endpoints, service, participation-only authorization, the
-   contract file, and the negative admin test. Polling is enough to prove it works.
-3. **Retention** — the two scheduled jobs, `TenantContext.runAs`, and tests that advance a clock
-   rather than sleeping.
-4. **SSE** — the per-user registry, the event on commit, a frontend hook modelled on `useDraft`.
-5. **Presence** — heartbeat, roster endpoint, the online/offline view.
-6. **Push** — only if §7.5 is answered yes, and with all three locales in the same commit.
+## 7. The eight questions, answered
+
+Answered 2026-08-22 — four by the user, two by reading production and the dependency list, and two
+by taking the assumption the draft had already written down. Recorded with the reasoning so a later
+reader can tell a decision from a default.
+
+1. **Does the 12-hour inactivity death apply to direct chats too? — No.** Confirmed as drafted:
+   direct conversations persist as empty containers, and their messages still expire at 24h. That
+   is also what makes messaging somebody again continue the same thread rather than opening a
+   second one. `ChatConversation.expiresOnInactivity()` is the single place this lives.
+2. **What is "all"? — A permanent group-wide channel.** One `EVERYONE` conversation per
+   organization, created lazily on first use, never deleted and exempt from the inactivity clock.
+   Enforced by a partial unique index rather than a service check, because lazy creation makes two
+   people opening chat simultaneously a real race.
+3. **Is the two-clock interaction intended? — Yes, as written.** A quiet group chat is destroyed at
+   12 hours and takes messages that were promised 24 with it. Intended, and flagged in
+   `ChatMessage`'s javadoc and in a test, because it is the kind of rule people notice only when
+   something they expected is gone.
+4. **Presence scope and visibility — per-group, visible to that group's members.** Taken as
+   drafted. **No invisible opt-out** for 2.0.0; if one is wanted later it is a column on
+   `user_presence` and a filter on the roster, not a redesign.
+5. **Push notifications on new messages? — Yes**, as the final step. Chat is much less useful
+   without it: a message that dies in 24 hours and is never seen is simply lost. The new
+   `NotificationCategory` ships with **en, pt and es** strings in the same commit — a missing key
+   reaches production looking like `CHAT_MESSAGE`.
+6. **Read receipts and typing indicators — out of scope**, as drafted. `last_read_at` exists for
+   unread counts and nobody but its owner ever sees the value.
+7. **How many dynos? — one, and it cannot currently be more.** `heroku ps -a footmania` reports
+   `web=1:Basic`. Heroku's Basic tier does not support horizontal scaling at all, so the per-JVM
+   SSE registry is sound *by construction* rather than by luck. ⚠️ That guarantee is a property of
+   the dyno tier, not of the app: moving to Standard or Performance and scaling past one dyno
+   breaks delivery **silently** — half the events reach the wrong process and nothing errors.
+   Sticky sessions or a broker have to come first. Recorded in `ChatConversation`'s javadoc and the
+   `V41` header so it is found by somebody changing the dyno formation, who will not be reading
+   this file.
+8. **Message body — plain text, 2000 characters.** `org.owasp.encoder:encoder:1.3.1` was already on
+   the dependency list as the draft assumed. Stored raw and encoded on the way *out*: escaping on
+   the way in would corrupt the text for every non-HTML consumer (a push notification body, a
+   future export) and double-encode as soon as anything else escaped it too.
+
+## 8. Build order
+
+Each step is a pull request into `release/2.0.0`, and each leaves the app working. Seven rather
+than the original six: answering §7.1's moderation question added the reporting step.
+
+1. ✅ **Schema and model** — `V41`, the five entities, repositories, tenancy annotations.
+   [FootMania-Back#210](https://github.com/ricsnsuka/FootMania-Back/pull/210), in review. 11
+   integration tests for what only the migration can express, 12 unit tests for the lifecycle rules.
+2. ⬜ **Send and read, no realtime** — endpoints, service, participation-only authorization,
+   `docs/api/CHAT-API-CONTRACT.md`, and the negative admin test asserting **404, not 403**. Polling
+   is enough to prove it works. Also the lazy get-or-create of the `EVERYONE` channel, including
+   re-reading through the unique-index race.
+3. ⬜ **Retention** — the two scheduled jobs, `TenantContext.runAs`, and tests that advance a clock
+   rather than sleeping. Note the reads already filter on `expires_at > now`, so this step reclaims
+   space rather than being what makes the promise true.
+4. ⬜ **Reporting and the moderation surface** — the report endpoint for participants, and the
+   queue for administrators. Kept off `/api/chat` by construction; this is where "who reads the
+   queue" and "how long is a report kept" get answered, and where `PRIVACY-API-CONTRACT.md` gains
+   the GDPR-export decision from §6.
+5. ⬜ **SSE** — the per-user registry, the event on commit, a frontend hook modelled on `useDraft`.
+6. ⬜ **Presence** — heartbeat, roster endpoint, the online/offline view.
+7. ⬜ **Push** — the new category with all three locales in the same commit.
 
 ## 9. Related
 
