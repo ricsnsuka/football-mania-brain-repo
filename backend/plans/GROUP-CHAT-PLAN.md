@@ -1,18 +1,21 @@
 # Ephemeral Group Chat & Presence — Technical Specification
 
 **Date:** 2026-08-21, updated 2026-08-22
-**Status:** **IN PROGRESS — steps 1–5 of 7 in review.** The eight questions in §7 are answered, and
+**Status:** **IN PROGRESS — steps 1–6 of 7 in review.** The eight questions in §7 are answered, and
 so are §6's two privacy questions. Backend: schema
 [#210](https://github.com/ricsnsuka/FootMania-Back/pull/210) → send-and-read
 [#211](https://github.com/ricsnsuka/FootMania-Back/pull/211) → retention
 [#212](https://github.com/ricsnsuka/FootMania-Back/pull/212) → reporting and moderation
 [#213](https://github.com/ricsnsuka/FootMania-Back/pull/213) → SSE
-[#214](https://github.com/ricsnsuka/FootMania-Back/pull/214), **stacked in that order and to be
+[#214](https://github.com/ricsnsuka/FootMania-Back/pull/214) → presence
+[#215](https://github.com/ricsnsuka/FootMania-Back/pull/215), **stacked in that order and to be
 merged in it**. Frontend:
-[FootMania-Simple-Front#72](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/72), the chat
-stream hook, based on `release/2.0.0`. **Nothing is merged and nothing is deployed** — and when it
-is, the backend goes first, per [deployment topology](../../architecture/). §4 carries the fifth
-table the moderation answer required; §7 records the answers rather than the questions.
+[FootMania-Simple-Front#72](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/72), carrying
+both the stream and presence hooks, based on `release/2.0.0`. **Nothing is merged and nothing is
+deployed** — and when it is, the backend goes first. Only **step 7 (push)** remains, and after it
+the chat *screens*, which this plan never covered: every frontend deliverable so far is a hook.
+§4 carries the fifth table the moderation answer required; §7 records the answers rather than the
+questions.
 **Target release:** `2.0.0` — branches off `release/2.0.0` in both repos, per the freeze in
 [CONTRIBUTING.md](../../CONTRIBUTING.md#branches-and-releases)
 **Estimated effort:** L — the largest single feature since tenancy. Backend ≈3–4 days, frontend
@@ -307,7 +310,19 @@ than the original six: answering §7.1's moderation question added the reporting
    - **Inactivity deaths emit nothing**, deliberately: the sweep deletes in bulk and does not know
      which conversations it took. A vanished conversation is noticed as a 404, which the contract
      already called ordinary.
-6. ⬜ **Presence** — heartbeat, roster endpoint, the online/offline view.
+6. ✅ **Presence** — [FootMania-Back#215](https://github.com/ricsnsuka/FootMania-Back/pull/215) and
+   the frontend hook on FootMania-Simple-Front#72. 16 tests. Presence is a **timestamp and a
+   threshold**, never a connection count — deriving it from open emitters would report the whole
+   group offline after every deploy. The open stream writes the timestamp (which is a different
+   thing), so the registry now carries each subscription's tenant: presence is per-group and one
+   stream would otherwise know somebody was here but not where.
+   - **Two deliberate restraints, both asserted:** no last-seen timestamp (the request asked who is
+     online; a log of somebody's habits visible to everyone they play with is a different feature
+     nobody asked for) and no presence event on the SSE stream (a group of twenty would produce a
+     constant trickle of arrive/depart frames to keep a dot the right colour). Poll at half the
+     window instead — presence is stale by construction, so nothing is lost.
+   - The roster is the **membership marked up**, not the presence table: somebody who has never
+     opened chat is offline rather than absent.
 7. ⬜ **Push** — the new category with all three locales in the same commit.
 
 ## 9. Related
