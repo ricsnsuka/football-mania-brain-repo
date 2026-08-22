@@ -1,12 +1,13 @@
 # Ephemeral Group Chat & Presence — Technical Specification
 
 **Date:** 2026-08-21, updated 2026-08-22
-**Status:** **IN PROGRESS — steps 1 and 2 of 7 in review.** The eight questions in §7 are answered.
-The schema is in [FootMania-Back#210](https://github.com/ricsnsuka/FootMania-Back/pull/210); the
-send-and-read endpoints and `docs/api/CHAT-API-CONTRACT.md` are in
-[#211](https://github.com/ricsnsuka/FootMania-Back/pull/211), stacked on it. **Nothing is merged
-and nothing is deployed.** §4 carries the fifth table the moderation answer required; §7 records
-the answers rather than the questions.
+**Status:** **IN PROGRESS — steps 1–3 of 7 in review.** The eight questions in §7 are answered.
+Schema in [FootMania-Back#210](https://github.com/ricsnsuka/FootMania-Back/pull/210);
+send-and-read plus `docs/api/CHAT-API-CONTRACT.md` in
+[#211](https://github.com/ricsnsuka/FootMania-Back/pull/211); retention in
+[#212](https://github.com/ricsnsuka/FootMania-Back/pull/212). The three are **stacked in that
+order** and must merge in it. **Nothing is merged and nothing is deployed.** §4 carries the fifth
+table the moderation answer required; §7 records the answers rather than the questions.
 **Target release:** `2.0.0` — branches off `release/2.0.0` in both repos, per the freeze in
 [CONTRIBUTING.md](../../CONTRIBUTING.md#branches-and-releases)
 **Estimated effort:** L — the largest single feature since tenancy. Backend ≈3–4 days, frontend
@@ -259,9 +260,17 @@ than the original six: answering §7.1's moderation question added the reporting
    - **The OWASP encoder is the wrong tool** and was never used: the API returns JSON, which
      Jackson escapes, to a React client that renders text. §7.8's answer stands, but the mechanism
      named in it does not — corrected in the code.
-3. ⬜ **Retention** — the two scheduled jobs, `TenantContext.runAs`, and tests that advance a clock
-   rather than sleeping. Note the reads already filter on `expires_at > now`, so this step reclaims
-   space rather than being what makes the promise true.
+3. ✅ **Retention** — two sweeps on one fifteen-minute tick, with the clock passed in rather than
+   read. [FootMania-Back#212](https://github.com/ricsnsuka/FootMania-Back/pull/212), stacked on
+   #211. 17 tests. **The plan's `TenantContext.runAs` was not used, deliberately:** neither sweep
+   reads a bound tenant — both are single bulk statements, and the windows are product constants
+   rather than per-group settings — so binding one would change no row and looping the
+   organizations would issue two statements per group to apply the same two constants. If a group
+   ever gets its own retention window, this is the code that becomes a loop. `ChatRetentionIT`
+   asserts the global behaviour across two tenants so that change fails loudly.
+   - Also worth keeping: the cron had to become a property (`app.chat.retention.cron`, `-` to
+     disable) because the sweep is global and absolute and would delete rows a test had just
+     seeded — a flake that would have read as a bad assertion rather than as the scheduler working.
 4. ⬜ **Reporting and the moderation surface** — the report endpoint for participants, and the
    queue for administrators. Kept off `/api/chat` by construction; this is where "who reads the
    queue" and "how long is a report kept" get answered, and where `PRIVACY-API-CONTRACT.md` gains
