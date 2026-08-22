@@ -1,15 +1,18 @@
 # Ephemeral Group Chat & Presence — Technical Specification
 
 **Date:** 2026-08-21, updated 2026-08-22
-**Status:** **IN PROGRESS — steps 1–4 of 7 in review.** The eight questions in §7 are answered, and
-so are §6's two privacy questions. Schema in
-[FootMania-Back#210](https://github.com/ricsnsuka/FootMania-Back/pull/210); send-and-read plus
-`docs/api/CHAT-API-CONTRACT.md` in [#211](https://github.com/ricsnsuka/FootMania-Back/pull/211);
-retention in [#212](https://github.com/ricsnsuka/FootMania-Back/pull/212); reporting and the
-moderation surface in [#213](https://github.com/ricsnsuka/FootMania-Back/pull/213). The four are
-**stacked in that order** and must merge in it. **Nothing is merged and nothing is deployed.** §4
-carries the fifth table the moderation answer required; §7 records the answers rather than the
-questions.
+**Status:** **IN PROGRESS — steps 1–5 of 7 in review.** The eight questions in §7 are answered, and
+so are §6's two privacy questions. Backend: schema
+[#210](https://github.com/ricsnsuka/FootMania-Back/pull/210) → send-and-read
+[#211](https://github.com/ricsnsuka/FootMania-Back/pull/211) → retention
+[#212](https://github.com/ricsnsuka/FootMania-Back/pull/212) → reporting and moderation
+[#213](https://github.com/ricsnsuka/FootMania-Back/pull/213) → SSE
+[#214](https://github.com/ricsnsuka/FootMania-Back/pull/214), **stacked in that order and to be
+merged in it**. Frontend:
+[FootMania-Simple-Front#72](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/72), the chat
+stream hook, based on `release/2.0.0`. **Nothing is merged and nothing is deployed** — and when it
+is, the backend goes first, per [deployment topology](../../architecture/). §4 carries the fifth
+table the moderation answer required; §7 records the answers rather than the questions.
 **Target release:** `2.0.0` — branches off `release/2.0.0` in both repos, per the freeze in
 [CONTRIBUTING.md](../../CONTRIBUTING.md#branches-and-releases)
 **Estimated effort:** L — the largest single feature since tenancy. Backend ≈3–4 days, frontend
@@ -291,7 +294,19 @@ than the original six: answering §7.1's moderation question added the reporting
      a group the caller actively belongs to — but the participant rows would have restored old
      conversations to anybody who rejoined. Now cleared, direct threads first; reports about the
      departing member are deliberately kept.
-5. ⬜ **SSE** — the per-user registry, the event on commit, a frontend hook modelled on `useDraft`.
+5. ✅ **SSE** — [FootMania-Back#214](https://github.com/ricsnsuka/FootMania-Back/pull/214) and
+   [FootMania-Simple-Front#72](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/72), the
+   first step touching both repos. 29 tests. **The recipient list is the authorization boundary** —
+   nothing in the delivery path re-checks participation, so recipients are resolved inside the
+   sending transaction from the same two sources authorization uses, and the registry test asserts
+   who does *not* receive a message.
+   - **A keep-alive the draft stream never needed.** Heroku's router closes any connection that
+     transmits nothing for 55 seconds. Draft events are frequent; an idle chat stream is silent for
+     hours, so a comment frame every 25s is what stops every client reconnecting once a minute for
+     as long as the app is open. Clients must skip lines starting with `:` rather than parse them.
+   - **Inactivity deaths emit nothing**, deliberately: the sweep deletes in bulk and does not know
+     which conversations it took. A vanished conversation is noticed as a 404, which the contract
+     already called ordinary.
 6. ⬜ **Presence** — heartbeat, roster endpoint, the online/offline view.
 7. ⬜ **Push** — the new category with all three locales in the same commit.
 
