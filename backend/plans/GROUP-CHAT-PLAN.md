@@ -1,21 +1,30 @@
 # Ephemeral Group Chat & Presence — Technical Specification
 
 **Date:** 2026-08-21, updated 2026-08-22
-**Status:** **IN PROGRESS — steps 1–6 of 7 in review.** The eight questions in §7 are answered, and
-so are §6's two privacy questions. Backend: schema
+**Status:** **ALL SEVEN STEPS BUILT — in review, nothing merged, nothing deployed.** The eight
+questions in §7 are answered and so are §6's two privacy questions.
+
+**Backend, stacked in this order and to be merged in it:** schema
 [#210](https://github.com/ricsnsuka/FootMania-Back/pull/210) → send-and-read
 [#211](https://github.com/ricsnsuka/FootMania-Back/pull/211) → retention
 [#212](https://github.com/ricsnsuka/FootMania-Back/pull/212) → reporting and moderation
 [#213](https://github.com/ricsnsuka/FootMania-Back/pull/213) → SSE
 [#214](https://github.com/ricsnsuka/FootMania-Back/pull/214) → presence
-[#215](https://github.com/ricsnsuka/FootMania-Back/pull/215), **stacked in that order and to be
-merged in it**. Frontend:
-[FootMania-Simple-Front#72](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/72), carrying
-both the stream and presence hooks, based on `release/2.0.0`. **Nothing is merged and nothing is
-deployed** — and when it is, the backend goes first. The chat **screens** are built too —
-[FootMania-Simple-Front#73](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/73), stacked on
-#72 — which this plan never covered: every other frontend deliverable here is a hook. Only
-**step 7 (push)** remains.
+[#215](https://github.com/ricsnsuka/FootMania-Back/pull/215) → push
+[#216](https://github.com/ricsnsuka/FootMania-Back/pull/216).
+
+**Frontend, also stacked:** hooks
+[#72](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/72) → the chat and moderation
+**screens** [#73](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/73) → the push category
+label [#74](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/74), all based on
+`release/2.0.0`. The screens were never part of this plan — it is a backend plan, and every
+frontend item in its seven steps is a hook — but seven steps with nothing to click is not a
+feature, so they were built alongside.
+
+**When this ships the backend goes first**, and the frontend must not deploy ahead of it.
+⚠️ **The screens have not been exercised against a running backend**: they build and serve, but the
+content sits behind the auth guard.
+
 §4 carries the fifth table the moderation answer required; §7 records the answers rather than the
 questions.
 **Target release:** `2.0.0` — branches off `release/2.0.0` in both repos, per the freeze in
@@ -325,7 +334,19 @@ than the original six: answering §7.1's moderation question added the reporting
      window instead — presence is stale by construction, so nothing is lost.
    - The roster is the **membership marked up**, not the presence table: somebody who has never
      opened chat is offline rather than absent.
-7. ⬜ **Push** — the new category with all three locales in the same commit.
+7. ✅ **Push** — [FootMania-Back#216](https://github.com/ricsnsuka/FootMania-Back/pull/216) and
+   [FootMania-Simple-Front#74](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/74).
+   12 tests. **The message text is deliberately not in the payload** — a push notification outlives
+   the message it is about: it sits in the OS notification centre after the row is deleted, is
+   legible on a lock screen, and cannot be withdrawn. It is the one surface where a message would
+   escape both its 24 hours and its participants, so the notification says who and where only.
+   - **Nobody online is notified** — a current heartbeat means the stream already delivered it, and
+     buzzing somebody reading the message is how a channel gets muted. Presence rather than the
+     emitter registry, because it degrades the right way after a deploy.
+   - **No throttle, and none needed:** the service worker already tags by category and replaces
+     silently, so a burst becomes one notification that updates.
+   - `PushNotificationService.notifyUsers` was added: every existing entry point takes a
+     `playerId`, and a member with no player row still chats.
 
 ## 9. Related
 
