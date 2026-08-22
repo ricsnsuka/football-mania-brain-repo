@@ -1,11 +1,12 @@
 # Ephemeral Group Chat & Presence — Technical Specification
 
 **Date:** 2026-08-21, updated 2026-08-22
-**Status:** **IN PROGRESS — step 1 of 7 in review.** The eight questions in §7 are answered, and
-the schema, entities and repositories are in
-[FootMania-Back#210](https://github.com/ricsnsuka/FootMania-Back/pull/210) against
-`release/2.0.0`. Nothing is merged and nothing is deployed. §4 has been amended to carry the fifth
-table the moderation answer required; §7 now records the answers rather than the questions.
+**Status:** **IN PROGRESS — steps 1 and 2 of 7 in review.** The eight questions in §7 are answered.
+The schema is in [FootMania-Back#210](https://github.com/ricsnsuka/FootMania-Back/pull/210); the
+send-and-read endpoints and `docs/api/CHAT-API-CONTRACT.md` are in
+[#211](https://github.com/ricsnsuka/FootMania-Back/pull/211), stacked on it. **Nothing is merged
+and nothing is deployed.** §4 carries the fifth table the moderation answer required; §7 records
+the answers rather than the questions.
 **Target release:** `2.0.0` — branches off `release/2.0.0` in both repos, per the freeze in
 [CONTRIBUTING.md](../../CONTRIBUTING.md#branches-and-releases)
 **Estimated effort:** L — the largest single feature since tenancy. Backend ≈3–4 days, frontend
@@ -246,10 +247,18 @@ than the original six: answering §7.1's moderation question added the reporting
 1. ✅ **Schema and model** — `V41`, the five entities, repositories, tenancy annotations.
    [FootMania-Back#210](https://github.com/ricsnsuka/FootMania-Back/pull/210), in review. 11
    integration tests for what only the migration can express, 12 unit tests for the lifecycle rules.
-2. ⬜ **Send and read, no realtime** — endpoints, service, participation-only authorization,
-   `docs/api/CHAT-API-CONTRACT.md`, and the negative admin test asserting **404, not 403**. Polling
-   is enough to prove it works. Also the lazy get-or-create of the `EVERYONE` channel, including
-   re-reading through the unique-index race.
+2. ✅ **Send and read, no realtime** — six endpoints, `docs/api/CHAT-API-CONTRACT.md`, and
+   `ChatPrivacyIT` asserting **404, not 403** against a real `GROUP_ADMIN` membership.
+   [FootMania-Back#211](https://github.com/ricsnsuka/FootMania-Back/pull/211), stacked on #210.
+   46 tests. Two things the build taught that the plan had not anticipated:
+   - **The `EVERYONE` race needs its own bean.** The loser of the creation race cannot re-read
+     inside the transaction that hit the constraint — `DataIntegrityViolationException` marks it
+     rollback-only — so the insert needs `REQUIRES_NEW`, and Spring's proxy-based transactions mean
+     a private method on `ChatService` would carry the annotation and silently ignore it. Hence
+     `EveryoneChannelProvisioner`.
+   - **The OWASP encoder is the wrong tool** and was never used: the API returns JSON, which
+     Jackson escapes, to a React client that renders text. §7.8's answer stands, but the mechanism
+     named in it does not — corrected in the code.
 3. ⬜ **Retention** — the two scheduled jobs, `TenantContext.runAs`, and tests that advance a clock
    rather than sleeping. Note the reads already filter on `expires_at > now`, so this step reclaims
    space rather than being what makes the promise true.
