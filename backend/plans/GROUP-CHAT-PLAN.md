@@ -12,8 +12,10 @@ so are §6's two privacy questions. Backend: schema
 merged in it**. Frontend:
 [FootMania-Simple-Front#72](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/72), carrying
 both the stream and presence hooks, based on `release/2.0.0`. **Nothing is merged and nothing is
-deployed** — and when it is, the backend goes first. Only **step 7 (push)** remains, and after it
-the chat *screens*, which this plan never covered: every frontend deliverable so far is a hook.
+deployed** — and when it is, the backend goes first. The chat **screens** are built too —
+[FootMania-Simple-Front#73](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/73), stacked on
+#72 — which this plan never covered: every other frontend deliverable here is a hook. Only
+**step 7 (push)** remains.
 §4 carries the fifth table the moderation answer required; §7 records the answers rather than the
 questions.
 **Target release:** `2.0.0` — branches off `release/2.0.0` in both repos, per the freeze in
