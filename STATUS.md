@@ -13,15 +13,50 @@ which is the only honest thing a status page can do with them.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `7c42f91` — identical to `main`; `git log next..main` prints nothing | `17213a9` — the same, and the same check passes |
-| Release | **`1.9.2`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`1.9.1`** — `package.json` and both `package-lock.json` self-references. **The numbers diverge again, deliberately**: `1.9.2` is backend-only (like `1.9.0`), so the frontend skips it rather than shipping an empty bump |
-| Running in production | ⚠️ **`7c42f91` was pushed to `main` (2026-08-09 evening), and nothing has confirmed it booted.** Heroku builds every push, so the deploy was triggered — but neither `heroku releases -a footmania` nor `/api/version` was read back: this release was cut from the same kind of environment as `1.9.1`, and the egress proxy answered `403` on the CONNECT to the production host when it was actually tried this time. **Treat as unconfirmed until somebody asks the platform.** | **`17213a9`**, confirmed against Netlify: deploy `6a78d8910023d00008ea4252`, `ready`, context `production`, `commit_ref` matching, published `2026-08-09T19:45:10Z` — reporting `1.9.1` while running past it, see below |
-| `main` head | `7c42f91` — **1.9.2** (Rating Model v2.2 + the goal-type breakdown, now versioned) | `17213a9` — 1.9.1 plus the frontend live-sync fixes, still unversioned by owner decision |
+| `next` head | `7f015ca` — identical to `main`, checked: `git log next..main` prints nothing | `097916a` — the same, and the same check passes |
+| Release | **`2.0.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.0.0`** — `package.json`. The numbers converge again: this release is both halves |
+| Running in production | **`7f015ca`, confirmed by asking the platform.** Heroku release **v69**, `Deploy 7f015ca1`, 2026-08-23 01:05:40 +0100. `/api/version` reports `2.0.0` (build `2026-08-23T00:05:20.910Z`), `/api/health` is `UP` | **`097916a`, confirmed against Netlify:** deploy `6a8a3c8f2bc77a0009d3c415`, `ready`, context `production`, `commit_ref` matching, published `2026-08-23T00:20:15Z`. Also read back from the live site — `/chat` and `/moderation` answer `200` while a nonsense path answers `404`, so the new routes are genuinely served rather than swallowed by a catch-all |
+| `main` head | `7f015ca` — **2.0.0**: group chat, presence, moderation, and the Ballon d'Or eligibility rule | `097916a` — **2.0.0**: the chat and moderation screens, both hooks, the restructured navbar |
 | Working tree | clean | clean |
-| Tests | **1356 unit**, SpotBugs clean, and the **Testcontainers tier green in CI** — the whole matrix passed on both `1.9.2` PR heads (`#205`, `#206`) | **826 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines are **stale**, see below |
-| Latest migration | **`V39__api_tokens.sql`** — on `main`; `1.9.2` carries none | — |
-| Deployed through | **`V39` was pushed**; that it applied is ⚠️ unconfirmed for the same reason the running version is. The full `V1`–`V39` chain *was* applied and validated against the entity mappings on a real PostgreSQL 16 before release — see below | — |
-| Tags | `v1.0.0` → **`v1.7.0`**. ⚠️ **None of `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` exists on the remote** — see below | `v1.1.0` → `v1.4.2`, then `v1.6.0`, `v1.7.0`. ⚠️ **Neither `v1.8.0` nor `v1.9.1` exists on the remote** — see below. There will never be a `v1.9.0` or `v1.9.2` here, and that is correct |
+| Tests | **1489 unit + 146 integration**, SpotBugs clean, full CI matrix green on the release PRs | **884 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines were stale as of 1.9.1 and are **not** re-verified here |
+| Latest migration | **`V41__chat_and_presence.sql`** — five tables, additive | — |
+| Deployed through | **`V41`, confirmed applied**: `flyway_schema_history` shows `41 · chat and presence · success = t · 2026-08-23 00:05:50`, read from production | — |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v2.0.0`** — pushed, at the deployed commit. ⚠️ `v1.8.0`–`v1.9.2` and `v1.10.0` still do not exist on the remote | `v1.1.0` → `v1.4.2`, `v1.6.0`, `v1.7.0`, then **`v2.0.0`** — pushed. ⚠️ `v1.8.0`, `v1.9.1` and `v1.10.0` still missing |
+
+## 2.0.0 — group chat, shipped and confirmed 2026-08-23
+
+**The major number moved for chat**, the first feature since tenancy to add a whole surface: five
+tables (`V41`), thirteen endpoints, an SSE stream, a moderation queue, a `CHAT_MESSAGE` push
+category, and the screens for all of it.
+
+**Deployed in order, each half confirmed before the next moved.** Backend merged → Heroku v69 →
+`/api/version` read back → `V41` verified in `flyway_schema_history` → *then* the frontend. That
+ordering is not ceremony here: the chat screens call endpoints `1.10.0` does not have, and a 404 in
+chat legitimately means "gone", so a frontend that went first would have rendered an *empty* chat
+rather than an error. It would have looked like a working feature nobody had used.
+
+**The freeze on `next` is over.** It existed so the 2.0.0 set could be assembled on
+`release/2.0.0` and enter `next` as one merge, which is what happened. Ordinary branch-then-`next`
+flow resumes.
+
+⚠️ **Two things carried into production knowingly.**
+
+- **The chat screens have never been exercised against a running backend with data.** They ship on
+  884 passing tests, a clean type-check and a clean build, with everything behind the auth guard
+  untested in anger. The API is live now, so this is finally testable — it should be done rather
+  than waited on.
+- **Chat's realtime layer assumes `web=1`.** The SSE registry is in-memory and per-JVM. Heroku Basic
+  cannot scale horizontally, so this holds by construction *today* — but moving to Standard and
+  running two dynos breaks message delivery **silently**: each process knows only its own
+  subscribers, roughly half of every conversation never arrives, and nothing errors or logs.
+
+**`V41` is additive** — five tables created, nothing dropped — so unlike `V40`, `V29` and `V22` the
+previous jar starts against the migrated schema. Rollback is a redeploy, not a restore.
+
+**CI gained a `test-model` slice, and it was overdue.** `verifyTestSplit` failed the release build:
+thirteen tests in a new `model` package belonged to no CI slice and would never have run in CI —
+passing locally on every run while every green PR check silently skipped them. That guard exists
+because the same thing happened twice before, to `security` and to `config`/`tenancy`.
 
 ## The unversioned ship on top of 1.9.1 — deliberate, owner's call
 
