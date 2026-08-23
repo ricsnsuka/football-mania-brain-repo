@@ -39,16 +39,24 @@ rather than an error. It would have looked like a working feature nobody had use
 `release/2.0.0` and enter `next` as one merge, which is what happened. Ordinary branch-then-`next`
 flow resumes.
 
-⚠️ **Two things carried into production knowingly.**
+**Both of the release's open questions are now closed by the owner (2026-08-23).**
 
-- **The chat screens have never been exercised against a running backend with data.** They ship on
-  884 passing tests, a clean type-check and a clean build, with everything behind the auth guard
-  untested in anger. The API is live now, so this is finally testable — it should be done rather
-  than waited on.
-- **Chat's realtime layer assumes `web=1`.** The SSE registry is in-memory and per-JVM. Heroku Basic
-  cannot scale horizontally, so this holds by construction *today* — but moving to Standard and
-  running two dynos breaks message delivery **silently**: each process knows only its own
-  subscribers, roughly half of every conversation never arrives, and nothing errors or logs.
+- ✅ **Chat has been exercised against production and works.** It shipped having never been run
+  against a live backend with data — 884 passing tests, a clean type-check and a clean build, with
+  everything behind the auth guard untested in anger — and the owner tested the live feature after
+  deployment and confirmed it working. The gap is closed by use rather than by a test, which is
+  worth knowing: there is still no automated coverage of the screens against a real API.
+- ✅ **Staying on the current Heroku settings is an owner decision.** The SSE registry is in-memory
+  and per-JVM, so chat's realtime layer only works on one dyno. The owner has decided to keep the
+  present configuration (`web=1:Basic`), which makes this a **deliberate accepted constraint rather
+  than an unexamined risk** — Basic cannot scale horizontally, so the assumption holds by
+  construction.
+
+  ⚠️ **The trigger to re-open this is a change of dyno tier, not of dyno count.** Moving to Standard
+  or Performance makes a second dyno possible, and two dynos break message delivery **silently**:
+  each process knows only its own subscribers, roughly half of every conversation never arrives,
+  and nothing errors or logs. Sticky sessions or a broker must come first. Anyone changing the
+  formation should read this line before doing it.
 
 **`V41` is additive** — five tables created, nothing dropped — so unlike `V40`, `V29` and `V22` the
 previous jar starts against the migrated schema. Rollback is a redeploy, not a restore.
