@@ -412,9 +412,11 @@ disable push rather than shipping a key.
   be checked without taking this document's word for it. **Findings 4, 6 and 7 in particular deserve
   a runtime confirmation before anybody spends time on them** — they are the three where a test run
   would settle it in seconds.
-- **No dependency/CVE scan.** The last one on record is
-  [SECURITY-AUDIT-2025-07-09](../backend/security/SECURITY-AUDIT-2025-07-09.md), which is thirteen
-  months old and predates the Next.js 16 / React 19 / Tailwind 4 upgrades.
+- ~~**No dependency/CVE scan.**~~ ✅ **Done 2026-08-24** —
+  [DEPENDENCY-CVE-SCAN-2026-08-24](../backend/security/DEPENDENCY-CVE-SCAN-2026-08-24.md). The last
+  one on record had been thirteen months old. The scan found **~70 advisories** on the backend
+  classpath and **7 high** in the frontend lockfile, cleared all of them without a single major
+  upgrade, and put a failing CI check behind both so this line cannot come back.
 - **The visual suite was not touched.** It cannot be meaningfully run off Windows —
   [hazard 7](../STATUS.md#live-hazards) — and [hazard 8](../STATUS.md#live-hazards) makes running it
   on Linux actively misleading.
