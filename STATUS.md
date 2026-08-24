@@ -690,6 +690,15 @@ reason this repo exists.
    Still open, and now with three production sightings behind it — see the drift section. The
    template exists: `modifierClassParity.test.ts` does exactly this for CSS modifiers. Point the
    same shape at `NotificationCategory`, `AppSetting` and `Role` against `en`/`pt`/`es`.
+
+   ⚠️ **Add `GenerationType` to that list, and expect the test to fail on the day it is written.**
+   The [2026-08-24 code review](architecture/code-review-2026-08-24.md) checked all three named
+   enums by hand and found them **complete in all three locales**, along with `Badge`, `MatchType`,
+   `ConfirmationStatus`, `SeasonAwardType`, `ChatConversationKind` and `ApiTokenScope` — and found
+   that `teamGeneration.generationType.MANUAL` does not exist in any locale, while every match
+   recorded by hand carries exactly that value. Four sightings now, and the fourth was in the one
+   family nobody had thought to list. Raw key-file parity is separately clean: 1390 keys in each of
+   `en`, `pt` and `es`, identical sets.
 7. ~~**Decide what `next` is for.**~~ ✅ Answered 2026-08-04: **revived.** Work goes to `next`;
    `main` moves only when a release is cut. Both branches re-synced to `1.3.1` — see the top of this
    file for the flow.
@@ -702,7 +711,13 @@ reason this repo exists.
    ways round against real PostgreSQL, and it had to — a partial unique index is not expressible in
    the JPA entity, so an implementation that flushed both `is_current` updates together would pass
    every unit test in the build and fail on the first group to own two seasons.
-9. Then Phase 3's last item — AI match reports. Billing is on hold.
+9. **Work the [2026-08-24 code review](architecture/code-review-2026-08-24.md).** A whole-codebase
+   read of `2.0.0` across both repos, with eight open findings and a suggested branch split. Nothing
+   in it is an outage and nothing in it contradicts a hazard above; the two worth reading first are
+   a promise `MatchFeeService` makes about concurrent charge generation that it does not keep, and a
+   reconnect guard `useChatStream` has and `useDraftSessionSSE` — the hook it was modelled on —
+   never got.
+10. Then Phase 3's last item — AI match reports. Billing is on hold.
 
 ---
 
@@ -713,3 +728,14 @@ reason this repo exists.
   account a member of the current group" about the caller reading *their own record*. Fixed in
   `1.3.0`, together with the rule that removes the ambiguity: **an account is either a platform
   operator or a member of groups, never both** (`V35`).
+
+  ⚠️ **The rule is narrower than the bug, and the rest of it is still open.** `V35` settles the
+  *operator* account. It says nothing about the ordinary one, and `POST /api/users/register`
+  deliberately creates an account with no membership — so a newly registered user who has not yet
+  accepted an invite or founded a group still meets `TenantContext.currentTenant()`, which throws,
+  at every tenant-scoped endpoint: 100 call sites across 21 services, each answering **500** where
+  `TenantResolver`'s own javadoc says tenant-scoped endpoints should *refuse*. `GET /api/chat/presence`
+  is the shortest reproduction. `PlatformOperatorAccountIT` predicted this in its own javadoc — "a
+  fix without the rule just waits for the next endpoint" — and it was right about the mechanism and
+  optimistic about the rule. Finding 3 of the
+  [2026-08-24 code review](architecture/code-review-2026-08-24.md).

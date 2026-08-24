@@ -20,6 +20,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V33 history + deployment state |
 | [architecture/multi-tenancy](architecture/multi-tenancy.md) | Phase 5 cross-repo contract: tenant resolution, cache/key rules, the rollout ladder |
 | [architecture/app-store-strategy](architecture/app-store-strategy.md) 📝 | Phase 4 draft: the Capacitor route, the four obstacles, and when *not* to start |
+| [architecture/code-review-2026-08-24](architecture/code-review-2026-08-24.md) ⚠️ | Whole-codebase read of `2.0.0`, both repos. Eight open findings, ordered, with a suggested branch split |
 
 ---
 
@@ -50,6 +51,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 |---|---|
 | [INCIDENT 2026-05-26](backend/fixes/INCIDENT_2026-05-26_Java_Version_Mismatch.md) | Java 21 vs IntelliJ's 17 |
 | [SECURITY-AUDIT 2025-07-09](backend/security/SECURITY-AUDIT-2025-07-09.md) · [2025-07-16](backend/security/SECURITY-AUDIT-2025-07-16.md) | Two audit passes |
+| [code-review 2026-08-24](architecture/code-review-2026-08-24.md) | Cross-repo, so it lives in `architecture/` rather than here. Linked from Start here |
 
 ### Plans and handoffs
 
