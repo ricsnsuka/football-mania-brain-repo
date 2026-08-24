@@ -420,9 +420,11 @@ disable push rather than shipping a key.
 - **The visual suite was not touched.** It cannot be meaningfully run off Windows —
   [hazard 7](../STATUS.md#live-hazards) — and [hazard 8](../STATUS.md#live-hazards) makes running it
   on Linux actively misleading.
-- **`CalculationService` (1119 lines) was read for structure, not verified numerically.** The
-  rating formulas have their own document and worked examples; checking the arithmetic against them
-  is a separate exercise and a worthwhile one.
+- ~~**`CalculationService` was read for structure, not verified numerically.**~~ ✅ **Done 2026-08-24.**
+  Worked Example A is now a test. It found the example itself is incomplete — its RAW lines omit
+  the decisiveness and goal-difference terms, so the mid-table numbers are low while the two ends
+  are exact. The code is right; the document was not. Annotated in
+  [CALCULATION_SERVICE](../backend/features/CALCULATION_SERVICE.md#worked-examples-v22--escalating-ladder).
 
 ---
 

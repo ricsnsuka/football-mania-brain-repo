@@ -756,7 +756,7 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 | Where | Problem | Correction |
 |---|---|---|
 | [backend/architecture/ARCHITECTURE.md](backend/architecture/ARCHITECTURE.md) | Migration table stops at **V13** of 31, and the rest of it predates multi-tenancy | Superseded on migrations by [architecture/database-migrations.md](architecture/database-migrations.md); the layering and schema sections need a tenancy pass |
-| [backend/api/API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md) | No Push section, no Payments/match-fee section; `totalCostCents` on `MatchPlanDTO` still missing (it is now described in [backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md), but not in the reference) | Contracts exist standalone ([PUSH](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PUSH-API-CONTRACT.md), [PAYMENTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md)); the reference needs the sections and the field |
+| [backend/api/API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md) | No Push section, no Payments/match-fee section. ~~`totalCostCents` on `MatchPlanDTO` missing~~ | ✅ `totalCostCents` **added 2026-08-24**, along with the three derived booleans the example also lacked and the absent-is-not-zero warning; pinned by `MatchPlanControllerTest`. The Push and Payments sections are still absent — contracts exist standalone ([PUSH](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PUSH-API-CONTRACT.md), [PAYMENTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md)) |
 | ~~[backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md)~~ | Last touched 2026-05-27 — predated kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | ✅ **Resolved 2026-08-05.** Rewritten against the entities, the migrations and `MatchPlanController`: instant kickoff, `GENERATED` and the derived `expired`/`generatable`/`cancellable` flags, the derived waitlist, guests on `players`, `timeframe` and the ordering, pitch cost, post-V33 grants, and the weekly runs `1.3.0` added. The frontend side is now [frontend/features/match-plans.md](frontend/features/match-plans.md) |
 | ~~[backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md)~~ | Header read "DRAFT — not implemented"; it shipped in `828db3b` | ✅ **Resolved.** Corrected here on import, and the stale backend copy went with the documentation split — there is one copy now, and it is this one |
 | [backend/plans/ORCHESTRATOR_SESSION.md](backend/plans/ORCHESTRATOR_SESSION.md) | Last entry 2026-07-28, though `orchestrator.agent.md` still mandates an entry per session | Resume it, or retire the convention deliberately |
@@ -847,8 +847,9 @@ reason this repo exists.
    **Verified to fail for the right reason**: removing the `MANUAL` key from `en` gives
    `1 failed | 63 passed`.
 
-   ⏳ **The other half of this entry is still open** — the controller test asserting
-   `totalCostCents` serialises. Not written.
+   ✅ **And the other half, same day**: `MatchPlanControllerTest` now asserts `totalCostCents` reaches
+   the wire — set, zero, and absent — because `non_null` inclusion makes an unset cost *missing*
+   rather than null, and missing is not the same as `0`, which means the pitch was free.
 7. ~~**Decide what `next` is for.**~~ ✅ Answered 2026-08-04: **revived.** Work goes to `next`;
    `main` moves only when a release is cut. Both branches re-synced to `1.3.1` — see the top of this
    file for the flow.
