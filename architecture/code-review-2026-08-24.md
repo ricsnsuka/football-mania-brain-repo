@@ -1,8 +1,8 @@
 # Code review — 2026-08-24
 
 **Status:** review complete; **all eight findings worked on 2026-08-24**, in the suggested order.
-Seven pull requests are open against `next` in the two repos — **written and green, not merged and
-not deployed.** See [What was done about it](#what-was-done-about-it) at the foot of this file for
+Seven pull requests, **all merged into `next` on 2026-08-24 and none deployed** — `main` has not
+moved, and only `main` deploys.
 the branch-by-branch disposition, including the two places where the fix that shipped differs from
 the fix suggested here and why.
 
@@ -451,18 +451,18 @@ production sightings, and finding 7 is the fourth.
 
 ## What was done about it
 
-Worked on **2026-08-24**, in the order suggested above. Seven pull requests, all targeting `next`.
-**Written and green; not merged and not deployed** — nothing below is in production, and the
-backend half deploys first as usual when it is.
+Worked on **2026-08-24**, in the order suggested above. Seven pull requests, all targeting `next`,
+**all merged the same day.** Merge commits below. **Nothing is deployed** — `main` has not moved,
+and only `main` deploys; the backend half goes first as usual when it does.
 
-| Branch | Findings | Pull request |
-|---|---|---|
-| `fix/generation-type-manual` | 8 (backend), 4 + 7 (frontend) | [Back #220](https://github.com/ricsnsuka/FootMania-Back/pull/220) · [Front #78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) |
-| `fix/draft-sse-reconnect-guard` | 5 | [Front #79](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/79) |
-| `fix/tenant-context-clear-on-skipped-paths` | 1 | [Back #221](https://github.com/ricsnsuka/FootMania-Back/pull/221) |
-| `fix/charge-generation-race` | 2 | [Back #222](https://github.com/ricsnsuka/FootMania-Back/pull/222) |
-| `fix/groupless-account-refusal` | 3, 6 | [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223) |
-| `test/enum-locale-parity` | the closing item | [Front #80](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/80) — **stacked on Front #78**, which adds the key it requires |
+| Branch | Findings | Pull request | Merged as |
+|---|---|---|---|
+| `fix/generation-type-manual` | 8 (backend), 4 + 7 (frontend) | [Back #220](https://github.com/ricsnsuka/FootMania-Back/pull/220) · [Front #78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) | `05160ce` · `4178bc7` |
+| `fix/draft-sse-reconnect-guard` | 5 | [Front #79](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/79) | `6195381` |
+| `fix/tenant-context-clear-on-skipped-paths` | 1 | [Back #221](https://github.com/ricsnsuka/FootMania-Back/pull/221) | `91cbd10` |
+| `fix/charge-generation-race` | 2 | [Back #222](https://github.com/ricsnsuka/FootMania-Back/pull/222) | `bbb6600` |
+| `fix/groupless-account-refusal` | 3, 6 | [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223) | `b2f17d8` |
+| `test/enum-locale-parity` | the closing item | [Front #82](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/82) — opened as #80, which deleting #78's branch auto-closed | `d20d754` |
 
 ### Every fix has a test that fails without it
 
