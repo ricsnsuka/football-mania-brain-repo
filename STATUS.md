@@ -21,7 +21,7 @@ which is the only honest thing a status page can do with them.
 | Tests | **1489 unit + 146 integration**, SpotBugs clean, full CI matrix green on the release PRs | **884 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines were stale as of 1.9.1 and are **not** re-verified here |
 | Latest migration | **`V41__chat_and_presence.sql`** — five tables, additive | — |
 | Deployed through | **`V41`, confirmed applied**: `flyway_schema_history` shows `41 · chat and presence · success = t · 2026-08-23 00:05:50`, read from production | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v2.0.0`** — pushed, at the deployed commit. ⚠️ `v1.8.0`–`v1.9.2` and `v1.10.0` still do not exist on the remote | `v1.1.0` → `v1.4.2`, `v1.6.0`, `v1.7.0`, then **`v2.0.0`** — pushed. ⚠️ `v1.8.0`, `v1.9.1` and `v1.10.0` still missing |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`** (`3c85245`) and **`v2.0.0`** (`7f015ca`) — both on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`** (`3be25f3`) and **`v2.0.0`** (`097916a`). ⚠️ `v1.8.0` and `v1.9.1` are missing — **and so is `v1.7.0`**, which this row claimed for two weeks |
 
 ## 2.0.0 — group chat, shipped and confirmed 2026-08-23
 
@@ -88,6 +88,56 @@ that release's CHANGELOG section and version number. The frontend half (`#68`) r
 `1.9.2` is backend-only, so the frontend still reports `1.9.1` while running past it.
 
 ## 1.8.0 through 1.9.2 — the six tags that were not pushed
+
+✅ **The cause is known, and it is the release environment rather than the repository.** Both
+`v1.10.0` tags were created and pushed without incident on 2026-08-20, from a local checkout, using
+ordinary `git push origin v1.10.0` — the exact command recorded below as returning `403`. Both
+`v2.0.0` tags went the same way on 2026-08-23. **Nothing about either repository refuses tag
+writes**, so the ceiling described below belongs to the sandboxed environments those earlier
+releases were cut from and does not generalise. That matters for what to do next: this is a
+recoverable backlog, not a permissions problem to investigate.
+
+⚠️ **The outstanding ones are still missing, and knowing the cause did not fix them.** They exist
+only in the environments that created them, so they cannot simply be pushed from anywhere else —
+they would have to be **recreated at the commits those releases actually deployed**, and
+establishing which commit each one was is the work. `v1.9.2` is the tractable one: `main` was at
+`7c42f91`, and Heroku release **v67** `Deploy 7c42f910` confirms it. The rest need the same evidence
+assembled first, because a release tag placed from a status document rather than from the platform
+is how `v1.1.0` landed three deploys early. Left outstanding deliberately rather than guessed at —
+recreating them is a decision with a prerequisite, not a chore.
+
+### The inventory, read from the platform on 2026-08-24
+
+**This section's own count was wrong, in both directions, and so was the summary row above it.** Asked
+directly, GitHub's tag list says:
+
+| | Present | Missing |
+|---|---|---|
+| Backend | `v1.0.0`–`v1.7.0`, **`v1.10.0`**, **`v2.0.0`** | `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` |
+| Frontend | `v1.1.0`–`v1.4.2`, `v1.6.0`, **`v1.10.0`**, **`v2.0.0`** | `v1.7.0`, `v1.8.0`, `v1.9.1` |
+
+Three corrections fall out of that:
+
+- **`v1.10.0` exists in both repos** — at `3c85245` and `3be25f3`, the commits those halves deployed.
+  It was recorded as missing, which is what made the cause look unsolved for four days longer than
+  it was.
+- **Frontend `v1.7.0` does not exist**, and has been listed as present since it was written down. It
+  is a *seventh* outstanding tag that nobody has been counting, and unlike the others it has no
+  known reason — the environment story does not cover it.
+- **"Six tags" is right by luck**: four in the backend and two in the frontend for the 1.8.0–1.9.2
+  range. Adding frontend `v1.7.0` makes it seven outstanding in total.
+
+**The lesson is the one this file already teaches about tags, turned on itself.** *"A release tag is
+a claim about production, so it is only as good as the evidence behind it. Ask the platform, then
+tag."* This inventory was maintained by hand from what each release session believed it had done,
+and it drifted in both directions — claiming a tag that was never pushed, and denying two that were.
+Ask the platform, then *write it down*.
+
+*Cause established 2026-08-24, carried over from a 1.10.0 status pull request otherwise superseded by
+the 2.0.0 release ([#41](https://github.com/ricsnsuka/football-mania-brain-repo/pull/41)); the
+inventory was verified against GitHub while checking that pull request's claims, which is how the
+three errors surfaced. The original diagnosis follows, kept because it is accurate about those
+environments.*
 
 **Six tags are outstanding: `v1.8.0` and `v1.9.1` in both repos, and `v1.9.0` and `v1.9.2` in the
 backend.** None could be published, and the cause is settled rather than intermittent — see below.
