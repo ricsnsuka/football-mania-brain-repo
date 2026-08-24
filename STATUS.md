@@ -23,6 +23,27 @@ which is the only honest thing a status page can do with them.
 | Deployed through | **`V41`, confirmed applied**: `flyway_schema_history` shows `41 · chat and presence · success = t · 2026-08-23 00:05:50`, read from production | — |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`** (`3c85245`) and **`v2.0.0`** (`7f015ca`) — both on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`** (`3be25f3`) and **`v2.0.0`** (`097916a`). ⚠️ `v1.8.0` and `v1.9.1` are missing — **and so is `v1.7.0`**, which this row claimed for two weeks |
 
+## ⏳ Open pull requests — 2026-08-24, none merged
+
+**Seven, all targeting `next`, all from working the
+[2026-08-24 code review](architecture/code-review-2026-08-24.md).** Written and green; **nothing
+below is in `next`, in `main`, or in production**, and the table above still describes `2.0.0` as
+deployed. Read this before starting any of these findings again.
+
+| Repo | PR | Branch | What |
+|---|---|---|---|
+| Back | [#220](https://github.com/ricsnsuka/FootMania-Back/pull/220) | `fix/generation-type-manual` | the `generationType` "valid values" list, derived from the enum |
+| Back | [#221](https://github.com/ricsnsuka/FootMania-Back/pull/221) | `fix/tenant-context-clear-on-skipped-paths` | `TenantContext` and MDC cleared for `/actuator`, `/v3/api-docs`, `/swagger-ui` |
+| Back | [#222](https://github.com/ricsnsuka/FootMania-Back/pull/222) | `fix/charge-generation-race` | each racing insert in its own transaction — **changes an atomicity guarantee**, see step 9 |
+| Back | [#223](https://github.com/ricsnsuka/FootMania-Back/pull/223) | `fix/groupless-account-refusal` | `409` instead of `500` for a group-less caller, plus the chat `page` clamp |
+| Front | [#78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) | `fix/generation-type-manual` | `MANUAL` spelled as the server sends it, and its three locale keys |
+| Front | [#79](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/79) | `fix/draft-sse-reconnect-guard` | the draft stream stops reopening itself after unmount |
+| Front | [#80](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/80) | `test/enum-locale-parity` | the enum/locale parity test — **stacked on Front #78**, merge that first |
+
+**Merge order matters in two places.** Front #80 is based on Front #78 and fails without it. And
+the usual rule applies to the pair that spans both repos: **backend before frontend** — though for
+#220/#78 specifically the two halves are independent and neither ordering breaks anything.
+
 ## 2.0.0 — group chat, shipped and confirmed 2026-08-23
 
 **The major number moved for chat**, the first feature since tenancy to add a whole surface: five
@@ -706,9 +727,14 @@ noticing. Type checking cannot see it (string concatenation), and rendering test
 CSS modifier against `globals.css`, in both directions, with documented exemptions. It was verified
 to fail on a real break before being committed.
 
-⚠️ **The locale key-parity test still does not exist** — nothing checks that the locale files cover
-`NotificationCategory`, or `AppSetting`, or `Role`. The CSS one is a template for it; the settings
-labels above are precisely what it would have caught.
+✅ **And now the locale one**: `tests/lib/enumLocaleParity.test.ts`, written 2026-08-24
+([Front #80](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/80) — **open, not merged**).
+Ten enum families, not the three this section had been asking for, because the fourth sighting
+turned up in a family nobody had listed: `teamGeneration.generationType.MANUAL` was absent from all
+three locales while every hand-recorded match carried exactly that value. Raw key-file parity was
+spotless at the time — 1390 identical keys in each of `en`, `pt` and `es` — which is the point: **three
+files can agree perfectly and still be missing the same key.** Verified to fail on a real break
+before being committed, like the CSS one.
 
 The shape of all of this is the same: the code shipped, the follow-through did not. That is the
 reason this repo exists.
@@ -736,19 +762,27 @@ reason this repo exists.
    messages and cut as `[1.1.0]`. Keep fixing the rest of the drift table above.
 5. ~~Regenerate the Postman collection.~~ ✅ Done 2026-08-02 — and made a derived artefact, so this
    line cannot come back: `node postman/generate-collection.mjs` against a running app.
-6. **Add the locale key-parity test**, and a controller test asserting `totalCostCents` serialises.
-   Still open, and now with three production sightings behind it — see the drift section. The
-   template exists: `modifierClassParity.test.ts` does exactly this for CSS modifiers. Point the
-   same shape at `NotificationCategory`, `AppSetting` and `Role` against `en`/`pt`/`es`.
+6. ~~**Add the locale key-parity test.**~~ ✅ Written 2026-08-24 — `enumLocaleParity.test.ts`,
+   [Front #80](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/80). **Open, not merged.**
+   Stacked on [Front #78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78), which adds
+   the `MANUAL` key it requires; merging it first fails CI.
 
-   ⚠️ **Add `GenerationType` to that list, and expect the test to fail on the day it is written.**
-   The [2026-08-24 code review](architecture/code-review-2026-08-24.md) checked all three named
-   enums by hand and found them **complete in all three locales**, along with `Badge`, `MatchType`,
-   `ConfirmationStatus`, `SeasonAwardType`, `ChatConversationKind` and `ApiTokenScope` — and found
-   that `teamGeneration.generationType.MANUAL` does not exist in any locale, while every match
-   recorded by hand carries exactly that value. Four sightings now, and the fourth was in the one
-   family nobody had thought to list. Raw key-file parity is separately clean: 1390 keys in each of
-   `en`, `pt` and `es`, identical sets.
+   It came out wider than this entry asked for: **ten enum families**, not three —
+   `NotificationCategory`, `AppSetting` and `Role` as named, plus `GenerationType`, which is the one
+   nobody listed and the one that had actually drifted, plus the six the code review had checked by
+   hand (`Badge`, `MatchType`, `ConfirmationStatus`, `SeasonAwardType`, `ChatConversationKind`,
+   `ApiTokenScope`). Values come from an exported constant wherever one exists; the families whose
+   type is a bare union are written out with a `source` naming the Java enum they mirror, because
+   the frontend repository cannot read the backend's enum and saying so beats pretending otherwise.
+   It carries `modifierClassParity`'s two load-bearing habits — an `exempt` map that turns a
+   deliberate omission into an argument somebody can disagree with (`CAPTAIN_PICK` and
+   `STREAK_AWARE`), and an inverse check for a label whose value no enum has any more.
+
+   **Verified to fail for the right reason**: removing the `MANUAL` key from `en` gives
+   `1 failed | 63 passed`.
+
+   ⏳ **The other half of this entry is still open** — the controller test asserting
+   `totalCostCents` serialises. Not written.
 7. ~~**Decide what `next` is for.**~~ ✅ Answered 2026-08-04: **revived.** Work goes to `next`;
    `main` moves only when a release is cut. Both branches re-synced to `1.3.1` — see the top of this
    file for the flow.
@@ -761,12 +795,30 @@ reason this repo exists.
    ways round against real PostgreSQL, and it had to — a partial unique index is not expressible in
    the JPA entity, so an implementation that flushed both `is_current` updates together would pass
    every unit test in the build and fail on the first group to own two seasons.
-9. **Work the [2026-08-24 code review](architecture/code-review-2026-08-24.md).** A whole-codebase
-   read of `2.0.0` across both repos, with eight open findings and a suggested branch split. Nothing
-   in it is an outage and nothing in it contradicts a hazard above; the two worth reading first are
-   a promise `MatchFeeService` makes about concurrent charge generation that it does not keep, and a
-   reconnect guard `useChatStream` has and `useDraftSessionSSE` — the hook it was modelled on —
-   never got.
+9. ~~**Work the [2026-08-24 code review](architecture/code-review-2026-08-24.md).**~~ ✅ All eight
+   findings worked the same day, in the review's suggested order. **Seven pull requests, open
+   against `next` in both repos — written and green, not merged and not deployed.** The review's own
+   [What was done about it](architecture/code-review-2026-08-24.md#what-was-done-about-it) section
+   carries the branch-by-branch disposition; three things belong here rather than there:
+
+   ⚠️ **Charge generation is no longer atomic.** Finding 2 was fixed with `REQUIRES_NEW` per insert
+   (owner's call, over `INSERT … ON CONFLICT DO NOTHING`, which H2 cannot run and which would have
+   put all three sites beyond the unit tier). Each charge now commits in its own transaction, so a
+   failure part way through leaves the earlier charges committed where the batch used to be
+   all-or-nothing. Stated in `generateChargesFor`'s javadoc. **The trade is deliberate**, and it is
+   the right one for a method whose whole contract is that running it again finishes the job.
+
+   ⚠️ **A group-less caller now gets `409`, not `500`, from every tenant-scoped endpoint** —
+   [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223), documented in
+   `API_REFERENCE`. `TenantContext.currentTenant()` throws `UnboundTenantException` (still an
+   `IllegalStateException`, so nothing else changes) and the handler refuses **only** when the
+   caller genuinely holds no membership — a forgotten `runAs` keeps its 500 and its stack trace. No
+   frontend change: `AuthGuard` routes group-less users to onboarding, so this was an API-contract
+   defect rather than a visible one.
+
+   **Every fix has a test that fails without it**, each verified by reverting the change and
+   re-running rather than assumed. Both findings the review flagged as deserving runtime
+   confirmation turned out to be real.
 10. Then Phase 3's last item — AI match reports. Billing is on hold.
 
 ---
@@ -779,7 +831,17 @@ reason this repo exists.
   `1.3.0`, together with the rule that removes the ambiguity: **an account is either a platform
   operator or a member of groups, never both** (`V35`).
 
-  ⚠️ **The rule is narrower than the bug, and the rest of it is still open.** `V35` settles the
+  ✅ **The rest of it was closed on 2026-08-24** —
+  [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223), **open, not merged.** A
+  group-less caller now gets a `409` naming the state instead of a `500`, and only when they
+  genuinely hold no membership: a forgotten `runAs` keeps its `500` and its stack trace, and work
+  with no HTTP request behind it never reaches the handler at all. `GrouplessAccountRefusalIT`
+  proves it over HTTP with a real login, and pins the case the alternative fix would have broken —
+  `GET /api/users/me` still answers `200` with no group bound, which is this incident's own
+  endpoint. The paragraph below is what was true until then, kept because the reasoning in it is
+  what the fix was built against.
+
+  ⚠️ **The rule is narrower than the bug, and the rest of it was open for twenty days.** `V35` settles the
   *operator* account. It says nothing about the ordinary one, and `POST /api/users/register`
   deliberately creates an account with no membership — so a newly registered user who has not yet
   accepted an invite or founded a group still meets `TenantContext.currentTenant()`, which throws,

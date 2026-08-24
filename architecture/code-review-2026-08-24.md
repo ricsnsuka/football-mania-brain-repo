@@ -1,6 +1,11 @@
 # Code review — 2026-08-24
 
-**Status:** complete. Findings recorded, none fixed — every entry below is open work.
+**Status:** review complete; **all eight findings worked on 2026-08-24**, in the suggested order.
+Seven pull requests are open against `next` in the two repos — **written and green, not merged and
+not deployed.** See [What was done about it](#what-was-done-about-it) at the foot of this file for
+the branch-by-branch disposition, including the two places where the fix that shipped differs from
+the fix suggested here and why.
+
 **Scope:** both code repos at `main` — backend `7f015ca`, frontend `097916a`, i.e. `2.0.0` as
 deployed and confirmed on 2026-08-23.
 **Read alongside:** [STATUS.md](../STATUS.md) — the live hazards there are *not* repeated here, and
@@ -47,16 +52,16 @@ that test would do automatically, and it is in the one family nobody thought to 
 
 Ordered by what it would cost to be wrong about them, not by how interesting they are.
 
-| # | Where | What | Severity |
-|---|---|---|---|
-| 1 | backend | `TenantContext` is not cleared for three request paths | Medium — latent |
-| 2 | backend | A rule stated once in `EveryoneChannelProvisioner` is broken in three other services | Medium |
-| 3 | backend | A group-less account gets a **500** from every tenant-scoped endpoint | Medium |
-| 4 | frontend | `matchDTOSchema` rejects every manually-recorded match | Medium |
-| 5 | frontend | `useDraftSessionSSE` leaks a self-perpetuating reconnect loop past unmount | Medium |
-| 6 | backend | `page` is the one unclamped paging parameter, and a negative one is a 500 | Low |
-| 7 | both | `GenerationType.MANUAL` has no i18n key, and the TS union spells it lowercase | Low |
-| 8 | backend | `parseGenerationType`'s "valid values" list has drifted from the enum | Low |
+| # | Where | What | Severity | Fixed in |
+|---|---|---|---|---|
+| 1 | backend | `TenantContext` is not cleared for three request paths | Medium — latent | [Back #221](https://github.com/ricsnsuka/FootMania-Back/pull/221) |
+| 2 | backend | A rule stated once in `EveryoneChannelProvisioner` is broken in three other services | Medium | [Back #222](https://github.com/ricsnsuka/FootMania-Back/pull/222) |
+| 3 | backend | A group-less account gets a **500** from every tenant-scoped endpoint | Medium | [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223) |
+| 4 | frontend | `matchDTOSchema` rejects every manually-recorded match | Medium | [Front #78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) |
+| 5 | frontend | `useDraftSessionSSE` leaks a self-perpetuating reconnect loop past unmount | Medium | [Front #79](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/79) |
+| 6 | backend | `page` is the one unclamped paging parameter, and a negative one is a 500 | Low | [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223) |
+| 7 | both | `GenerationType.MANUAL` has no i18n key, and the TS union spells it lowercase | Low | [Front #78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) |
+| 8 | backend | `parseGenerationType`'s "valid values" list has drifted from the enum | Low | [Back #220](https://github.com/ricsnsuka/FootMania-Back/pull/220) |
 
 ---
 
@@ -441,3 +446,93 @@ much as to features.
 Then **write the locale parity test**. It is the only item here that prevents a class rather than an
 instance, [suggested next step 6](../STATUS.md#suggested-next-steps) has been open through three
 production sightings, and finding 7 is the fourth.
+
+---
+
+## What was done about it
+
+Worked on **2026-08-24**, in the order suggested above. Seven pull requests, all targeting `next`.
+**Written and green; not merged and not deployed** — nothing below is in production, and the
+backend half deploys first as usual when it is.
+
+| Branch | Findings | Pull request |
+|---|---|---|
+| `fix/generation-type-manual` | 8 (backend), 4 + 7 (frontend) | [Back #220](https://github.com/ricsnsuka/FootMania-Back/pull/220) · [Front #78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) |
+| `fix/draft-sse-reconnect-guard` | 5 | [Front #79](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/79) |
+| `fix/tenant-context-clear-on-skipped-paths` | 1 | [Back #221](https://github.com/ricsnsuka/FootMania-Back/pull/221) |
+| `fix/charge-generation-race` | 2 | [Back #222](https://github.com/ricsnsuka/FootMania-Back/pull/222) |
+| `fix/groupless-account-refusal` | 3, 6 | [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223) |
+| `test/enum-locale-parity` | the closing item | [Front #80](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/80) — **stacked on Front #78**, which adds the key it requires |
+
+### Every fix has a test that fails without it
+
+This was verified by reverting the change and re-running, not assumed:
+
+| Test | Reverted | Result |
+|---|---|---|
+| `useDraftSessionSSE.test.ts` | the hook | `1 failed \| 1 passed` |
+| `HttpRequestLoggingFilterTest` | the filter | `tests="4" failures="2"` |
+| `MatchFeeChargeRaceIT` | one line back to `chargeRepository.save(...)` | `3 tests, 2 failed` |
+| `GrouplessAccountRefusalIT` | the `@ExceptionHandler` annotation | `4 tests, 1 failed` |
+| `enumLocaleParity.test.ts` | the `MANUAL` key from `en` | `1 failed \| 63 passed` |
+
+**Both of the findings this review flagged as deserving runtime confirmation before anybody spent
+time on them turned out to be real.** `?page=-1` was a 500, and `matchDTOSchema` did reject
+`"MANUAL"`. Finding 7 was confirmed by reading the three locale files directly.
+
+### Two places the fix differs from the one suggested here
+
+**Finding 2 — one shared bean rather than a provisioner per site.** The suggestion was
+`REQUIRES_NEW` per insert *or* `INSERT … ON CONFLICT DO NOTHING`; the owner chose `REQUIRES_NEW`,
+because `ON CONFLICT` is a native query H2 cannot run, which would have put all three sites beyond
+the reach of the unit tier — the same reasoning `ChatPresenceService.heartbeat` already had written
+down for rejecting it. What is *not* three copies of `EveryoneChannelProvisioner` is deliberate, and
+follows this review's own closing note on that finding: the rule lives once, in a new
+`IsolatedInserter`, and `EveryoneChannelProvisioner` keeps its own javadoc because the caller's
+find/insert/**re-read** sequence is part of what it explains.
+
+⚠️ **This changes a guarantee, and the change is worth knowing.** Charge generation is **no longer
+atomic**: each charge commits in its own transaction, so a failure part way through leaves the
+charges written so far committed, where before the batch was all-or-nothing. That is the trade
+`REQUIRES_NEW` buys, and `generateChargesFor`'s javadoc now states it rather than leaving it to be
+discovered.
+
+**Finding 3 — a narrow exception handler rather than a refusal at the filter chain.** This review
+suggested refusing in the filter, before any service reads the context, and rejected an
+`@ExceptionHandler(IllegalStateException.class)` because it "would turn genuine
+async-forgot-its-tenant bugs into quiet 4xx and lose the stack trace the design wants". That
+objection is right about a *bare* handler and is what the shipped fix is built around.
+
+The filter approach needs an explicit allow-list of every path a group-less account may legitimately
+reach — and that list is larger than "public or tenant-agnostic". `GET /api/users/me` is neither,
+works today, and is the endpoint the 2026-08-04 incident was about; the platform-operator surface is
+neither either. **A path missed off that list becomes a new 409 on something that works today**,
+which is how that incident happened in the first place.
+
+So instead: `currentTenant()` now throws `UnboundTenantException` — still an
+`IllegalStateException`, so every existing catch and test is unaffected, but checkable without
+matching on a message — and the handler answers `409` **only when the caller genuinely holds no
+active membership**. A caller who holds one and hit an unbound read has a bug and keeps the 500 and
+the trace; work with no HTTP request behind it never reaches a `@RestControllerAdvice` at all, so
+the forgotten-tenant case never sees the handler. The fix cannot break anything, because it only
+fires where a 500 fires today. `GrouplessAccountRefusalIT` pins the case a blanket filter refusal
+would have broken: `GET /api/users/me` still answers `200` with no group bound.
+
+### The parity test came out wider than the entry that asked for it
+
+[Suggested next step 6](../STATUS.md#suggested-next-steps) named three enums. `enumLocaleParity.test.ts`
+covers **ten** — those three plus `GenerationType`, the one nobody listed and the one that had
+drifted, plus the six this review checked by hand. Values come from an exported constant wherever
+one exists; the families whose type is a bare union are written out with a `source` naming the Java
+enum they mirror, because this repository cannot read the backend's enum and saying so is better
+than pretending otherwise. It carries `modifierClassParity`'s two load-bearing habits: an `exempt`
+map that makes a deliberate omission an argument rather than an oversight (`CAPTAIN_PICK` and
+`STREAK_AWARE`), and an inverse check for a label whose value no enum has any more.
+
+### Still open from this review's own list
+
+- **The dependency/CVE scan.** Not run. The last one on record is still thirteen months old and
+  still predates the Next.js 16 / React 19 / Tailwind 4 upgrades.
+- **`CalculationService`'s arithmetic**, read for structure and not verified numerically. Unchanged.
+- **The visual suite.** Untouched, for the reasons hazards 7 and 8 give.
+- **The `totalCostCents` controller test**, the other half of suggested next step 6. Not written.
