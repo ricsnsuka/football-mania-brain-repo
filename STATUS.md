@@ -23,31 +23,42 @@ which is the only honest thing a status page can do with them.
 | Deployed through | **`V41`, confirmed applied**: `flyway_schema_history` shows `41 · chat and presence · success = t · 2026-08-23 00:05:50`, read from production | — |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`** (`3c85245`) and **`v2.0.0`** (`7f015ca`) — both on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`** (`3be25f3`) and **`v2.0.0`** (`097916a`). ⚠️ `v1.8.0` and `v1.9.1` are missing — **and so is `v1.7.0`**, which this row claimed for two weeks |
 
-## ⏳ Open pull requests — 2026-08-24, none merged
+## Where the 2026-08-24 work stands — seven merged, two open
 
-**Nine, all targeting `next`.** Seven from working the
-[2026-08-24 code review](architecture/code-review-2026-08-24.md), and two from a bug the owner
-reported the same day. Written and green; **nothing below is in `next`, in `main`, or in
-production**, and the table above still describes `2.0.0` as deployed. Read this before starting
-any of this work again.
+**The seven [code-review](architecture/code-review-2026-08-24.md) branches are merged into `next`
+in both repos.** `next` is green at both heads (backend `b2f17d8`, frontend `d20d754`), and
+**nothing is deployed** — `main` has not moved, and only `main` deploys.
 
-| Repo | PR | Branch | What |
+| Repo | PR | Merge commit | What |
 |---|---|---|---|
-| Back | [#220](https://github.com/ricsnsuka/FootMania-Back/pull/220) | `fix/generation-type-manual` | the `generationType` "valid values" list, derived from the enum |
-| Back | [#221](https://github.com/ricsnsuka/FootMania-Back/pull/221) | `fix/tenant-context-clear-on-skipped-paths` | `TenantContext` and MDC cleared for `/actuator`, `/v3/api-docs`, `/swagger-ui` |
-| Back | [#222](https://github.com/ricsnsuka/FootMania-Back/pull/222) | `fix/charge-generation-race` | each racing insert in its own transaction — **changes an atomicity guarantee**, see step 9 |
-| Back | [#223](https://github.com/ricsnsuka/FootMania-Back/pull/223) | `fix/groupless-account-refusal` | `409` instead of `500` for a group-less caller, plus the chat `page` clamp |
-| Back | [#224](https://github.com/ricsnsuka/FootMania-Back/pull/224) | `fix/account-endpoints-without-a-group` | the account surface answers before a group is chosen — **and every tenant-resolver refusal stops being a bodyless `403`** |
-| Front | [#78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) | `fix/generation-type-manual` | `MANUAL` spelled as the server sends it, and its three locale keys |
-| Front | [#79](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/79) | `fix/draft-sse-reconnect-guard` | the draft stream stops reopening itself after unmount |
-| Front | [#80](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/80) | `test/enum-locale-parity` | the enum/locale parity test — **stacked on Front #78**, merge that first |
-| Front | [#81](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/81) | `fix/settings-without-a-group` | the settings page holds up on the group picker |
+| Back | [#220](https://github.com/ricsnsuka/FootMania-Back/pull/220) | `05160ce` | the `generationType` "valid values" list, derived from the enum |
+| Back | [#221](https://github.com/ricsnsuka/FootMania-Back/pull/221) | `91cbd10` | `TenantContext` and MDC cleared for `/actuator`, `/v3/api-docs`, `/swagger-ui` |
+| Back | [#222](https://github.com/ricsnsuka/FootMania-Back/pull/222) | `bbb6600` | each racing insert in its own transaction — **charge generation is no longer atomic** |
+| Back | [#223](https://github.com/ricsnsuka/FootMania-Back/pull/223) | `b2f17d8` | `409` instead of `500` for a group-less caller, plus the chat `page` clamp |
+| Front | [#78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) | `4178bc7` | `MANUAL` spelled as the server sends it, and its three locale keys |
+| Front | [#79](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/79) | `6195381` | the draft stream stops reopening itself after unmount |
+| Front | [#82](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/82) | `d20d754` | the enum/locale parity test |
 
-**Merge order matters in three places.** Front #80 is based on Front #78 and fails without it.
-**Back #224 must be deployed before Front #81** — that page cannot show what the server refuses.
-And the usual rule applies to the remaining pair that spans both repos: backend before frontend,
-though for #220/#78 specifically the two halves are independent and neither ordering breaks
-anything.
+⚠️ **Front #80 is closed and was not the one that merged — #82 was.** Deleting `fix/generation-type-manual`
+on merging #78 made GitHub **auto-close** #80, whose base was that branch, and a closed PR cannot be
+reopened or retargeted once its base is gone. #82 is the same branch at the same commit (`9f7145d`),
+retargeted at `next`. **The lesson is about `--delete-branch`, not about stacking**: delete the base
+branch of a stacked PR and you close the PR on top of it. Retarget first, then delete.
+
+**Every backend merge after the first conflicted on `CHANGELOG.md`** — four entries, all added
+immediately under `## [Unreleased]`. Each was resolved by keeping both sides, and the section now
+carries all four, most significant first. Nothing was dropped; the resolutions are in the merge
+commits.
+
+### Still open
+
+| Repo | PR | State | Note |
+|---|---|---|---|
+| Back | [#224](https://github.com/ricsnsuka/FootMania-Back/pull/224) | **conflicting** | needs `next` merged into it — `CHANGELOG.md` again |
+| Front | [#81](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/81) | mergeable | **#224 must be deployed first** — the page cannot show what the server refuses |
+
+Neither came from the code review; both came from the settings-page bug the owner reported the same
+day. They are described below.
 
 ### The reported bug, and the one it turned out to be sitting on
 
@@ -759,7 +770,8 @@ CSS modifier against `globals.css`, in both directions, with documented exemptio
 to fail on a real break before being committed.
 
 ✅ **And now the locale one**: `tests/lib/enumLocaleParity.test.ts`, written 2026-08-24
-([Front #80](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/80) — **open, not merged**).
+([Front #82](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/82), **merged into `next`** as
+`d20d754`; #80 was its auto-closed predecessor, at the same commit).
 Ten enum families, not the three this section had been asking for, because the fourth sighting
 turned up in a family nobody had listed: `teamGeneration.generationType.MANUAL` was absent from all
 three locales while every hand-recorded match carried exactly that value. Raw key-file parity was
@@ -794,9 +806,10 @@ reason this repo exists.
 5. ~~Regenerate the Postman collection.~~ ✅ Done 2026-08-02 — and made a derived artefact, so this
    line cannot come back: `node postman/generate-collection.mjs` against a running app.
 6. ~~**Add the locale key-parity test.**~~ ✅ Written 2026-08-24 — `enumLocaleParity.test.ts`,
-   [Front #80](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/80). **Open, not merged.**
-   Stacked on [Front #78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78), which adds
-   the `MANUAL` key it requires; merging it first fails CI.
+   [Front #82](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/82), **merged into `next`**
+   as `d20d754`. Opened as #80, stacked on [#78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78)
+   for the `MANUAL` key it requires; deleting #78's branch on merge auto-closed #80, and #82 is
+   that same commit retargeted at `next`.
 
    It came out wider than this entry asked for: **ten enum families**, not three —
    `NotificationCategory`, `AppSetting` and `Role` as named, plus `GenerationType`, which is the one
@@ -827,10 +840,11 @@ reason this repo exists.
    the JPA entity, so an implementation that flushed both `is_current` updates together would pass
    every unit test in the build and fail on the first group to own two seasons.
 9. ~~**Work the [2026-08-24 code review](architecture/code-review-2026-08-24.md).**~~ ✅ All eight
-   findings worked the same day, in the review's suggested order. **Seven pull requests, open
-   against `next` in both repos — written and green, not merged and not deployed.** The review's own
-   [What was done about it](architecture/code-review-2026-08-24.md#what-was-done-about-it) section
-   carries the branch-by-branch disposition; three things belong here rather than there:
+   findings worked the same day, in the review's suggested order. **Seven pull requests, all
+   merged into `next` in both repos the same day — and none deployed; `main` has not moved.**
+   The review's own [What was done about it](architecture/code-review-2026-08-24.md#what-was-done-about-it)
+   section carries the branch-by-branch disposition and the merge commits; three things belong
+   here rather than there:
 
    ⚠️ **Charge generation is no longer atomic.** Finding 2 was fixed with `REQUIRES_NEW` per insert
    (owner's call, over `INSERT … ON CONFLICT DO NOTHING`, which H2 cannot run and which would have
@@ -863,7 +877,8 @@ reason this repo exists.
   operator or a member of groups, never both** (`V35`).
 
   ✅ **The rest of it was closed on 2026-08-24** —
-  [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223), **open, not merged.** A
+  [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223), **merged into `next`** as
+  `b2f17d8` and not deployed. A
   group-less caller now gets a `409` naming the state instead of a `500`, and only when they
   genuinely hold no membership: a forgotten `runAs` keeps its `500` and its stack trace, and work
   with no HTTP request behind it never reaches the handler at all. `GrouplessAccountRefusalIT`
