@@ -1,42 +1,64 @@
 # Project Status
 
-**Snapshot: 2026-08-09, after 1.8.0, 1.9.0, 1.9.1, the deliberate unversioned ship, and 1.9.2 (backend-only).** Update it when the answers change, not on a
-schedule — a status page nobody trusts is worse than none.
+**Snapshot: 2026-08-24, after 2.1.0 — deployed and confirmed on both halves.** Update it when the
+answers change, not on a schedule — a status page nobody trusts is worse than none.
 
-⚠️ **Two claims below are weaker than the rest, and both are marked where they appear.** The
-backend's running version was **not** read back from the platform in any of these releases
-(1.9.2 included — the release environment's egress proxy still blocks the production hosts), and
-**six tags** — `v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend — exist on no
-remote. Neither is a guess dressed as a fact here; both are recorded as unknown/outstanding,
-which is the only honest thing a status page can do with them.
+⚠️ **Two claims below are weaker than the rest, and both are marked where they appear.** **Six
+tags** — `v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend — exist on no remote.
+That is recorded as outstanding rather than dressed as a fact, which is the only honest thing a
+status page can do with it. The running-version claims are **not** among the weak ones any more:
+2.1.0 was read back from both platforms, and the evidence is in the table.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | **`d8995a1` — ahead of `main` by 6 merged PRs (17 commits)**, all from 2026-08-24 and none released. CI green | **`5694977` — ahead by 5 merged PRs (11 commits)**, the same set. CI green |
-| Release | **`2.0.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.0.0`** — `package.json`. The numbers converge again: this release is both halves |
-| Running in production | **`7f015ca`, confirmed by asking the platform.** Heroku release **v69**, `Deploy 7f015ca1`, 2026-08-23 01:05:40 +0100. `/api/version` reports `2.0.0` (build `2026-08-23T00:05:20.910Z`), `/api/health` is `UP` | **`097916a`, confirmed against Netlify:** deploy `6a8a3c8f2bc77a0009d3c415`, `ready`, context `production`, `commit_ref` matching, published `2026-08-23T00:20:15Z`. Also read back from the live site — `/chat` and `/moderation` answer `200` while a nonsense path answers `404`, so the new routes are genuinely served rather than swallowed by a catch-all |
-| `main` head | `7f015ca` — **2.0.0**: group chat, presence, moderation, and the Ballon d'Or eligibility rule | `097916a` — **2.0.0**: the chat and moderation screens, both hooks, the restructured navbar |
+| `next` head | `1fbf735` — identical to `main`, checked: `git log next..main` prints nothing | `8ef4733` — the same, and the same check passes |
+| Release | **`2.1.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.1.0`** — `package.json`, with the lockfile's root version moved to match |
+| Running in production | **`1fbf735`, confirmed by asking the platform.** Heroku release **v70**, `Deploy 1fbf735b`, 2026-08-24 18:54:56 +0100. `/api/version` reports `2.1.0` (build `2026-08-24T17:54:24.762Z`), `/api/health` is `UP`, and `heroku ps` shows `web.1` up running **`football-2.1.0.jar`** | **`8ef4733`, confirmed against Netlify:** deploy `6a8c8817240c3f0007d346c0`, `ready`, context `production`, `commit_ref` matching, published `2026-08-24T18:07:16Z`. Read back from the live site too — `/` and `/settings` answer `200` while a nonsense path answers `404`, so the routes are genuinely served |
+| `main` head | `1fbf735` — **2.1.0**: the 2026-08-24 code review, the settings-page bug, the dependency backlog | `8ef4733` — **2.1.0**: the same set's frontend halves |
 | Working tree | clean | clean |
-| Tests | **1489 unit + 146 integration**, SpotBugs clean, full CI matrix green on the release PRs | **884 unit, all passing**. ⚠️ Visual: `settings-light` and `settings-dark` baselines were stale as of 1.9.1 and are **not** re-verified here |
-| Latest migration | **`V41__chat_and_presence.sql`** — five tables, additive | — |
-| Deployed through | **`V41`, confirmed applied**: `flyway_schema_history` shows `41 · chat and presence · success = t · 2026-08-23 00:05:50`, read from production | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`** (`3c85245`) and **`v2.0.0`** (`7f015ca`) — both on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`** (`3be25f3`) and **`v2.0.0`** (`097916a`). ⚠️ `v1.8.0` and `v1.9.1` are missing — **and so is `v1.7.0`**, which this row claimed for two weeks |
+| Tests | **unit slices + integration green on the release branch**, `dependencyCveScan` reports 0 advisories | **96 files, 959 tests, all passing**. ⚠️ Visual: baselines are **not** re-verified for this release — see hazard 7 |
+| Latest migration | **`V41__chat_and_presence.sql`** — unchanged by 2.1.0 | — |
+| Deployed through | **`V41`.** ✅ **2.1.0 adds no migration**, so the previous jar starts against the same schema and rollback is a redeploy | — |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`** and **`v2.1.0`** (`1fbf735`) — on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`** and **`v2.1.0`** (`8ef4733`). ⚠️ `v1.8.0`, `v1.9.1` and `v1.7.0` are missing |
 
-## ⚠️ `next` is ahead of `main` by the whole 2026-08-24 set — nothing deployed
+## 2.1.0 — shipped and confirmed 2026-08-24
 
-**All eleven branches of 2026-08-24 are merged into `next` in both repos**: the seven from the
+**A maintenance release**, and the first in a while with no feature in it: the whole of the
+2026-08-24 code review, the settings-page bug found the same day, and the dependency backlog that
+thirteen months of not scanning had accumulated. Fourteen merged pull requests across the two repos.
+
+**Deployed in order, each half confirmed before the next moved.** Backend merged → Heroku v70 →
+`/api/version` read back → dyno checked for the right jar → *then* the frontend. That ordering was
+load-bearing again: the settings-page fix has two halves, and the frontend one only makes the page
+degrade gracefully. The page stops being *wrong* when the server stops refusing its requests.
+
+⚠️ **Two behaviour changes went out with it, both deliberate and both in the CHANGELOG.**
+
+- **Charge generation is no longer atomic.** Each charge commits in its own transaction, so a
+  failure part way through leaves the earlier ones written. That is the trade that makes the
+  documented "re-running is safe" true — it was not before, and a duplicate could roll a whole
+  batch back *after* the `FEE_CHARGED` pushes had gone out.
+- **A group-less or undecided caller now gets `409` or `400`** where they got `500` or a bodyless
+  `403`. Nothing that worked stops working.
+
+**Spring Boot 3.4.5 → 3.5.16** is the largest runtime change. 3.4.x is EOL; the bump cleared roughly
+64 of the ~70 advisories that were on the classpath.
+
+✅ **A memory symptom that predates this release stopped at the deploy, and is recorded rather than
+claimed.** `Error R14 (Memory quota exceeded)` was firing about three times a minute on 2.0.0
+throughout the hour before the release — 103 occurrences in the log window, starting well before
+anything was pushed. Since v70 booted there have been **zero**. Whether that is the Boot upgrade,
+the ZGC generational heap behaving differently, or simply a fresh process is **not established**,
+and the honest reading is "it stopped, and nobody has proved why". Worth watching rather than
+celebrating: if it returns, the Basic dyno's 512 MB against `-Xmx512m` is the place to look.
+
+### What 2.1.0 contained — the fourteen pull requests
+
+All merged into `next` on 2026-08-24 and released the same day: seven from the
 [code review](architecture/code-review-2026-08-24.md), two from the settings-page bug the owner
-reported the same day, and two from the dependency scan that closed the review's last open
-item. CI is green at both heads — backend `d8995a1`, frontend `5694977`.
-
-**None of it is deployed.** `main` has not moved in either repo, and only `main` deploys. The
-table at the top of this file describes what is *running*, which is still `2.0.0` — its `next`
-head row is the one that moved.
-
-⚠️ **When this is released, the backend goes first and is confirmed before the frontend.** Front
-#81 makes the settings page degrade gracefully, but the page only stops being *wrong* once Back
-#224 is live — it cannot show what the server refuses.
+reported that morning, two from the dependency scan that closed the review's last open item, and
+the release commit in each repo. Counted from the table, not estimated.
 
 | Repo | PR | Merge commit | What |
 |---|---|---|---|
@@ -51,6 +73,9 @@ head row is the one that moved.
 | Front | [#81](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/81) | `5731fd5` | the settings page holds up on the group picker |
 | Back | [#225](https://github.com/ricsnsuka/FootMania-Back/pull/225) | `d8995a1` | Spring Boot 3.5.16 and a `dependencyCveScan` task + CI job — **~70 advisories to 0** |
 | Front | [#83](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/83) | `5694977` | the 7 high npm advisories cleared, and `npm audit` in CI |
+| Back | [#226](https://github.com/ricsnsuka/FootMania-Back/pull/226) | `67e55f4` | the review's two leftovers — `totalCostCents` on the wire, and the rating arithmetic checked against its own document |
+| Back | [#227](https://github.com/ricsnsuka/FootMania-Back/pull/227) | `1fbf735` | **cut 2.1.0** — version, Procfile jar name, CHANGELOG |
+| Front | [#84](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/84) | `8ef4733` | **cut 2.1.0** — version and lockfile root |
 
 ⚠️ **Front #80 is closed and was not the one that merged — #82 was.** Deleting `fix/generation-type-manual`
 on merging #78 made GitHub **auto-close** #80, whose base was that branch, and a closed PR cannot be
