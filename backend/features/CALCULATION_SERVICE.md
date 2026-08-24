@@ -478,6 +478,29 @@ assistScarcityMult = 1.0 + scarcityRatio × ASSIST_SCARCITY_WEIGHT    ∈ [1.0, 
 
 ## Worked Examples (v2.2 — Escalating Ladder)
 
+> ⚠️ **These sums omit two terms the code applies, and the mid-table numbers below are therefore
+> low.** Verified against the implementation on 2026-08-24, when the code review noted this service
+> had been read for structure and never checked numerically.
+>
+> Each RAW line here reads `base + stats + result` and leaves out the **decisiveness** and
+> **goal-difference** contributions. That does not move the two ends — a top performer maps to the
+> ceiling whatever its RAW, and a non-contributor on a losing side barely shifts — but it moves
+> everyone in between:
+>
+> | Example A player | Written below | Measured |
+> |---|---|---|
+> | 3 goals + 2 assists | 9.5 | **9.5** ✅ |
+> | 1 goal | 6.62 | **6.863** |
+> | nothing, winning | 6.23 | **6.360** |
+> | nothing, losing | 5.49 | **5.486** ✅ |
+>
+> **The code is right and this example is incomplete** — which is worth stating plainly, because
+> anyone checking one against the other would reach the opposite conclusion. The examples are kept
+> as written rather than silently recomputed: they are pedagogically clear about the ladder, which
+> is what they exist to explain, and adding every term would bury that. Read them for the *shape*
+> and take the numbers from `CalculationServiceTest`, which now pins Example A against the real
+> implementation.
+
 > All examples below assume **neutral scarcity** (`mult = 1.0`) and treat the described
 > player as the **top RAW performer** in the match. For a single-player (or clear top)
 > performer, `raw / topRaw = 1`, so the final rating equals `RATING_FLOOR + (ceiling − RATING_FLOOR)`.
