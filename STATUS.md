@@ -13,7 +13,7 @@ which is the only honest thing a status page can do with them.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | **`131649e` — ahead of `main` by 5 merged PRs (15 commits)**, all from 2026-08-24 and none released. CI green | **`5731fd5` — ahead by 4 merged PRs (8 commits)**, the same set. CI green |
+| `next` head | **`d8995a1` — ahead of `main` by 6 merged PRs (17 commits)**, all from 2026-08-24 and none released. CI green | **`5694977` — ahead by 5 merged PRs (11 commits)**, the same set. CI green |
 | Release | **`2.0.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.0.0`** — `package.json`. The numbers converge again: this release is both halves |
 | Running in production | **`7f015ca`, confirmed by asking the platform.** Heroku release **v69**, `Deploy 7f015ca1`, 2026-08-23 01:05:40 +0100. `/api/version` reports `2.0.0` (build `2026-08-23T00:05:20.910Z`), `/api/health` is `UP` | **`097916a`, confirmed against Netlify:** deploy `6a8a3c8f2bc77a0009d3c415`, `ready`, context `production`, `commit_ref` matching, published `2026-08-23T00:20:15Z`. Also read back from the live site — `/chat` and `/moderation` answer `200` while a nonsense path answers `404`, so the new routes are genuinely served rather than swallowed by a catch-all |
 | `main` head | `7f015ca` — **2.0.0**: group chat, presence, moderation, and the Ballon d'Or eligibility rule | `097916a` — **2.0.0**: the chat and moderation screens, both hooks, the restructured navbar |
@@ -25,9 +25,10 @@ which is the only honest thing a status page can do with them.
 
 ## ⚠️ `next` is ahead of `main` by the whole 2026-08-24 set — nothing deployed
 
-**All nine branches of 2026-08-24 are merged into `next` in both repos**: the seven from the
-[code review](architecture/code-review-2026-08-24.md) and the two from the settings-page bug the
-owner reported the same day. CI is green at both heads — backend `131649e`, frontend `5731fd5`.
+**All eleven branches of 2026-08-24 are merged into `next` in both repos**: the seven from the
+[code review](architecture/code-review-2026-08-24.md), two from the settings-page bug the owner
+reported the same day, and two from the dependency scan that closed the review's last open
+item. CI is green at both heads — backend `d8995a1`, frontend `5694977`.
 
 **None of it is deployed.** `main` has not moved in either repo, and only `main` deploys. The
 table at the top of this file describes what is *running*, which is still `2.0.0` — its `next`
@@ -48,6 +49,8 @@ head row is the one that moved.
 | Front | [#82](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/82) | `d20d754` | the enum/locale parity test |
 | Back | [#224](https://github.com/ricsnsuka/FootMania-Back/pull/224) | `131649e` | the account surface answers before a group is chosen — **and every tenant-resolver refusal stops being a bodyless `403`** |
 | Front | [#81](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/81) | `5731fd5` | the settings page holds up on the group picker |
+| Back | [#225](https://github.com/ricsnsuka/FootMania-Back/pull/225) | `d8995a1` | Spring Boot 3.5.16 and a `dependencyCveScan` task + CI job — **~70 advisories to 0** |
+| Front | [#83](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/83) | `5694977` | the 7 high npm advisories cleared, and `npm audit` in CI |
 
 ⚠️ **Front #80 is closed and was not the one that merged — #82 was.** Deleting `fix/generation-type-manual`
 on merging #78 made GitHub **auto-close** #80, whose base was that branch, and a closed PR cannot be
@@ -554,6 +557,21 @@ real payment integration would bolt on later without any of it being wasted.
 ---
 
 ## Live hazards
+
+**0. Dependabot alerts are DISABLED on both repos, and only the owner can change that.**
+Found 2026-08-24 while doing the dependency scan: the API answers
+`403: Dependabot alerts are disabled for this repository` for both. It is a repository setting, not
+something a branch can fix.
+
+Both repos now fail CI on a high-severity advisory — `npm audit --audit-level=high` on the frontend,
+`dependencyCveScan` against OSV.dev on the backend — so this is no longer a blind spot at *push*
+time. What is still missing is the other half: **a dependency does not become vulnerable when you
+push, it becomes vulnerable when the advisory is published.** Dependabot is what closes the gap
+between those two moments, and that gap is exactly how the last one grew to thirteen months.
+
+The backend already submits its dependency graph to GitHub via the `dependency-submission` job, so
+the data is sitting there unused. See
+[DEPENDENCY-CVE-SCAN-2026-08-24](backend/security/DEPENDENCY-CVE-SCAN-2026-08-24.md).
 
 **1. ~~V18 and V19 have never run against a real database.~~ Resolved 2026-08-01.** The whole
 chain through **V21** is now applied in production — the guest-players feature (V20+V21, and
