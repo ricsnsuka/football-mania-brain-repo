@@ -25,10 +25,11 @@ which is the only honest thing a status page can do with them.
 
 ## ⏳ Open pull requests — 2026-08-24, none merged
 
-**Seven, all targeting `next`, all from working the
-[2026-08-24 code review](architecture/code-review-2026-08-24.md).** Written and green; **nothing
-below is in `next`, in `main`, or in production**, and the table above still describes `2.0.0` as
-deployed. Read this before starting any of these findings again.
+**Nine, all targeting `next`.** Seven from working the
+[2026-08-24 code review](architecture/code-review-2026-08-24.md), and two from a bug the owner
+reported the same day. Written and green; **nothing below is in `next`, in `main`, or in
+production**, and the table above still describes `2.0.0` as deployed. Read this before starting
+any of this work again.
 
 | Repo | PR | Branch | What |
 |---|---|---|---|
@@ -36,13 +37,43 @@ deployed. Read this before starting any of these findings again.
 | Back | [#221](https://github.com/ricsnsuka/FootMania-Back/pull/221) | `fix/tenant-context-clear-on-skipped-paths` | `TenantContext` and MDC cleared for `/actuator`, `/v3/api-docs`, `/swagger-ui` |
 | Back | [#222](https://github.com/ricsnsuka/FootMania-Back/pull/222) | `fix/charge-generation-race` | each racing insert in its own transaction — **changes an atomicity guarantee**, see step 9 |
 | Back | [#223](https://github.com/ricsnsuka/FootMania-Back/pull/223) | `fix/groupless-account-refusal` | `409` instead of `500` for a group-less caller, plus the chat `page` clamp |
+| Back | [#224](https://github.com/ricsnsuka/FootMania-Back/pull/224) | `fix/account-endpoints-without-a-group` | the account surface answers before a group is chosen — **and every tenant-resolver refusal stops being a bodyless `403`** |
 | Front | [#78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) | `fix/generation-type-manual` | `MANUAL` spelled as the server sends it, and its three locale keys |
 | Front | [#79](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/79) | `fix/draft-sse-reconnect-guard` | the draft stream stops reopening itself after unmount |
 | Front | [#80](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/80) | `test/enum-locale-parity` | the enum/locale parity test — **stacked on Front #78**, merge that first |
+| Front | [#81](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/81) | `fix/settings-without-a-group` | the settings page holds up on the group picker |
 
-**Merge order matters in two places.** Front #80 is based on Front #78 and fails without it. And
-the usual rule applies to the pair that spans both repos: **backend before frontend** — though for
-#220/#78 specifically the two halves are independent and neither ordering breaks anything.
+**Merge order matters in three places.** Front #80 is based on Front #78 and fails without it.
+**Back #224 must be deployed before Front #81** — that page cannot show what the server refuses.
+And the usual rule applies to the remaining pair that spans both repos: backend before frontend,
+though for #220/#78 specifically the two halves are independent and neither ordering breaks
+anything.
+
+### The reported bug, and the one it turned out to be sitting on
+
+**Reported:** on the group picker, opening Settings showed a page with the person's own username
+missing. **Cause:** a session that has not chosen a group sends no `X-Group-Id`, and
+`TenantResolver` refused every request the page made — `GET /api/users/me` included. That state is
+where every multi-group session *begins*, because `AuthGuard` shows the picker to everybody at
+sign-in.
+
+**And underneath it, a defect nothing had ever surfaced.** `TenantResolver` raises a `400` ("send
+the header") and a `404` ("no such group"), and **neither was ever what a client received**. It
+runs inside the security filter chain, and an exception thrown there does not reach
+`@RestControllerAdvice`: it propagates to the container, which ERROR-dispatches to `/error`, which
+re-enters the chain as an anonymous request and is refused. Every refusal in the tenancy contract
+was delivered as a **`403` with an empty body**, whatever the document said — so no client could
+tell "pick a group" from "the server broke".
+
+Measured against a real container before and after, since MockMvc rethrows filter exceptions and
+hides this entirely:
+
+| Request, no group chosen | Before | After |
+|---|---|---|
+| `GET /api/users/me` | `403`, empty body | `200`, the record |
+| `GET /api/api-tokens` | `403`, empty body | `200` — reading and revoking are keyed by `user_id` |
+| `GET /api/players` | `403`, empty body | `400` naming `X-Group-Id` |
+| `GET /api/users/me` + a group the caller is not in | `403`, empty body | `404` with a body |
 
 ## 2.0.0 — group chat, shipped and confirmed 2026-08-23
 
@@ -840,6 +871,16 @@ reason this repo exists.
   `GET /api/users/me` still answers `200` with no group bound, which is this incident's own
   endpoint. The paragraph below is what was true until then, kept because the reasoning in it is
   what the fix was built against.
+
+  ⚠️ **A third case was found the same day, and it is not the same one.** `Back #223` handles the
+  account that holds **no** membership. An account that holds **several and has chosen none** —
+  every multi-group session at sign-in — was refused earlier and by a different component,
+  `TenantResolver`, with a `400` demanding the `X-Group-Id` header, on `GET /api/users/me` among
+  everything else. That is [Back #224](https://github.com/ricsnsuka/FootMania-Back/pull/224), which
+  also fixes the reason nobody had noticed: the refusal was arriving as a **bodyless `403`**,
+  because an exception thrown inside the security filter chain never reaches
+  `@RestControllerAdvice`. Three distinct ways to have no tenant bound, three different components
+  refusing, and this incident's own endpoint broken by two of them.
 
   ⚠️ **The rule is narrower than the bug, and the rest of it was open for twenty days.** `V35` settles the
   *operator* account. It says nothing about the ordinary one, and `POST /api/users/register`
