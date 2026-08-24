@@ -13,7 +13,7 @@ which is the only honest thing a status page can do with them.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `7f015ca` — identical to `main`, checked: `git log next..main` prints nothing | `097916a` — the same, and the same check passes |
+| `next` head | **`131649e` — ahead of `main` by 5 merged PRs (15 commits)**, all from 2026-08-24 and none released. CI green | **`5731fd5` — ahead by 4 merged PRs (8 commits)**, the same set. CI green |
 | Release | **`2.0.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.0.0`** — `package.json`. The numbers converge again: this release is both halves |
 | Running in production | **`7f015ca`, confirmed by asking the platform.** Heroku release **v69**, `Deploy 7f015ca1`, 2026-08-23 01:05:40 +0100. `/api/version` reports `2.0.0` (build `2026-08-23T00:05:20.910Z`), `/api/health` is `UP` | **`097916a`, confirmed against Netlify:** deploy `6a8a3c8f2bc77a0009d3c415`, `ready`, context `production`, `commit_ref` matching, published `2026-08-23T00:20:15Z`. Also read back from the live site — `/chat` and `/moderation` answer `200` while a nonsense path answers `404`, so the new routes are genuinely served rather than swallowed by a catch-all |
 | `main` head | `7f015ca` — **2.0.0**: group chat, presence, moderation, and the Ballon d'Or eligibility rule | `097916a` — **2.0.0**: the chat and moderation screens, both hooks, the restructured navbar |
@@ -23,11 +23,19 @@ which is the only honest thing a status page can do with them.
 | Deployed through | **`V41`, confirmed applied**: `flyway_schema_history` shows `41 · chat and presence · success = t · 2026-08-23 00:05:50`, read from production | — |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`** (`3c85245`) and **`v2.0.0`** (`7f015ca`) — both on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`** (`3be25f3`) and **`v2.0.0`** (`097916a`). ⚠️ `v1.8.0` and `v1.9.1` are missing — **and so is `v1.7.0`**, which this row claimed for two weeks |
 
-## Where the 2026-08-24 work stands — seven merged, two open
+## ⚠️ `next` is ahead of `main` by the whole 2026-08-24 set — nothing deployed
 
-**The seven [code-review](architecture/code-review-2026-08-24.md) branches are merged into `next`
-in both repos.** `next` is green at both heads (backend `b2f17d8`, frontend `d20d754`), and
-**nothing is deployed** — `main` has not moved, and only `main` deploys.
+**All nine branches of 2026-08-24 are merged into `next` in both repos**: the seven from the
+[code review](architecture/code-review-2026-08-24.md) and the two from the settings-page bug the
+owner reported the same day. CI is green at both heads — backend `131649e`, frontend `5731fd5`.
+
+**None of it is deployed.** `main` has not moved in either repo, and only `main` deploys. The
+table at the top of this file describes what is *running*, which is still `2.0.0` — its `next`
+head row is the one that moved.
+
+⚠️ **When this is released, the backend goes first and is confirmed before the frontend.** Front
+#81 makes the settings page degrade gracefully, but the page only stops being *wrong* once Back
+#224 is live — it cannot show what the server refuses.
 
 | Repo | PR | Merge commit | What |
 |---|---|---|---|
@@ -38,6 +46,8 @@ in both repos.** `next` is green at both heads (backend `b2f17d8`, frontend `d20
 | Front | [#78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) | `4178bc7` | `MANUAL` spelled as the server sends it, and its three locale keys |
 | Front | [#79](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/79) | `6195381` | the draft stream stops reopening itself after unmount |
 | Front | [#82](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/82) | `d20d754` | the enum/locale parity test |
+| Back | [#224](https://github.com/ricsnsuka/FootMania-Back/pull/224) | `131649e` | the account surface answers before a group is chosen — **and every tenant-resolver refusal stops being a bodyless `403`** |
+| Front | [#81](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/81) | `5731fd5` | the settings page holds up on the group picker |
 
 ⚠️ **Front #80 is closed and was not the one that merged — #82 was.** Deleting `fix/generation-type-manual`
 on merging #78 made GitHub **auto-close** #80, whose base was that branch, and a closed PR cannot be
@@ -45,20 +55,14 @@ reopened or retargeted once its base is gone. #82 is the same branch at the same
 retargeted at `next`. **The lesson is about `--delete-branch`, not about stacking**: delete the base
 branch of a stacked PR and you close the PR on top of it. Retarget first, then delete.
 
-**Every backend merge after the first conflicted on `CHANGELOG.md`** — four entries, all added
-immediately under `## [Unreleased]`. Each was resolved by keeping both sides, and the section now
-carries all four, most significant first. Nothing was dropped; the resolutions are in the merge
+**Every backend merge after the first conflicted on `CHANGELOG.md`** — five entries, every one of
+them added immediately under `## [Unreleased]`. Each was resolved by keeping both sides, and the
+section now carries all seven. Nothing was dropped, and the resolutions are visible in the merge
 commits.
 
-### Still open
-
-| Repo | PR | State | Note |
-|---|---|---|---|
-| Back | [#224](https://github.com/ricsnsuka/FootMania-Back/pull/224) | **conflicting** | needs `next` merged into it — `CHANGELOG.md` again |
-| Front | [#81](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/81) | mergeable | **#224 must be deployed first** — the page cannot show what the server refuses |
-
-Neither came from the code review; both came from the settings-page bug the owner reported the same
-day. They are described below.
+The last resolution reordered rather than appended: the three entries about tenancy refusals —
+the group-less `409`, the account surface, and the bodyless `403` — now sit together, because
+merge order is not a useful way to read a changelog.
 
 ### The reported bug, and the one it turned out to be sitting on
 
