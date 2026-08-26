@@ -270,8 +270,17 @@ reference `users(id)` with `ON DELETE CASCADE`, and erasure deletes that row. Un
 record, there is nothing here worth anonymising and keeping — a subscription with its keys
 removed is not a usable send target, just a row.
 
-**Export** reports the device label, the push service **host**, the registration time and the
-last notification time. Three fields are deliberately withheld:
+**Export** reports the device label, the push service **host**, the registration time, the last
+notification time, and `receiving` — whether that device is currently being sent to.
+
+`receiving` was added with V42, which let a registration go **dormant** rather than be deleted when
+another account claims the same browser or the subject signs out. Dormant registrations are still
+exported: they are data the deployment holds about the subject, so withholding them would
+understate the record. But reporting them without saying which are live would overstate the other
+way — it would read as "five devices can reach you" when one can. Saying which is the honest
+version of both.
+
+Three fields are deliberately withheld:
 
 | Withheld | Why |
 |----------|-----|
