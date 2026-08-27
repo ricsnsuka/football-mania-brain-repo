@@ -1,9 +1,14 @@
 # Feature Status
 
 What exists, in which repo, and where it is written down. Commit refs are the change that
-introduced the feature, not the last touch. Verified 2026-07-31.
+introduced the feature, not the last touch. Verified 2026-07-31; 2.2.0's rows added 2026-08-27.
 
-Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
+Legend: ✅ shipped · 🟢 **merged to `next`, not deployed** · 🟡 partial · ⬜ not started ·
+— not applicable
+
+⚠️ **🟢 is not ✅.** Four features below are cut into **2.2.0** and sit on `next` in both repos with
+`main` unmoved, so nothing in production has them. Merged is not deployed — see
+[CONTRIBUTING § Deployment order](../CONTRIBUTING.md#deployment-order).
 
 ---
 
@@ -28,6 +33,9 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Kickoff time + plan lifecycle (V17) | ✅ `4120ad1` | ✅ `eff49bf` | [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md) — the instant kickoff, `GENERATED`, and the derived `expired`/`generatable`/`cancellable` flags |
 | Match editing — details, scoresheet, lineup (1.4.0) | ✅ `e69e604` | ✅ `b55274f` | [lineup contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-LINEUP-API-CONTRACT.md) · [MATCH_FEATURE](../backend/features/MATCH_FEATURE.md) · [FE matches](../frontend/features/matches.md) |
 | Delete a match, unwinding it (1.4.1) | ✅ `aa86d24` | ✅ `0f226d3` | [deletion contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-DELETION-API-CONTRACT.md) · [MATCH_FEATURE §8](../backend/features/MATCH_FEATURE.md) · [FE matches](../frontend/features/matches.md) |
+| Goals as events, idempotent (V44) | 🟢 2.2.0 `044ce34` | ⬜ | [goal events contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-GOAL-EVENTS-API-CONTRACT.md) · [MATCH_FEATURE §goals as events](../backend/features/MATCH_FEATURE.md#goals-as-events-220) · [V44](../architecture/database-migrations.md). `POST /api/matches/{id}/events` writes the `Goal` row **and** the counters in one transaction. **A duplicate is a `200`, not a `409`** — the caller drains an offline queue, and an error would jam it permanently on a goal that was never lost. This is what finally writes the `goals` table, empty since `V1`. No frontend surface: the caller is a watch shortcut |
+| Goal timing used only on complete events | 🟢 2.2.0 `0b417b9` | — | [CALCULATION_SERVICE §partial goal events](../backend/features/CALCULATION_SERVICE.md#partial-goal-events-fall-back-too-and-that-is-the-whole-point-220). Timing weights are all-or-nothing, so three events against five counted goals rated two players at **zero stat points**. Falls back to the *less precise* flat model on purpose: flat loses a rounding difference, timing-on-partial-data loses whole players. Unreachable until the row above made it reachable |
+| Team names without the scoresheet | 🟢 2.2.0 `a7a939c` | ⬜ | [MATCH_FEATURE §two team names](../backend/features/MATCH_FEATURE.md#the-two-team-names-without-the-scoresheet-220). `GET /api/matches/{id}/teams` — a header reading "Reds vs Blues" was downloading twenty-two stat rows to render two strings. **No migration** |
 | Weekly recurring match plans (V34 horizon) | ✅ `5aff478` | ✅ `4dec174` | [recurring contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/RECURRING-MATCH-PLANS-API-CONTRACT.md) · [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md#weekly-recurring-runs) · [FE match-plans](../frontend/features/match-plans.md) |
 | Match plans filtered to one week (Mon–Sun) | ✅ | ✅ | [MATCH_PLANS_FEATURE](../backend/features/MATCH_PLANS_FEATURE.md#from--to--an-explicit-kickoff-window) · [endpoint changelog](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/frontend/FRONTEND_ENDPOINT_CHANGES.md) · [FE match-plans](../frontend/features/match-plans.md#the-week-filter) |
 | Running score + stale-scoresheet guard | ✅ 1.9.1 | ✅ 1.9.1 | [contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-LIVE-STATS-API-CONTRACT.md). An in-progress match now has a score — before this only completion ever wrote one, so a match reported `0-0` however much had been recorded. And completing declares `expectedVersion`, so a scoresheet opened before somebody recorded a goal from a watch can no longer erase it: **a silent data-loss path, reachable the day the shortcut was** |
@@ -44,6 +52,8 @@ Legend: ✅ shipped · 🟡 partial · ⬜ not started · — not applicable
 | Privacy / GDPR export & erasure | ✅ | ✅ `ce9ab08` | [PRIVACY_AND_DATA_PROTECTION](../backend/features/PRIVACY_AND_DATA_PROTECTION.md) · [contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PRIVACY-API-CONTRACT.md) · [FE](../frontend/features/privacy.md) |
 | Phase 1 — PWA (installable, offline, SW) | — | ✅ | [FE pwa](../frontend/features/pwa.md) |
 | Phase 2 — Web Push (VAPID, 7 categories) | ✅ `80e9b5f`, `aaff369` | ✅ | [PUSH contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PUSH-API-CONTRACT.md) · [FE push](../frontend/features/push-notifications.md) |
+| Push scoped to the account, not the browser (V42) | 🟢 2.2.0 `4c54cb8` | 🟢 2.2.0 `b450b7b` | [PUSH contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PUSH-API-CONTRACT.md) · [FE push §the channel is the browser's](../frontend/features/push-notifications.md#the-channel-is-the-browsers-the-registration-is-the-accounts) · [V42](../architecture/database-migrations.md). **A live bug, not a refinement**: on any device that saw two accounts, the first account's notifications were delivered to and displayed on a device the second was signed in on, and the second could not register at all. `POST /api/push/claim` at sign-in; the displaced row goes **dormant**, not deleted. ⚠️ `V42` is a **rollback boundary**. Also fixes `MATCH_REMINDER` showing a raw `Instant` on a lock screen — `sw.js` is `v4` |
+| Password recovery — emailed link + admin fallback (V43) | 🟢 2.2.0 `19fe8dd` | 🟢 2.2.0 `2f17956` | [password reset contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PASSWORD-RESET-API-CONTRACT.md) · [FE password-recovery](../frontend/features/password-recovery.md) · [V43](../architecture/database-migrations.md). The first way back into an account whose password nobody remembers; before it, recovery was `UPDATE users SET password = …` by hand. ⚠️ **The email half ships dark** until `MAIL_*` are set as config vars — the admin-issued link works either way. Redeeming **revokes the account's API tokens** and does **not** sign anybody in |
 | Balance at a glance | — | ✅ `f8798cc` | [FE team-generation](../frontend/features/team-generation.md) |
 | Leaderboards & rankings | ✅ `2e3018e` | ✅ `6d27431` | [LEADERBOARDS contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/LEADERBOARDS-API-CONTRACT.md) · [FE rankings](../frontend/features/rankings.md) |
 | Crowd MOTM voting (V14) | ✅ `cf3240e` | ✅ `139e0ed` | [MOTM contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MOTM-API-CONTRACT.md) · [FE motm-voting](../frontend/features/motm-voting.md) |

@@ -1,26 +1,143 @@
 # Project Status
 
-**Snapshot: 2026-08-24, after 2.1.0 — deployed and confirmed on both halves.** Update it when the
-answers change, not on a schedule — a status page nobody trusts is worse than none.
+**Snapshot: 2026-08-27. 2.2.0 is cut on `next` in both repos and *not deployed*; production is
+still 2.1.0.** Update it when the answers change, not on a schedule — a status page nobody trusts is
+worse than none.
+
+⚠️ **The 2.2.0 row in the table below says "cut", not "running", and that distinction is the whole
+point of this file.** `main` has not moved in either repo, so Heroku and Netlify are both still
+serving 2.1.0. Nothing in 2.2.0 — the account-scoped push fix included — is in front of anybody yet.
 
 ⚠️ **Two claims below are weaker than the rest, and both are marked where they appear.** **Six
 tags** — `v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend — exist on no remote.
 That is recorded as outstanding rather than dressed as a fact, which is the only honest thing a
-status page can do with it. The running-version claims are **not** among the weak ones any more:
-2.1.0 was read back from both platforms, and the evidence is in the table.
+status page can do with it. The running-version claims are **not** among the weak ones: 2.1.0 was
+read back from both platforms, and the evidence is in the table.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `1fbf735` — identical to `main`, checked: `git log next..main` prints nothing | `8ef4733` — the same, and the same check passes |
-| Release | **`2.1.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.1.0`** — `package.json`, with the lockfile's root version moved to match |
+| `next` head | **ahead of `main` by five commits** — the four 2.2.0 pull requests plus the release commit. `git log next..main` still prints nothing, which is the check that matters: `main` carries nothing `next` lacks | **ahead of `main` by two commits** — #85 and the release commit. `git log next..main` prints nothing |
+| Release | **`2.2.0` on `next`, `2.1.0` on `main`.** `build.gradle` and the `Procfile` jar name agree at `2.2.0`, and the Version Check job passed on the release PR | **`2.2.0` on `next`, `2.1.0` on `main`** — `package.json` with the lockfile's root version moved to match |
 | Running in production | **`1fbf735`, confirmed by asking the platform.** Heroku release **v70**, `Deploy 1fbf735b`, 2026-08-24 18:54:56 +0100. `/api/version` reports `2.1.0` (build `2026-08-24T17:54:24.762Z`), `/api/health` is `UP`, and `heroku ps` shows `web.1` up running **`football-2.1.0.jar`** | **`8ef4733`, confirmed against Netlify:** deploy `6a8c8817240c3f0007d346c0`, `ready`, context `production`, `commit_ref` matching, published `2026-08-24T18:07:16Z`. Read back from the live site too — `/` and `/settings` answer `200` while a nonsense path answers `404`, so the routes are genuinely served |
-| `main` head | `1fbf735` — **2.1.0**: the 2026-08-24 code review, the settings-page bug, the dependency backlog | `8ef4733` — **2.1.0**: the same set's frontend halves |
+| `main` head | `1fbf735` — **still 2.1.0**, unmoved since 2026-08-24 | `8ef4733` — **still 2.1.0**, unmoved |
 | Working tree | clean | clean |
-| Tests | **unit slices + integration green on the release branch**, `dependencyCveScan` reports 0 advisories | **96 files, 959 tests, all passing**. ⚠️ Visual: baselines are **not** re-verified for this release — see hazard 7 |
-| Latest migration | **`V41__chat_and_presence.sql`** — unchanged by 2.1.0 | — |
-| Deployed through | **`V41`.** ✅ **2.1.0 adds no migration**, so the previous jar starts against the same schema and rollback is a redeploy | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`** and **`v2.1.0`** (`1fbf735`) — on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`** and **`v2.1.0`** (`8ef4733`). ⚠️ `v1.8.0`, `v1.9.1` and `v1.7.0` are missing |
+| Tests | **1581 unit tests green** on the 2.2.0 release branch, 0 failures, 0 skipped; SpotBugs clean; `dependencyCveScan` reports 0 advisories. Integration ran in CI on the release PR | **100 files, 989 tests, all passing** (was 96/959 at 2.1.0 — `sw.js` gained its first tests). ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7 |
+| Latest migration | **`V44__goal_events.sql`**, on `next`. Production is still on **`V41`** | — |
+| Deployed through | **`V41`.** ⚠️ **2.2.0 carries `V42`, `V43` and `V44`, none applied.** `V42` is a rollback boundary — it drops `uq_push_subscriptions_endpoint`, so the 2.1.0 jar starts against the `V42` schema without the uniqueness it assumes. `V43`/`V44` are redeploy-reversible | — |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`** and **`v2.1.0`** (`1fbf735`) — on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing. **No `v2.2.0`**, correctly: there is no deployed commit to put it at | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`** and **`v2.1.0`** (`8ef4733`). ⚠️ `v1.8.0`, `v1.9.1` and `v1.7.0` are missing. **No `v2.2.0`**, for the same reason |
+
+## 2.2.0 — cut 2026-08-27, **not deployed**
+
+**Two things people could not do, and one thing the database had never been asked to hold.** There
+was no way back into an account whose password nobody remembered; a browser shared by two accounts
+delivered one of them the other's notifications; and the `goals` table, which has existed since
+`V1`, had never had a single row written to it. Five pull requests across the two repos, three
+migrations.
+
+⚠️ **`main` has not moved in either repo, so none of this is in production.** `next` is
+`cb85c11` (backend) and `78503d2` (frontend); `main` is still `1fbf735` and `8ef4733`, where 2.1.0
+left them. Heroku and Netlify both deploy from `main`, so nothing has been built and nothing needs
+confirming yet. **Merged is not deployed**, and this section is written before the deploy rather
+than after it precisely so that the distinction survives being read in a hurry.
+
+### What is left to do, in order
+
+The steps below are [CONTRIBUTING § Cutting a release](CONTRIBUTING.md#cutting-a-release) 3–8, with
+1 and 2 already done. **The backend goes first and is confirmed before the frontend moves** — more
+strictly than usual this time, because the frontend calls `POST /api/push/claim` on every sign-in
+and the password-reset endpoints on routes it now exposes, and against a 2.1.0 server those `404`.
+
+1. Merge `next` → `main` in **FootMania-Back**. That is the deploy.
+2. `heroku releases -a footmania` for the commit that landed; `/api/version` for what the process
+   says it is; `heroku ps` for `football-2.2.0.jar`. A deploy that started is not a deploy that
+   booted the right jar.
+3. Confirm the migration chain applied: `heroku pg:psql -c 'select version from
+   flyway_schema_history order by installed_rank desc limit 1'` should answer **`44`**.
+4. Then merge `next` → `main` in **FootMania-Simple-Front**, and read back the Netlify deploy id
+   rather than assuming the push published.
+5. Tag `v2.2.0` in both repos **at the commits that were deployed**, annotated with how that was
+   established. [Step 6 is the one that goes wrong](CONTRIBUTING.md#cutting-a-release): a tag is a
+   claim about production, so ask the platform first.
+6. `git log --oneline next..main` must print nothing in both repos.
+7. Come back and rewrite this section as a shipped one.
+
+### The five pull requests
+
+| Repo | PR | Merge commit | What |
+|---|---|---|---|
+| Back | [#228](https://github.com/ricsnsuka/FootMania-Back/pull/228) | `5970b92` | push subscriptions scoped to the account (`V42`); password recovery, emailed link plus admin fallback (`V43`) |
+| Back | [#229](https://github.com/ricsnsuka/FootMania-Back/pull/229) | `f4b89eb` | `GET /api/matches/{id}/teams`, and the Postman collection regenerated |
+| Back | [#230](https://github.com/ricsnsuka/FootMania-Back/pull/230) | `ac79968` | goal timing used only when the events account for the whole match |
+| Back | [#231](https://github.com/ricsnsuka/FootMania-Back/pull/231) | `e079e10` | `POST /api/matches/{id}/events` — goals as idempotent events (`V44`) |
+| Front | [#85](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/85) | `20d99b2` | the forgot/reset screens, the server-read push claim, `sw.js` v4 |
+| Back | [#232](https://github.com/ricsnsuka/FootMania-Back/pull/232) | `cb85c11` | **cut 2.2.0** — version, Procfile jar name, CHANGELOG |
+| Front | [#86](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/86) | `78503d2` | **cut 2.2.0** — version and lockfile root |
+
+**Green on merge, in both repos.** Backend: all thirteen CI jobs, Integration (Testcontainers)
+included, plus 1581 unit tests, 0 failures, 0 skipped, SpotBugs clean and `dependencyCveScan` at 0
+advisories. Frontend: 100 files, 989 tests. ⚠️ Visual baselines are **not** re-verified — hazard 7
+still stands.
+
+### ⚠️ `V42` is a rollback boundary, and `V40` is a harder one nobody had recorded
+
+`V43` and `V44` are reversible by redeploying the previous jar: `V43` only adds a table nothing
+before it reads, and `V44`'s two `goals` columns are additive and nullable.
+
+**`V42` is not.** It drops `uq_push_subscriptions_endpoint`, which is the constraint the 2.1.0 jar
+depends on for one registration per browser. That jar *starts* against the `V42` schema and no
+longer has the uniqueness it assumes, so it can write a second live row for an endpoint and then
+fail its next insert against the new partial index — a failure at the point of subscribing, not at
+boot, where nobody is watching.
+
+**And `V40` is worse, and is already in production.** It **drops** `match_plans.description`, so the
+pre-`V40` jar does not merely lose a guarantee — it does not start at all, because `ddl-auto:
+validate` refuses to build the EntityManagerFactory against an entity mapping a column that no
+longer exists. That was never written down here until 2026-08-27; see
+[database-migrations](architecture/database-migrations.md#deployment-state).
+
+### ⚠️ Password recovery ships dark on the email half
+
+`spring.mail.*` and `app.mail.*` default to blank, exactly as VAPID does, so the application boots
+without them and `POST /password-reset/request` is accepted and answered identically while no mail
+leaves the server. **Emailed links start working when `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD`,
+`MAIL_FROM` and `MAIL_RESET_URL_BASE` are set as config vars on the dyno** — not in
+`application.yml`, which is public, and where a default VAPID key was already published once on
+2026-08-03.
+
+**The admin-issued link works either way**, and is the path that is usable on the day this deploys.
+`GET /api/auth/password-reset/availability` reports which of the two a deployment has, and the login
+page reads it. See [password-recovery](frontend/features/password-recovery.md).
+
+### The push bug is the reason to prioritise the deploy
+
+This is not a refinement. **On any device that has seen two accounts, the first account's
+notifications have been arriving on the second account's screen** — the service worker renders
+whatever arrives, has no session, and cannot check — while the second account had no registration
+and no way to get one, because the toggle asked the browser *"is there a subscription?"* rather than
+the server *"is it mine?"*. Every day this sits on `next` is a day that keeps happening. See
+[push-notifications](frontend/features/push-notifications.md#the-channel-is-the-browsers-the-registration-is-the-accounts).
+
+### The bookkeeping this release forced
+
+Three things were wrong in *this* repo and were found by cutting the release rather than by reading:
+
+- **`V40` and `V41` had no row in the migration ledger.** The gap was recorded on 2026-08-26 rather
+  than filled, which was right at the time; it is now filled from the migrations' own headers.
+- **The ledger's header said "complete as of V39" and "production applied through V35".** Both were
+  several releases stale.
+- **It also still said `V36` was "written, not merged and not deployed".** `V36` shipped long ago.
+
+⚠️ **The backend's `[Unreleased]` CHANGELOG section was empty when this was cut.** None of the four
+feature pull requests added an entry as it landed, so the whole `[2.2.0]` section was written at cut
+time from the merge commits. It came out well because the commit messages are unusually good — but
+that is luck, not process, and it is recorded in
+[RELEASE_NOTES](backend/next-release/RELEASE_NOTES.md) as the thing to fix next time.
+
+**Two leftovers, named rather than left to be found:** the merged release branches
+`chore/release-2.2.0` still exist on both remotes — the environment this was cut from cannot push a
+branch deletion — and the Postman generator still models tenancy with one list where the server has
+three (see the drift section).
 
 ## 2.1.0 — shipped and confirmed 2026-08-24
 
@@ -786,10 +903,32 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 | ~~[backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md)~~ | Header read "DRAFT — not implemented"; it shipped in `828db3b` | ✅ **Resolved.** Corrected here on import, and the stale backend copy went with the documentation split — there is one copy now, and it is this one |
 | [backend/plans/ORCHESTRATOR_SESSION.md](backend/plans/ORCHESTRATOR_SESSION.md) | Last entry 2026-07-28, though `orchestrator.agent.md` still mandates an entry per session | Resume it, or retire the convention deliberately |
 | ~~[API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md) §generate + [backend/features/TEAM_GENERATION_DESIGN.md](backend/features/TEAM_GENERATION_DESIGN.md) §7.3/§7.6~~ | Both documented `params[formWindow]`, `params[captainAId]` and `params[captainBId]` as working generation parameters. **They had never reached a strategy.** `@RequestParam Map<String,String>` binds query keys literally, so the map arrived as `{generationType=…, params[formWindow]=3}` and every `params.get("formWindow")` returned null | ✅ **Resolved 2026-08-07**, in `1.6.0`. Fixed the binding rather than the documents, so the published contract starts being true and no caller changed. `MatchPlanControllerTest` pins the server half and `generationQuery.test.ts` the frontend half — the absence of *either* is why this survived, since every strategy test builds its context directly and never involves the controller. **`1.6.0` is the first release in which `formWindow` and the captain overrides do anything** |
-| ~~Postman collection~~ | Was 60 requests against a 103-operation API, and — the deeper find — **gitignored the whole time**, so every copy lived on one person's disk and none could be diffed | ✅ **Resolved 2026-08-02.** Now *generated* from the running app's `/v3/api-docs` by `postman/generate-collection.mjs`, committed to the repo (103 requests, 17 folders, `X-Group-Id` per the tenancy contract), and regeneration is one command. The hand-maintenance workflow in `postman-engineer.agent.md` is marked historical |
+| ~~Postman collection~~ | Was 60 requests against a 103-operation API, and — the deeper find — **gitignored the whole time**, so every copy lived on one person's disk and none could be diffed | ✅ **Resolved 2026-08-02.** Now *generated* from the running app's `/v3/api-docs` by `postman/generate-collection.mjs`, committed to the repo, and regeneration is one command. The hand-maintenance workflow in `postman-engineer.agent.md` is marked historical. ⚠️ **And it came back anyway, by a different road, in 2.2.0** — see below |
 | ~~[frontend/INDEX.md](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/INDEX.md)~~ | Omitted seven of its own files | ✅ **Resolved** by the documentation split — the feature docs it failed to link now live here, and what is left there is a pointer plus the seven guides |
 | frontend — missing files | Nothing for guest players or payment delegation (`722335c`) as features in their own right | Write them. ✅ `features/payments.md` **written 2026-08-05** — the balance, the interleaved ledger, the roster and the delegation groups; delegation is covered there rather than separately. ✅ The group dimension is covered by [frontend/features/groups.md](frontend/features/groups.md) |
 | **this repo — no tenancy feature doc** | [architecture/multi-tenancy.md](architecture/multi-tenancy.md) and the plans carry the design, but `backend/features/` has nothing on organizations, memberships or per-membership roles, while nine older features each have a file | Write `backend/features/TENANCY.md`. It is the one thing a new session most needs and currently has to reconstruct from four plans |
+
+⚠️ **A derived artefact can rot without anybody hand-editing it, and the Postman collection just
+proved it.** Making it generated closed the drift the old row describes — nobody has hand-edited the
+JSON since — but **nobody re-derived it either.** Twenty-four days and 38 operations later it
+described an API that no longer existed: five folders absent entirely (Chat, Seasons, API tokens,
+Ballon d'Or, Moderation), plus match deletion, both lineup endpoints, password recovery and
+draft-session resume missing from folders that *did* exist. Regenerated in 2.2.0: **103 requests in
+17 folders → 142 in 22.**
+
+The generator carries a hand-kept `PUBLIC` list mirroring the server's permit-all rules, and it had
+fallen four paths behind — so every password-recovery request inherited bearer auth and an
+`X-Group-Id`, credentials describing a caller who by definition cannot sign in. Fixed in the script,
+never in the JSON, which is the discipline that makes the artefact worth generating at all.
+
+**The lesson is narrower than "derive it".** A derived artefact is only as fresh as its last
+derivation, and nothing in CI runs the generator or fails when the checked-in copy disagrees with
+`/v3/api-docs`. Until something does, this is a manual step with a good excuse.
+
+⚠️ **Still not fixed, and recorded rather than left to be rediscovered:** the generator models
+tenancy with one list where the server now has three, so account-scoped requests still send
+`X-Group-Id`. Harmless while the header names a group the caller belongs to — which the default
+`groupId=1` does — but it is wrong about the model.
 
 A related failure, already fixed: the notification-settings screen rendered `MVP_VOTE_OPEN` and
 `FEE_CHARGED` as raw enum names because both categories were added backend-side without anyone
@@ -832,6 +971,17 @@ reason this repo exists.
 ---
 
 ## Suggested next steps
+
+**0. Deploy 2.2.0.** It is cut, green and sitting on `next` in both repos with `main` unmoved. The
+step-by-step is at the [top of this file](#what-is-left-to-do-in-order); the reason it is item zero
+rather than item ten is the push bug — on every shared device, one account's notifications are
+currently being delivered to whoever else uses that browser, and the fix is merged and not in front
+of anybody. Backend first, confirmed, then the frontend.
+
+**0b. Then decide about `MAIL_*`.** Password recovery deploys with its email half dark. The
+admin-issued link works without it, so this is not a blocker for the release — but "there is no way
+back into your account" only stops being true for people who can reach an admin until the config
+vars are set.
 
 1. ~~Wire `integrationTest` into CI and run it.~~ ✅ Done 2026-08-01/02. The tier is green on every
    pull request; `GuestIsolationIT`, `TenancySchemaIT` and `TenantIsolationIT` have all now

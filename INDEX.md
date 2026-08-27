@@ -85,6 +85,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 |---|---|
 | [architecture/overview](frontend/architecture/overview.md) | Tech stack, folder structure, data flow |
 | [login](frontend/features/login.md) | Auth flow, change-password |
+| [password-recovery](frontend/features/password-recovery.md) | Forgot-password and reset screens, and the admin-issued link — **2.2.0, cut not deployed** |
 | [dashboard](frontend/features/dashboard.md) | Role-based overview |
 | [players](frontend/features/players.md) · [matches](frontend/features/matches.md) | The two main tables |
 | [match-plans](frontend/features/match-plans.md) | The poll, the waitlist, guests — and creating a weekly run |

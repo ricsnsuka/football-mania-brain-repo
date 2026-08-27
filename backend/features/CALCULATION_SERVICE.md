@@ -272,8 +272,9 @@ score one goal each both sit on the first rung, however late they scored.
 
 ### Graceful FLAT Fallback
 
-Older or manually-entered matches may have **no `Goal` rows**. In that case the timing model is
-skipped entirely and the service falls back to the `PlayerStat` counters (`soloGoals`,
+Older or manually-entered matches may have **no `Goal` rows** — and, since 2.2.0, matches that have
+*some* but not all of them. In either case the timing model is skipped entirely and the service
+falls back to the `PlayerStat` counters (`soloGoals`,
 `assistedGoals`, `penaltyGoals`, `assists`, `ownGoals`) — with the penalty goal getting only
 **half** the goal-scarcity bonus. Nothing breaks; the match is still rated. The public
 `computeMatchRating` / `computePreviewMatchRating` overloads always use this flat path.
@@ -289,6 +290,37 @@ meanRung = goalLadderSum(totalGoals) / totalGoals      // 2 goals → 2.10/2 = 1
 This is order-independent — the fallback cannot invent an ordering it does not have — and it agrees
 exactly with the timed path whenever all of a player's goals are the same type. Assists carry no
 type variation, so their exact ladder sum is used.
+
+### Partial goal events fall back too, and that is the whole point (2.2.0)
+
+⚠️ **Cut into 2.2.0 on `next`, not deployed.**
+
+**Timing weights are all-or-nothing.** When any `Goal` row exists with a scorer, `hasGoalData` is
+true and a player's stat points come **only** from `TimingContribution` — the `PlayerStat` counters
+are not read at all beyond own goals. So a match with three goal events and five counted goals did
+not rate three players precisely and two approximately. It rated the two who scored the missing
+goals at **zero stat points**, as though they had stood still all match.
+
+The guard is therefore: use timing **only when the events account for every counted goal**.
+
+That branch was unreachable for as long as nothing wrote `Goal` rows, which was every release up to
+this one. [`POST /api/matches/{id}/events`](MATCH_FEATURE.md#goals-as-events-220) is what makes it
+reachable, and **partial capture is the ordinary case there, not the failure case** — a flat
+battery, a missed tap, a goal nobody saw go in. The counters are the number everybody agrees on,
+because somebody sat down and totted them up; the events are a bonus when they happen to be
+complete.
+
+**So the fallback is deliberately to the *less precise* model**, which is the part worth
+understanding before anybody "fixes" it. Flat weights lose the go-ahead bonus and the late-game
+uplift: a rounding difference. Timing weights on partial data lose whole players: a wrong answer.
+
+**Own goals count on both sides of the comparison** — they produce a `Goal` row like any other and
+are counted in `PlayerStat.ownGoals` — even though they are attributed no timing points.
+Miscounting them either way would silently disable timing on every match containing one, which is
+why two of the three tests covering this are about own goals.
+
+Logged at `WARN` when it fires. This is the difference between two rating models, and somebody
+asking why a scorer rated badly needs to be able to find it.
 
 ---
 

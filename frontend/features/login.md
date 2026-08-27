@@ -12,6 +12,11 @@ The root route (`/`) redirects to `/dashboard` if the user is already authentica
 
 A **Register** link on the login page opens a modal for creating a new account (see [Registration](#registration) below).
 
+A **Forgot password?** link sits beside it, and is **always shown** — even on a deployment whose
+server cannot send email, because that page is also where somebody is told to ask an admin instead.
+The whole flow is its own document: [password-recovery](password-recovery.md). ⚠️ Added in 2.2.0,
+which is cut on `next` and not deployed.
+
 ---
 
 ## Files
