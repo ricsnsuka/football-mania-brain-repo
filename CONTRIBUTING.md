@@ -144,7 +144,8 @@ refactor/tenant-resolver      test/guest-removal-flush
 ```
 
 Types are `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `perf`. Delete the branch when its
-pull request merges — GitHub does it for you if you let it.
+pull request merges — GitHub does it for you if you let it, with **one thing to check first**: see
+[Deleting the branch under a stacked pull request](#deleting-the-branch-under-a-stacked-pull-request).
 
 **Name the branch after the change, not after who or what made it.** The repos accumulated
 `copilot/fix-jarfile-access-error`, `copilot/fix-jarfile-access-error-again`, and
@@ -156,6 +157,29 @@ follows the convention.
 
 **One branch, one reason to exist.** A branch that fixes CORS *and* reorganises docs cannot be
 reviewed as either, and cannot be reverted without taking the other with it.
+
+#### Deleting the branch under a stacked pull request
+
+**Retarget the child first.** Deleting the base branch of an open pull request makes GitHub
+**auto-close** that pull request — and a closed one cannot be reopened or retargeted once its base
+is gone. The work is not lost, but the review, its comments and its number are: the only way back is
+a new pull request from the same commit.
+
+That is not hypothetical. [Front #80](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/80)
+was the locale key-parity test, stacked on
+[#78](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/78) for the `MANUAL` key it needed.
+Merging #78 with `--delete-branch` closed #80 on the spot, and
+[#82](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/82) is that same commit (`9f7145d`)
+opened again against `next`. **The lesson is about deleting the base, not about stacking** — stacking
+is fine, and is often the honest way to say "this needs that first".
+
+So, in order: **retarget the child at `next` first, then merge the parent, then delete.**
+
+⚠️ **"Automatically delete head branches" makes this automatic rather than a choice somebody makes.**
+It is worth turning on — it is the only thing that stops the branch list growing by one per release,
+and the backend has some forty stale ones to show for not having it. But it removes the pause in
+which somebody would have noticed the stacked child. With it on, retargeting first stops being good
+practice and becomes the only protection there is.
 
 ## Deployment order
 
