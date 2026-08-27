@@ -419,6 +419,88 @@ Balancing uneven sides is a change to `CalculationService`, not to an endpoint.
 
 ---
 
+## Goals as events (2.2.0)
+
+⚠️ **Cut into 2.2.0 on `next`, not deployed.** Contract:
+[`MATCH-GOAL-EVENTS-API-CONTRACT.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-GOAL-EVENTS-API-CONTRACT.md)
+
+`POST /api/matches/{id}/events` writes a `Goal` row **and** moves the `PlayerStat` counters, in one
+transaction. **Both, never one.** The counters are what the scoreboard and the flat rating model
+read; the `Goal` row is what the timing-weighted model reads; and
+[`CalculationService` trusts goal events only when they account for every counted goal](CALCULATION_SERVICE.md#partial-goal-events-fall-back-too-and-that-is-the-whole-point-220).
+A half-written pair therefore does not degrade gracefully — it silently switches the whole match
+back to flat weights.
+
+**The `goals` table has existed since `V1` and nothing had ever written to it.** This is what fills
+it. `V44` adds `event_id` and `occurred_at`.
+
+### A duplicate is a success, not an error
+
+The caller this exists for captures goals where there is no network and drains a queue later,
+deleting each item only once the server confirms it. **A `409` on a goal the server already holds
+would stop that drain — and stop it on the same item every time afterwards**, jamming the queue
+permanently on a goal that was never lost.
+
+So a repeat carrying a known `eventId` answers **`200` with the goal already recorded**, and
+retrying onto a recorded goal is the happy path rather than an exception to it.
+
+`event_id` is unique **per tenant**, not globally: two groups cannot see each other's keys, so a
+collision between them is not a duplicate, and a global constraint would let one group's key
+silently reject another's goal.
+
+### The duplicate check runs before the completion check
+
+**That ordering is load-bearing, and it was found by exercising the endpoint against a running
+server rather than only against mocks.** With the checks the other way round, completing a match
+mid-drain turned every subsequent retry into a `409` — including retries of goals already safely
+stored.
+
+A goal already recorded stays recorded whatever the match has done since. Only a **genuinely new**
+goal on a completed match meets the `409`.
+
+### `occurredAt` is required, and the server never substitutes its own clock
+
+A goal queued at 15:12 and posted at 16:40 belongs at 15:12. Stamping it 16:40 would put every
+delayed goal at the end of the match, where it looks like a scoring bug rather than a clock bug.
+
+`minute` stays `null`: it needs a kickoff to count from, and `matches.match_date` is a schedulable,
+backdatable date rather than one. The goal ordering query therefore sorts on `occurredAt` ahead of
+`createdAt` — a queue drained in one burst shares a `createdAt` to the second, and a queue drained
+late arrives after goals scored later than it.
+
+`MATCH_STATS_WRITE` gains this path as an explicit decision, which is what the
+[API-tokens contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API-TOKENS-API-CONTRACT.md)
+says adding a path has to be: it writes the same match as the endpoint beside it, so a token trusted
+with one is trusted with the other.
+
+---
+
+## The two team names without the scoresheet (2.2.0)
+
+⚠️ **Cut into 2.2.0 on `next`, not deployed.**
+
+`GET /api/matches/{id}/teams` answers with `id`, `name`, `teamOrder` and nothing else.
+
+The names were already reachable — `GET /api/matches/{id}` carries them inside `teams[]` — but
+`MatchTeamDTO` brings every player's stat row with them. **A header that reads "Reds vs Blues" was
+downloading twenty-two rows of goals, assists, own goals and ratings** on a completed eleven-a-side
+to render two strings.
+
+`teamOrder` is included rather than left to list position, because it is what "team A" means
+everywhere else in the API — `scoreTeamA` is the score of the side whose order is `1` — and
+`Match.teams` carries no `@OrderBy`, so position was never a safe thing to read. Hence an ordered
+finder rather than reusing `findAllByMatchId`.
+
+The match is loaded and tenant-guarded **before** the teams are queried, so a match in another group
+is a `404` here exactly as on every other `/{id}` read, and the teams are never touched on the way
+to that answer. Cached on the existing `matches` cache: every write in `MatchService` and the
+match-creating path in `MatchPlanService` evicts it with `allEntries = true`, and nothing anywhere
+renames a `MatchTeam` after creation, so the entry cannot go stale.
+
+`GET /api/matches/{id}` is unchanged.
+
+---
+
 ## Manual Match Creation
 
 `POST /api/matches/manual` provides an **unrestricted** team creation path for admin/master users. It is designed for

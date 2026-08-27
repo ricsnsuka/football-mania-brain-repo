@@ -1,7 +1,7 @@
 # Push Notifications
 
-**Added in:** v1.0.0 (Roadmap Phase 2)
-**Status:** ✅ Implemented
+**Added in:** v1.0.0 (Roadmap Phase 2) · **account-scoped since 2.2.0**
+**Status:** ✅ Implemented — ⚠️ 2.2.0's changes are cut on `next` and **not deployed**
 **Backend contract:** `docs/api/PUSH-API-CONTRACT.md` in the backend repo
 
 Web Push over the raw protocol — no Firebase, no vendor SDK. The backend encrypts per
@@ -14,16 +14,24 @@ renders the notification, and owns the preferences UI.
 
 ```
 src/lib/pushSupport.ts                        Browser plumbing + environment store
+src/lib/pushSignOut.ts                        Releases the channel at sign-out
 src/services/pushService.ts                   API calls
 src/hooks/push/usePushNotifications.ts        React Query wrapper + state
+src/hooks/push/usePushDeviceClaim.ts          Whose channel is this? — asks the server
+src/components/pwa/PushDeviceClaim.tsx        Mounted app-wide from the root layout
 src/features/settings/NotificationSettings.tsx  The UI
 src/types/push.ts                             DTOs
 public/sw.js                                  push + notificationclick handlers
 ```
 
-Mounted from `app/(app)/dashboard/page.tsx`, below the role dashboard — the settings are
-identical for all three roles, so putting them inside each would be three places to keep in
-step.
+The settings UI is mounted from `app/(app)/dashboard/page.tsx`, below the role dashboard — the
+settings are identical for all three roles, so putting them inside each would be three places to
+keep in step.
+
+**`PushDeviceClaim` is mounted from the root layout instead, and that placement is load-bearing.**
+The claim is what takes the channel off whoever held it previously, so it has to run at sign-in.
+Deferring it until somebody opened settings would leave a previous user's notifications arriving on
+the current user's screen for as long as nobody visited that page — which is indefinitely.
 
 ---
 
@@ -119,9 +127,57 @@ landed without flushing a single microtask.
 
 ### Re-subscribing is cheap and expected
 
-The backend upserts on `endpoint`, so sending the same subscription again is safe. Worth doing
-on login: endpoints rotate, and on a shared browser the row needs reassigning to whoever is now
-signed in.
+The backend upserts on `(user_id, endpoint)`, so sending the same subscription again is safe.
+
+---
+
+## The channel is the browser's; the registration is the account's
+
+**This is the distinction the feature got wrong until 2.2.0, and it is worth stating before
+anything else on this page.** A browser mints **one push endpoint per origin** and hands back the
+same one whoever is signed in. So the endpoint identifies the *channel* — a browser install — and
+not the *registration*, which is a per-account fact. `V12` keyed the row on `endpoint` alone and
+conflated the two.
+
+On any device that saw two accounts, that had two consequences:
+
+- The row kept pointing at whoever registered first, so **their notifications were delivered to and
+  displayed on a device somebody else was now signed in on.** The service worker renders whatever
+  arrives: it has no session and cannot check.
+- The second account **had no registration and no way to get one.** This side asked the browser
+  *"is there a subscription?"* rather than the server *"is it mine?"*, so the toggle already read
+  **on**, `/subscribe` was never called, and nothing was ever received.
+
+`V42` keys a registration on `(user_id, endpoint)` with a partial unique index allowing at most one
+**active** row per endpoint, and only active rows are sent to. Ownership still moves — there is
+physically one channel per browser — but the displaced account keeps a **dormant** row rather than
+being erased, so switching back to it on that device restores the choice instead of asking for
+consent a second time. A dormant row is not a quieter subscription; it is not a subscription.
+
+### Ownership is a server fact, so it is read from the server
+
+`usePushDeviceClaim` POSTs `/api/push/claim`, which binds the channel to the caller and reports
+whether they are subscribed. **It never creates a registration** — claiming and subscribing are
+different acts, and merging them would opt somebody in by signing in.
+
+The answer is cached **per account**. A shared cache key would reproduce the original bug one layer
+up: two accounts on one device would agree on an answer that is true for only one of them.
+
+The claim also closes the leak when nobody signs out cleanly — tokens expire, tabs get closed —
+because *arriving* at a device takes the channel off whoever last held it, without needing the
+previous session to have done anything.
+
+`DELETE /api/push/claim` releases it at sign-out, dormant rather than deleted. That call is capped
+at 2.5s and swallows failures: somebody handing their phone over has to be able to log out on a
+flaky connection, and the claim at the next sign-in reconciles ownership anyway. **The browser
+subscription is deliberately not torn down** — notification permission is a device-level grant, and
+re-prompting risks a denial, which is permanent.
+
+### The toggle has three states, not two
+
+Until the server has answered, it says **"Checking this device"** rather than asserting **Off**.
+Asserting Off would flicker for somebody who has it on, and — worse — invite them to press a
+control that would then do nothing they expected.
 
 ---
 
@@ -149,11 +205,25 @@ about: retrofitting preferences once people are already over-notified is harder 
 
 ## Service worker
 
-`push` and `notificationclick` in `public/sw.js`. **`VERSION` was bumped to `v3`** — without
-that, existing installs keep the old worker and never gain the handlers.
+`push` and `notificationclick` in `public/sw.js`. **`VERSION` is `v4`** (bumped from `v3` in
+2.2.0) — without a bump, existing installs keep the old worker and never gain what changed.
 
 The handler runs with **no application code loaded** — no React, no router, no store — so the
-payload carries everything needed: `{ category, title, body, url }`.
+payload carries everything needed: `{ category, title, body, url, when }`.
+
+**`when` is new in 2.2.0, and it exists because the server has no timezone it could correctly
+pick** — the schema stores none, anywhere. `MATCH_REMINDER` used to concatenate
+`Instant.toString()` into the body, so people were reading `2026-07-31T19:00:00Z` on a lock screen.
+The instant now travels in the payload and the worker renders it as `DD-MON-YYYY HH:mm` in the
+device's own zone.
+
+Two decisions in that rendering are worth keeping:
+
+- **Built from date parts rather than `toLocaleString`**, so the format is fixed instead of varying
+  with the browser's locale.
+- **Appended to the body rather than substituted into a placeholder.** Workers update on their own
+  schedule, so an older worker that does not know about `when` will be receiving these payloads for
+  a while. Appending means it drops the time; substituting would have it render a token literally.
 
 - **A push with no data is ignored.** Some services send one purely to wake the worker.
 - **Unparseable JSON shows nothing**, rather than a notification built from garbage.
@@ -187,6 +257,10 @@ Step 4 is the quickest way to iterate on the handler itself.
 |------|--------|
 | `src/tests/lib/pushSupport.test.ts` | base64url decoding incl. the `ArrayBuffer` requirement, iPhone/iPad-as-Macintosh/desktop-Mac/Android detection, that the iOS-needs-install rule does not leak to other platforms, the synchronous permission call, and the **installed-iOS subscribe path** end to end — `userVisibleOnly`, the `Uint8Array` key, DTO shape, existing-subscription reuse and rejection of an incomplete subscription |
 | `src/tests/components/NotificationSettings.test.tsx` | Renders nothing before the environment is known, each unavailable reason, toggles rendered from the server list, absence-from-muted-means-on, subscribe/unsubscribe wiring, refused permission, and per-category busy state |
+| `src/tests/hooks/usePushDeviceClaim.test.tsx` | The claim is per-account, the cache key is not shared between accounts, and the toggle's third state while the server has not answered |
+| `src/tests/lib/pushSignOut.test.ts` | Release before the token is cleared, the 2.5s cap, failures swallowed, and that the browser subscription is left in place |
+| `src/tests/lib/serviceWorkerPush.test.ts` | `sw.js`'s first tests, **run against the real shipped file** rather than a copy — `when` rendering, the fixed date format, and that a payload without `when` still produces a notification |
 
-`public/sw.js` has no unit tests, for the reason given in [pwa.md](pwa.md) — it is verified in
-DevTools and by the browser-driven check described there.
+`public/sw.js` had no unit tests until 2.2.0, for the reason given in [pwa.md](pwa.md). It now has
+`serviceWorkerPush.test.ts`, which loads the shipped file rather than a fixture — the DevTools and
+browser-driven checks described there are still what covers the parts a test cannot reach.

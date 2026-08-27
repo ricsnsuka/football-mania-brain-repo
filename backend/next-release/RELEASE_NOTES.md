@@ -7,7 +7,15 @@
 > and the rule there is that **nothing is duplicated**. Append new entries below; never delete
 > existing ones. **Drain this file when a release ships** — that is the step that was missed, below.
 
-**Nothing is accumulated for the next release.** Everything in this file has shipped.
+**Nothing is accumulated for the next release.** Everything in this file has shipped, and 2.2.0's
+notes went straight to the CHANGELOG where they belong.
+
+⚠️ **2.2.0's `[Unreleased]` section was empty when the release was cut**, on 2026-08-27. None of its
+four pull requests added a CHANGELOG entry as it landed, so the whole section was written at cut
+time from the merge commits. That worked — the commit messages here are unusually good — but it is
+the same failure mode this file was drained to stop: **notes written after the fact are notes
+written by whoever is cutting, not by whoever made the change.** The person who knew why is the
+person who wrote the commit, and next time they may not have.
 
 ---
 
@@ -23,6 +31,7 @@
 | `1.4.0` | 2026-08-05 | CHANGELOG `[1.4.0]` — the last-administrator guard, [lineup swap/replace](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-LINEUP-API-CONTRACT.md) and the reversal fix under them; frontend: the match modal rebuilt and match/scoresheet/lineup editing. **No migration** |
 | `1.4.1` | 2026-08-05 | CHANGELOG `[1.4.1]` — [deleting a match unwinds it](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-DELETION-API-CONTRACT.md), including a completed one; `DELETE` answers `200` with a report. Frontend: the delete control, and the cost stated before it. **No migration** |
 | `1.9.2` | 2026-08-09 | CHANGELOG `[1.9.2]` — [Rating Model v2.2](../features/CALCULATION_SERVICE.md), the escalating goal/assist ladder, plus the goal-type breakdown on match reads (which had shipped unversioned the same day and folds in here). Backend-only; the frontend stays `1.9.1`. **No migration** |
+| `2.2.0` | 2026-08-27 | CHANGELOG `[2.2.0]` — [push scoped to the account](../../frontend/features/push-notifications.md#the-channel-is-the-browsers-the-registration-is-the-accounts) (`V42`), [password recovery](../../frontend/features/password-recovery.md) (`V43`), [goals as events](../features/MATCH_FEATURE.md#goals-as-events-220) (`V44`) and the timing guard under it, plus `GET /api/matches/{id}/teams`. ⚠️ **Cut, not deployed** — `main` has not moved in either repo. `V42` and `V40` are rollback boundaries; the email half ships dark |
 
 The CHANGELOG lives at
 [FootMania-Back/CHANGELOG.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/CHANGELOG.md).
