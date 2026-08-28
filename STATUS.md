@@ -1,28 +1,55 @@
 # Project Status
 
-**Snapshot: 2026-08-28, after 2.3.0 — deployed and confirmed on both halves, second attempt on the
-frontend.** Update it when the answers change, not on a schedule — a status page nobody trusts is
-worse than none.
+**Snapshot: 2026-08-28, late evening, after 2.3.1 — a frontend-only patch on top of the same day's
+2.3.0, deployed and confirmed.** The backend stays at 2.3.0 and its half of the table is unchanged.
+Update it when the answers change, not on a schedule — a status page nobody trusts is worse than
+none.
 
 ⚠️ **The old-tag backlog is still outstanding, and is marked where it appears.** **Seven tags** —
 `v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend, `v1.7.0` in the frontend — exist
 on no remote. That is recorded as outstanding rather than dressed as a fact. **`v2.2.0` has left
 that list**: both halves were tagged on 2026-08-28, retroactively but from platform evidence, and
-the annotations carry it. The running-version claims are **not** among the weak ones: 2.3.0 was
-read back from both platforms, and the evidence is in the table.
+the annotations carry it. The running-version claims are **not** among the weak ones: 2.3.0 and
+2.3.1 were read back from their platforms, and the evidence is in the table.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `c962b5b` — identical to `main`, checked: `git log next..main` prints nothing | `686105e` — **one merge ahead of `main`, deliberately**: #100, the CI production-build step, merged after the release so it rides the next one. `git log next..main` prints nothing, which is the check that matters |
-| Release | **`2.3.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.3.0`** — `package.json`, with the lockfile's root version moved to match |
-| Running in production | **`c962b5b`, confirmed by asking the platform.** Heroku release **v72**, `Deploy c962b5b5`, 2026-08-28 21:04:20 +0100. `/api/version` reports `2.3.0` (build `2026-08-28T20:04:01.266Z`), `/api/health` is `UP`, and `heroku ps` shows `web.1` up running **`football-2.3.0.jar`** | **`151b896`, confirmed against Netlify:** deploy `6a91f0616239ed000822463e`, `ready`, context `production`, `commit_ref` matching, published `2026-08-28T20:33:27Z`. Read back from the live site too — `/profile` (new this release) answers `200` while a nonsense path answers `404`. ⚠️ **This is the second promotion**: the first (`eb7b28d`) merged cleanly and failed its Netlify build — see the 2.3.0 section |
-| `main` head | `c962b5b` — **2.3.0**: the nine features from the 2026-08-28 feature-gap audit | `151b896` — **2.3.0**: the same set's screens, plus the stylesheet fix the first promotion needed |
+| `next` head | `c962b5b` — identical to `main`, checked: `git log next..main` prints nothing | `8098d81` — identical to `main`, checked: the same check passes |
+| Release | **`2.3.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.3.1`** — `package.json`, with the lockfile's root version moved to match. Frontend-only: the repos are one patch apart deliberately, the way `1.9.2` left them one minor apart the other way round |
+| Running in production | **`c962b5b`, confirmed by asking the platform.** Heroku release **v72**, `Deploy c962b5b5`, 2026-08-28 21:04:20 +0100. `/api/version` reports `2.3.0` (build `2026-08-28T20:04:01.266Z`), `/api/health` is `UP`, and `heroku ps` shows `web.1` up running **`football-2.3.0.jar`** | **`8098d81`, confirmed against Netlify:** deploy `6a91ff7dbf5aa900085511be`, `ready`, context `production`, `commit_ref` matching, published `2026-08-28T21:37:45Z`. Read back from the live site too — `/profile` answers `200` while a nonsense path answers `404` |
+| `main` head | `c962b5b` — **2.3.0**: the nine features from the 2026-08-28 feature-gap audit | `8098d81` — **2.3.1**: the two profile fixes the owner reported from the live 2.3.0, plus the CI production-build step |
 | Working tree | clean | clean |
-| Tests | **`./gradlew build` green** on every feature branch and the release branch (unit slices + SpotBugs + the Testcontainers migration check ride in it); all CI jobs green on the promotion after the Actions-budget incident below | **1041 tests, all passing** on the merged `next` (was 100 files/989 at 2.2.0). ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7. ⚠️ And note what the suite did *not* catch: the promotion that failed was green everywhere but Netlify |
+| Tests | **`./gradlew build` green** on every feature branch and the release branch (unit slices + SpotBugs + the Testcontainers migration check ride in it); all CI jobs green on the promotion after the Actions-budget incident below | **1043 tests, all passing** on the 2.3.1 release branch (106 files) — and CI now runs `npm run build` too, so the stylesheet compiles before anything merges. ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7 |
 | Latest migration | **`V44__goal_events.sql`** — unchanged by 2.3.0 | — |
 | Deployed through | **`V44`**, read from `flyway_schema_history` on 2026-08-28: `V42`–`V44` applied 2026-08-27 01:29 UTC, all successful. ✅ **2.3.0 adds no migration**, so rollback is a redeploy. The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71) and **`v2.3.0`** (`c962b5b`) — on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record) and **`v2.3.0`** (`151b896`). ⚠️ `v1.8.0`, `v1.9.1` and `v1.7.0` are missing |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71) and **`v2.3.0`** (`c962b5b`) — on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`) and **`v2.3.1`** (`8098d81`). ⚠️ `v1.8.0`, `v1.9.1` and `v1.7.0` are missing |
+
+## 2.3.1 — shipped and confirmed 2026-08-28, the same evening
+
+**Frontend only; the backend does not move.** The owner opened the freshly deployed profile page
+and reported the styling "very very wrong — margin spacing mainly". Two fixes, one release:
+
+- **The page root was missing every gutter its siblings have** (#102). `.page-container` owns width
+  and centering only; each page root supplies its own `px-4 py-8`, and every sibling does
+  (`.players-page`, `.rankings-page`, all of them). `.profile-page` shipped as `flex flex-col
+  gap-4` alone, so the page sat flush against the viewport edges. Now the exact shape the siblings
+  use.
+- **The account menu offered Profile before a group was chosen** (#102) — including on the
+  onboarding shell, which is precisely the no-group state, where every tenant-scoped read behind
+  the page would refuse. The entry now waits for the choice; settings and logout stay, being
+  account concerns. Two tests pin both states.
+
+The CI production-build step (#100, the 2.3.0 lesson turned into a check) rode along, and ran on
+every pull request of this release. Cut #103, promotion #104 (`8098d81`), Netlify deploy
+`6a91ff7dbf5aa900085511be` confirmed `ready` in production, tagged `v2.3.1` with the evidence.
+`git log next..main` prints nothing in both repos.
+
+**Worth keeping:** the gutters bug is invisible to every automated check the repo has — type-check,
+lint, vitest and `next build` all pass on a page with no padding. The only thing that catches "this
+looks wrong" is looking. The visual-baseline suite (hazard 7) exists for exactly this and has no
+`/profile` baseline yet; the profile page is a candidate the next time somebody regenerates on
+Windows.
 
 ## 2.3.0 — shipped and confirmed 2026-08-28
 
@@ -110,7 +137,7 @@ Frontend, same day:
 | [#98](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/98) | `eb7b28d` | ⚠️ the promotion that **failed its Netlify build** |
 | [#99](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/99) | `b6aed77` | the stylesheet fix — `text-ink-heading` → `text-ink` |
 | [#101](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/101) | `151b896` | **the promotion, take two — this is the deployed commit** |
-| [#100](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/100) | `686105e` | CI runs `next build` — merged to `next` *after* the release, rides the next one |
+| [#100](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/100) | `686105e` | CI runs `next build` — merged to `next` after the release; shipped in `2.3.1` the same evening |
 
 ### The auto-close bit again, once — and was prevented three times
 
