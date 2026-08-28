@@ -1,29 +1,71 @@
 # Project Status
 
-**Snapshot: 2026-08-28, late evening, after 2.3.1 — a frontend-only patch on top of the same day's
-2.3.0, deployed and confirmed.** The backend stays at 2.3.0 and its half of the table is unchanged.
-Update it when the answers change, not on a schedule — a status page nobody trusts is worse than
-none.
+**Snapshot: 2026-08-29, just past midnight, after 2.4.0 — the match clock and the timeline's
+centred ladder, deployed and confirmed on both halves.** The repos are one version again after
+2.3.1's deliberate split. Update it when the answers change, not on a schedule — a status page
+nobody trusts is worse than none.
 
 ⚠️ **The old-tag backlog is still outstanding, and is marked where it appears.** **Seven tags** —
 `v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend, `v1.7.0` in the frontend — exist
 on no remote. That is recorded as outstanding rather than dressed as a fact. **`v2.2.0` has left
 that list**: both halves were tagged on 2026-08-28, retroactively but from platform evidence, and
-the annotations carry it. The running-version claims are **not** among the weak ones: 2.3.0 and
-2.3.1 were read back from their platforms, and the evidence is in the table.
+the annotations carry it. The running-version claims are **not** among the weak ones: 2.4.0 was
+read back from both platforms, and the evidence is in the table.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `c962b5b` — identical to `main`, checked: `git log next..main` prints nothing | `8098d81` — identical to `main`, checked: the same check passes |
-| Release | **`2.3.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.3.1`** — `package.json`, with the lockfile's root version moved to match. Frontend-only: the repos are one patch apart deliberately, the way `1.9.2` left them one minor apart the other way round |
-| Running in production | **`c962b5b`, confirmed by asking the platform.** Heroku release **v72**, `Deploy c962b5b5`, 2026-08-28 21:04:20 +0100. `/api/version` reports `2.3.0` (build `2026-08-28T20:04:01.266Z`), `/api/health` is `UP`, and `heroku ps` shows `web.1` up running **`football-2.3.0.jar`** | **`8098d81`, confirmed against Netlify:** deploy `6a91ff7dbf5aa900085511be`, `ready`, context `production`, `commit_ref` matching, published `2026-08-28T21:37:45Z`. Read back from the live site too — `/profile` answers `200` while a nonsense path answers `404` |
-| `main` head | `c962b5b` — **2.3.0**: the nine features from the 2026-08-28 feature-gap audit | `8098d81` — **2.3.1**: the two profile fixes the owner reported from the live 2.3.0, plus the CI production-build step |
+| `next` head | `456c071` — identical to `main`, checked: `git log next..main` prints nothing | `7b507ff` — identical to `main`, checked: the same check passes |
+| Release | **`2.4.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.4.0`** — `package.json`, with the lockfile's root version moved to match. The repos are one version again after 2.3.1's deliberate one-patch split |
+| Running in production | **`456c071`, confirmed by asking the platform.** Heroku release **v73**, `Deploy 456c0716`, 2026-08-29 00:25:02 +0100. `/api/version` reports `2.4.0` (build `2026-08-28T23:24:45.029Z`), `/api/health` is `UP`, `heroku ps` shows `web.1` up running **`football-2.4.0.jar`**, and `flyway_schema_history`'s newest row is **`V45__match_clock.sql`, success** | **`7b507ff`, confirmed against Netlify:** deploy `6a921a6485f38400086ad103`, `ready`, context `production`, `commit_ref` matching, published `2026-08-28T23:32:32Z`. Read back from the live site too — `/profile` answers `200` while a nonsense path answers `404` |
+| `main` head | `456c071` — **2.4.0**: the match clock (`POST /{id}/clock`, API-only) and derived goal minutes | `7b507ff` — **2.4.0**: the timeline rebuilt as a centred ladder |
 | Working tree | clean | clean |
-| Tests | **`./gradlew build` green** on every feature branch and the release branch (unit slices + SpotBugs + the Testcontainers migration check ride in it); all CI jobs green on the promotion after the Actions-budget incident below | **1043 tests, all passing** on the 2.3.1 release branch (106 files) — and CI now runs `npm run build` too, so the stylesheet compiles before anything merges. ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7 |
-| Latest migration | **`V44__goal_events.sql`** — unchanged by 2.3.0 | — |
-| Deployed through | **`V44`**, read from `flyway_schema_history` on 2026-08-28: `V42`–`V44` applied 2026-08-27 01:29 UTC, all successful. ✅ **2.3.0 adds no migration**, so rollback is a redeploy. The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71) and **`v2.3.0`** (`c962b5b`) — on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`) and **`v2.3.1`** (`8098d81`). ⚠️ `v1.8.0`, `v1.9.1` and `v1.7.0` are missing |
+| Tests | **`./gradlew build` green** on the feature and release branches; all thirteen CI jobs green on the promotion, Integration (Testcontainers) included — which is what exercised `V45` against real PostgreSQL before production did | **1045 tests, all passing**, and CI runs `npm run build` since 2.3.1's cycle, so the stylesheet compiles before anything merges. ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7 |
+| Latest migration | **`V45__match_clock.sql`** — two nullable columns on `matches`, no backfill | — |
+| Deployed through | **`V45`**, read from `flyway_schema_history` after v73 booted: newest row `V45__match_clock.sql`, success. ✅ **Additive and nullable, so rollback is a redeploy.** The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`) and **`v2.4.0`** (`456c071`) — on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`) and **`v2.4.0`** (`7b507ff`). ⚠️ `v1.8.0`, `v1.9.1` and `v1.7.0` are missing |
+
+## 2.4.0 — shipped and confirmed 2026-08-29, just past midnight
+
+**The whistle, and the ladder it gives minutes to.** One backend feature and one frontend
+correction, both born from the first real look at the 2.3.0 timeline — the owner's styling report,
+and the observation that a watch recording goals could just as well record the whistles.
+
+**The match clock** (`FootMania-Back#244`, released by `#245`/`#246`): `POST /api/matches/{id}/clock`
+records the official kickoff and final whistle from the recording client's clock — the Shortcuts
+"match started"/"match finished" triggers. **API-only by design**: no screen calls it, because a
+kickoff typed into a form after the fact is `matchDate` with extra steps, and `matchDate` is
+exactly what V44 ruled out as a minute reference. With a kickoff recorded, the timeline read
+derives each goal's `minute` at read time (first sixty seconds is minute 1, pre-kickoff clamps to
+1, a stored minute wins, nothing written back), and `MatchDTO` gains `kickedOffAt`/`fullTimeAt`.
+
+Three decisions worth knowing over the endpoint's own contract
+([MATCH-CLOCK-API-CONTRACT](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/MATCH-CLOCK-API-CONTRACT.md)):
+
+- **First write per whistle wins; a repeat is a `200` no-op.** The event type is the idempotency
+  key — a match has one kickoff — and moving a recorded one would silently shift every derived
+  minute. A wrong whistle is an administrator conversation, not a retry.
+- **A completed match accepts clock triggers** — the one deliberate divergence from the goals
+  endpoint, because the clock changes nothing ratings read, and the real ordering is whistle at
+  the pitch → completion from the web → queue drained after.
+- **`MATCH_STATS_WRITE` widened** to cover the endpoint: the whistle and the goal come off the
+  same wrist. Existing shortcut tokens gain it on deploy; the scope test pins the grant.
+
+**The timeline restyle** (`FootMania-Simple-Front#105`, released by `#106`/`#107`): the tab had
+shipped without the modal's gutters (the same class of bug as 2.3.1's profile page — a component
+missing the inset every sibling carries), with team headings the scoreboard directly above already
+provides, and with the goal's time inside the entry. Now: a centred ladder split on an undrawn
+middle line, entries centred in their team's half, minutes in fixed slots at the outer edges —
+where the backend's derived minutes land the moment a match is clocked, with no further frontend
+change.
+
+**`V45` is the release's one migration, the first since 2.2.0, and the mild kind:** two nullable
+columns on `matches`, no backfill — the 2.3.0 jar starts against the migrated schema, so rollback
+is a redeploy. Exercised by CI's Testcontainers tier before production, applied cleanly at v73.
+
+**A first for this file's release history:** the CHANGELOG section did not have to be
+reconstructed at cut time. The match-clock entry was written under `[Unreleased]` when #244
+landed — exactly what the 2.2.0 retrospective asked for — and the cut only added the framing.
 
 ## 2.3.1 — shipped and confirmed 2026-08-28, the same evening
 
