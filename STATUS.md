@@ -1,33 +1,133 @@
 # Project Status
 
-**Snapshot: 2026-08-27. 2.2.0 is cut on `next` in both repos and *not deployed*; production is
-still 2.1.0.** Update it when the answers change, not on a schedule — a status page nobody trusts is
+**Snapshot: 2026-08-28, after 2.3.0 — deployed and confirmed on both halves, second attempt on the
+frontend.** Update it when the answers change, not on a schedule — a status page nobody trusts is
 worse than none.
 
-⚠️ **The 2.2.0 row in the table below says "cut", not "running", and that distinction is the whole
-point of this file.** `main` has not moved in either repo, so Heroku and Netlify are both still
-serving 2.1.0. Nothing in 2.2.0 — the account-scoped push fix included — is in front of anybody yet.
-
-⚠️ **Two claims below are weaker than the rest, and both are marked where they appear.** **Six
-tags** — `v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend — exist on no remote.
-That is recorded as outstanding rather than dressed as a fact, which is the only honest thing a
-status page can do with it. The running-version claims are **not** among the weak ones: 2.1.0 was
+⚠️ **The old-tag backlog is still outstanding, and is marked where it appears.** **Seven tags** —
+`v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend, `v1.7.0` in the frontend — exist
+on no remote. That is recorded as outstanding rather than dressed as a fact. **`v2.2.0` has left
+that list**: both halves were tagged on 2026-08-28, retroactively but from platform evidence, and
+the annotations carry it. The running-version claims are **not** among the weak ones: 2.3.0 was
 read back from both platforms, and the evidence is in the table.
 
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | **ahead of `main` by five commits** — the four 2.2.0 pull requests plus the release commit. `git log next..main` still prints nothing, which is the check that matters: `main` carries nothing `next` lacks | **ahead of `main` by two commits** — #85 and the release commit. `git log next..main` prints nothing |
-| Release | **`2.2.0` on `next`, `2.1.0` on `main`.** `build.gradle` and the `Procfile` jar name agree at `2.2.0`, and the Version Check job passed on the release PR | **`2.2.0` on `next`, `2.1.0` on `main`** — `package.json` with the lockfile's root version moved to match |
-| Running in production | **`1fbf735`, confirmed by asking the platform.** Heroku release **v70**, `Deploy 1fbf735b`, 2026-08-24 18:54:56 +0100. `/api/version` reports `2.1.0` (build `2026-08-24T17:54:24.762Z`), `/api/health` is `UP`, and `heroku ps` shows `web.1` up running **`football-2.1.0.jar`** | **`8ef4733`, confirmed against Netlify:** deploy `6a8c8817240c3f0007d346c0`, `ready`, context `production`, `commit_ref` matching, published `2026-08-24T18:07:16Z`. Read back from the live site too — `/` and `/settings` answer `200` while a nonsense path answers `404`, so the routes are genuinely served |
-| `main` head | `1fbf735` — **still 2.1.0**, unmoved since 2026-08-24 | `8ef4733` — **still 2.1.0**, unmoved |
+| `next` head | `c962b5b` — identical to `main`, checked: `git log next..main` prints nothing | `686105e` — **one merge ahead of `main`, deliberately**: #100, the CI production-build step, merged after the release so it rides the next one. `git log next..main` prints nothing, which is the check that matters |
+| Release | **`2.3.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.3.0`** — `package.json`, with the lockfile's root version moved to match |
+| Running in production | **`c962b5b`, confirmed by asking the platform.** Heroku release **v72**, `Deploy c962b5b5`, 2026-08-28 21:04:20 +0100. `/api/version` reports `2.3.0` (build `2026-08-28T20:04:01.266Z`), `/api/health` is `UP`, and `heroku ps` shows `web.1` up running **`football-2.3.0.jar`** | **`151b896`, confirmed against Netlify:** deploy `6a91f0616239ed000822463e`, `ready`, context `production`, `commit_ref` matching, published `2026-08-28T20:33:27Z`. Read back from the live site too — `/profile` (new this release) answers `200` while a nonsense path answers `404`. ⚠️ **This is the second promotion**: the first (`eb7b28d`) merged cleanly and failed its Netlify build — see the 2.3.0 section |
+| `main` head | `c962b5b` — **2.3.0**: the nine features from the 2026-08-28 feature-gap audit | `151b896` — **2.3.0**: the same set's screens, plus the stylesheet fix the first promotion needed |
 | Working tree | clean | clean |
-| Tests | **1581 unit tests green** on the 2.2.0 release branch, 0 failures, 0 skipped; SpotBugs clean; `dependencyCveScan` reports 0 advisories. Integration ran in CI on the release PR | **100 files, 989 tests, all passing** (was 96/959 at 2.1.0 — `sw.js` gained its first tests). ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7 |
-| Latest migration | **`V44__goal_events.sql`**, on `next`. Production is still on **`V41`** | — |
-| Deployed through | **`V41`.** ⚠️ **2.2.0 carries `V42`, `V43` and `V44`, none applied.** `V42` is a rollback boundary — it drops `uq_push_subscriptions_endpoint`, so the 2.1.0 jar starts against the `V42` schema without the uniqueness it assumes. `V43`/`V44` are redeploy-reversible | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`** and **`v2.1.0`** (`1fbf735`) — on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing. **No `v2.2.0`**, correctly: there is no deployed commit to put it at | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`** and **`v2.1.0`** (`8ef4733`). ⚠️ `v1.8.0`, `v1.9.1` and `v1.7.0` are missing. **No `v2.2.0`**, for the same reason |
+| Tests | **`./gradlew build` green** on every feature branch and the release branch (unit slices + SpotBugs + the Testcontainers migration check ride in it); all CI jobs green on the promotion after the Actions-budget incident below | **1041 tests, all passing** on the merged `next` (was 100 files/989 at 2.2.0). ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7. ⚠️ And note what the suite did *not* catch: the promotion that failed was green everywhere but Netlify |
+| Latest migration | **`V44__goal_events.sql`** — unchanged by 2.3.0 | — |
+| Deployed through | **`V44`**, read from `flyway_schema_history` on 2026-08-28: `V42`–`V44` applied 2026-08-27 01:29 UTC, all successful. ✅ **2.3.0 adds no migration**, so rollback is a redeploy. The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71) and **`v2.3.0`** (`c962b5b`) — on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record) and **`v2.3.0`** (`151b896`). ⚠️ `v1.8.0`, `v1.9.1` and `v1.7.0` are missing |
 
-## 2.2.0 — cut 2026-08-27, **not deployed**
+## 2.3.0 — shipped and confirmed 2026-08-28
+
+**The feature-gap audit, shipped whole.** Nine features from the 2026-08-28 audit of "things the
+system determines and never shows": the Ballon d'Or result announcement (the vote had a winner and
+no screen ever said so), career honours in the player modal, the crowd MVP on `MatchDTO` and the
+match card, bulk badges on the roster, the payments write side (void, inspect, ad-hoc charges), a
+set of small finishing items (`needsRecalc` exposed and filterable, the `/draft-sessions` nav link,
+the player status toggle, the rankings streak glyph), the player profile page with self-edit and
+comparison, the goal timeline tab in the match modal, and head-to-head records. Twenty-three pull
+requests across the two repos, counted from the tables below.
+
+**No migrations.** Every change is an additive endpoint, DTO field or screen over columns that
+already existed, so **rollback is a redeploy**, and the deploy-order note is about when features
+light up rather than about correctness: every new frontend surface hides itself against a 2.2.0
+backend.
+
+**Deployed in order, backend first and confirmed before the frontend moved** — Heroku v72 read
+back, `/api/version` at `2.3.0`, the dyno on the right jar. Then the frontend, where it went wrong
+in a new way:
+
+### ⚠️ The first frontend promotion merged green and built nothing
+
+`eb7b28d` (#98) merged cleanly, every CI check passed, and **Netlify's production build failed 34
+seconds in**: `Cannot apply unknown utility class 'text-ink-heading'` — one word in `globals.css`,
+a token the theme never defined (headings use plain `text-ink`). Production kept serving 2.2.0,
+which is exactly what "merged is not deployed" looks like from the inside.
+
+**Why CI was green: nothing in the pipeline compiled the stylesheet.** Type-check reads types, lint
+reads source, vitest handles CSS through Vite's own pipeline, the locale check reads JSON. `next
+build` is the first thing that feeds `globals.css` through Tailwind 4, which refuses unknown
+classes at build time — and until this release, the first place `next build` ran was the production
+deploy. A green pipeline is a claim about what the pipeline runs, nothing more.
+
+Fixed and closed the same evening: #99 (the one-word fix, reproduced and verified with a full local
+`npm run build` before pushing), #100 (**CI now runs `next build`** on every push and pull
+request), #101 (the promotion, take two — `151b896`, deployed and confirmed in the table above).
+
+### ⚠️ The deploy stalled on a GitHub Actions budget, not on code
+
+The backend promotion's CI failed in seven seconds with *"The job was not started because an
+Actions budget is preventing further use"* — the account's spending limit was exhausted, and
+**Heroku's auto-deploy waits for CI**, so the merge sat undeployed. The owner raised the limit, the
+run was re-run, and everything proceeded. Worth remembering: a red check on `main` can mean the
+meter ran out, and the deploy pipeline downstream of it silently waits.
+
+### Two deliberate contract changes ride along
+
+- **`BALLON_DOR_AWARDED` is the push the 2.2.0 contract promised never to send.** The promise did
+  not survive contact with the rankings page's default season: a result nobody is told about is a
+  result nobody sees. The reversal is named in the backend CHANGELOG, not slipped in.
+- **`MATCH_READ` quietly widened** to cover the events read (`GET /api/matches/{id}/events`) its
+  own javadoc always described.
+
+### The twenty-three pull requests
+
+Backend, all merged into `next` on 2026-08-28 and released the same day:
+
+| PR | Merge commit | What |
+|---|---|---|
+| [#234](https://github.com/ricsnsuka/FootMania-Back/pull/234) | `f055262` | Ballon d'Or result — closed-poll read and the awarded push |
+| [#235](https://github.com/ricsnsuka/FootMania-Back/pull/235) | `24f46f7` | career honours — every trophy one player has won |
+| [#236](https://github.com/ricsnsuka/FootMania-Back/pull/236) | `bdfb664` | the crowd MVP on `MatchDTO` |
+| [#241](https://github.com/ricsnsuka/FootMania-Back/pull/241) | `040b7a2` | `needsRecalc` exposed, and the filter that finds it *(replaces #238 — see below)* |
+| [#237](https://github.com/ricsnsuka/FootMania-Back/pull/237) | `3ae8f89` | badges for the whole roster in one query |
+| [#239](https://github.com/ricsnsuka/FootMania-Back/pull/239) | `288d60c` | the goal timeline — `GET /api/matches/{id}/events` |
+| [#240](https://github.com/ricsnsuka/FootMania-Back/pull/240) | `c666558` | head-to-head — two players' record together and against |
+| [#242](https://github.com/ricsnsuka/FootMania-Back/pull/242) | `f0e8d6b` | **cut 2.3.0** — version, Procfile jar name, CHANGELOG |
+| [#243](https://github.com/ricsnsuka/FootMania-Back/pull/243) | `c962b5b` | **the promotion** — merging it deployed |
+
+Frontend, same day:
+
+| PR | Merge commit | What |
+|---|---|---|
+| [#88](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/88) | `897ba6b` | the Ballon d'Or result card — the announcement the vote never had |
+| [#89](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/89) | `8d9fbda` | the trophy cabinet in the player modal |
+| [#90](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/90) | `f4ebbe2` | the MOTM winner chip on the match card |
+| [#91](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/91) | `2a5c0d8` | badge counts on the roster, from one request |
+| [#92](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/92) | `cb6bc44` | the payments write side — void, inspect, ad-hoc charges |
+| [#93](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/93) | `87a13b5` | the finishing items — stale flag, nav link, status toggle, streak glyph |
+| [#94](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/94) | `8772cf2` | the player profile page — view, self-edit, compare |
+| [#95](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/95) | `9ee1e60` | the timeline tab — the match's story as a two-column ladder |
+| [#96](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/96) | `73393ba` | head-to-head panels under the comparison |
+| [#97](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/97) | `63e75bd` | **cut 2.3.0** — version and lockfile root |
+| [#98](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/98) | `eb7b28d` | ⚠️ the promotion that **failed its Netlify build** |
+| [#99](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/99) | `b6aed77` | the stylesheet fix — `text-ink-heading` → `text-ink` |
+| [#101](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/101) | `151b896` | **the promotion, take two — this is the deployed commit** |
+| [#100](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/100) | `686105e` | CI runs `next build` — merged to `next` *after* the release, rides the next one |
+
+### The auto-close bit again, once — and was prevented three times
+
+**Backend #238 was auto-closed** when its stacked base branch was deleted on merging #236 — the
+exact 2.1.0 lesson (front #80), repeated. A closed PR cannot be retargeted, so #241 is the same
+work re-pushed and merged. On the frontend the lesson was applied in time: **#93, #94 and #96 were
+retargeted at `next` before the branches under them were deleted**, and nothing closed. Retarget
+first, then delete.
+
+### The 2.2.0 tags were placed while the evidence was out
+
+Cutting this release surfaced that **2.2.0 was deployed on 2026-08-27 and never tagged, and this
+file still said "not deployed"** — see the corrected 2.2.0 section below. Both `v2.2.0` tags were
+placed on 2026-08-28 from platform evidence (Heroku v71 = `478446b2`; Netlify
+`6a8f93714b42f000080785c7` = `a20c968`), annotated as retroactive.
+
+## 2.2.0 — shipped 2026-08-27, tagged and recorded 2026-08-28
 
 **Two things people could not do, and one thing the database had never been asked to hold.** There
 was no way back into an account whose password nobody remembered; a browser shared by two accounts
@@ -35,32 +135,23 @@ delivered one of them the other's notifications; and the `goals` table, which ha
 `V1`, had never had a single row written to it. Five pull requests across the two repos, three
 migrations.
 
-⚠️ **`main` has not moved in either repo, so none of this is in production.** `next` is
-`cb85c11` (backend) and `78503d2` (frontend); `main` is still `1fbf735` and `8ef4733`, where 2.1.0
-left them. Heroku and Netlify both deploy from `main`, so nothing has been built and nothing needs
-confirming yet. **Merged is not deployed**, and this section is written before the deploy rather
-than after it precisely so that the distinction survives being read in a hurry.
+✅ **It went out in the small hours of 2026-08-27, in the right order — and the paper trail was
+finished a day late.** This section was written before the deploy and said so loudly; the deploy
+then happened without anyone coming back to it, so for a day this file claimed "not deployed" about
+a release that was live. The record below was reconstructed on 2026-08-28, from the platforms
+rather than from memory, while cutting 2.3.0:
 
-### What is left to do, in order
-
-The steps below are [CONTRIBUTING § Cutting a release](CONTRIBUTING.md#cutting-a-release) 3–8, with
-1 and 2 already done. **The backend goes first and is confirmed before the frontend moves** — more
-strictly than usual this time, because the frontend calls `POST /api/push/claim` on every sign-in
-and the password-reset endpoints on routes it now exposes, and against a 2.1.0 server those `404`.
-
-1. Merge `next` → `main` in **FootMania-Back**. That is the deploy.
-2. `heroku releases -a footmania` for the commit that landed; `/api/version` for what the process
-   says it is; `heroku ps` for `football-2.2.0.jar`. A deploy that started is not a deploy that
-   booted the right jar.
-3. Confirm the migration chain applied: `heroku pg:psql -c 'select version from
-   flyway_schema_history order by installed_rank desc limit 1'` should answer **`44`**.
-4. Then merge `next` → `main` in **FootMania-Simple-Front**, and read back the Netlify deploy id
-   rather than assuming the push published.
-5. Tag `v2.2.0` in both repos **at the commits that were deployed**, annotated with how that was
-   established. [Step 6 is the one that goes wrong](CONTRIBUTING.md#cutting-a-release): a tag is a
-   claim about production, so ask the platform first.
-6. `git log --oneline next..main` must print nothing in both repos.
-7. Come back and rewrite this section as a shipped one.
+- **Backend:** promotion [#233](https://github.com/ricsnsuka/FootMania-Back/pull/233) merged as
+  `478446b`; Heroku release **v71**, `Deploy 478446b2`, 2026-08-27 02:29:15 +0100.
+  `flyway_schema_history` shows **`V42`, `V43` and `V44` applied 2026-08-27 01:29 UTC, all
+  successful** — read back on 2026-08-28.
+- **Frontend:** promotion [#87](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/87)
+  merged as `a20c968`; Netlify deploy `6a8f93714b42f000080785c7`, `ready`, context `production`,
+  `commit_ref` matching, published 2026-08-27T01:32:22Z — backend first, as the checklist that used
+  to sit here demanded.
+- **The tags were not placed and this file was not updated** — those are the two steps the deploy
+  session skipped. Both `v2.2.0` tags were created on 2026-08-28, annotated as retroactive and
+  carrying the evidence above.
 
 ### The five pull requests
 
@@ -109,13 +200,13 @@ leaves the server. **Emailed links start working when `MAIL_HOST`, `MAIL_USERNAM
 `GET /api/auth/password-reset/availability` reports which of the two a deployment has, and the login
 page reads it. See [password-recovery](frontend/features/password-recovery.md).
 
-### The push bug is the reason to prioritise the deploy
+### The push bug was the reason to prioritise the deploy
 
-This is not a refinement. **On any device that has seen two accounts, the first account's
-notifications have been arriving on the second account's screen** — the service worker renders
-whatever arrives, has no session, and cannot check — while the second account had no registration
-and no way to get one, because the toggle asked the browser *"is there a subscription?"* rather than
-the server *"is it mine?"*. Every day this sits on `next` is a day that keeps happening. See
+This was not a refinement, and it is fixed in production since v71. **On any device that had seen
+two accounts, the first account's notifications had been arriving on the second account's screen**
+— the service worker renders whatever arrives, has no session, and cannot check — while the second
+account had no registration and no way to get one, because the toggle asked the browser *"is there
+a subscription?"* rather than the server *"is it mine?"*. See
 [push-notifications](frontend/features/push-notifications.md#the-channel-is-the-browsers-the-registration-is-the-accounts).
 
 ### The bookkeeping this release forced
@@ -1039,7 +1130,9 @@ vars are set.
    every unit test in the build and fail on the first group to own two seasons.
 9. ~~**Work the [2026-08-24 code review](architecture/code-review-2026-08-24.md).**~~ ✅ All eight
    findings worked the same day, in the review's suggested order. **Seven pull requests, all
-   merged into `next` in both repos the same day — and none deployed; `main` has not moved.**
+   merged into `next` in both repos the same day — and deployed the same day too, in `2.1.0`.**
+   *(This line said "none deployed" until 2026-08-28; it was written before the release and never
+   corrected.)*
    The review's own [What was done about it](architecture/code-review-2026-08-24.md#what-was-done-about-it)
    section carries the branch-by-branch disposition and the merge commits; three things belong
    here rather than there:
@@ -1075,8 +1168,8 @@ vars are set.
   operator or a member of groups, never both** (`V35`).
 
   ✅ **The rest of it was closed on 2026-08-24** —
-  [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223), **merged into `next`** as
-  `b2f17d8` and not deployed. A
+  [Back #223](https://github.com/ricsnsuka/FootMania-Back/pull/223), merged as
+  `b2f17d8` and **deployed in `2.1.0`**. A
   group-less caller now gets a `409` naming the state instead of a `500`, and only when they
   genuinely hold no membership: a forgotten `runAs` keeps its `500` and its stack trace, and work
   with no HTTP request behind it never reaches the handler at all. `GrouplessAccountRefusalIT`
