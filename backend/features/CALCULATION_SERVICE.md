@@ -5,9 +5,10 @@
 **Enhanced in:** v1.0.0 (2026-05-23) — Scarcity, Decisiveness & Dynamic Learning Rate  
 **Rating Model v2:** (unreleased) — Goal-type weights, goal-timing impact, RAW score & proportional stats-dependent ceiling  
 **Rating Model v2.1:** (unreleased) — Realistic 6.0-base distribution via compressed mapping [4.0, ceiling]  
-**Rating Model v2.2:** (unreleased) — Escalating contribution ladder; goal/assist value climbs with each repeat  
-**Idempotent recalculation:** (unreleased) — reverse-then-reapply; manually triggerable via the admin recalculation endpoints  
-**Status:** ✅ Released
+**Rating Model v2.2:** — Escalating contribution ladder; goal/assist value climbs with each repeat  
+**Rating Model v3:** (unreleased, branch `feat/rating-v3-absolute-curve`) — Absolute saturating curve replaces proportional normalization; collective team-defence term; true 10s reachable  
+**Idempotent recalculation:** — reverse-then-reapply; manually triggerable via the admin recalculation endpoints  
+**Status:** ✅ Released (v3 pending)
 
 ---
 
@@ -93,6 +94,64 @@ solo one.
 - Non-contributors drift **up ~0.2-0.3**, an unavoidable consequence of the ratio normalization
   — see "The v2.2 passenger drift" in §4, and `STAT_POINTS_GAIN` as the dial for it.
 
+## Why Rating Model v3?
+
+Owner testing in a real amateur league (2026-08-31) exposed two structural failures of the
+`raw / topRaw` proportional mapping — both consequences of rating players *relative to the
+match's best performer* rather than against an absolute standard:
+
+1. **Every dominant haul flattened onto exactly 9.5.** The ceiling saturates at
+   `DOMINANCE_FULL_POINTS = 7.0` stat points — roughly three solo goals — and the top
+   performer's ratio is `1.0` by definition. A hat-trick, a five-goal night and a seven-goal
+   night were therefore **indistinguishable**, all printing the `CEILING_MAX` lid of 9.5.
+2. **A player's rating depended on somebody else's night.** The same performance rated
+   differently depending on how good the best player happened to be — and in a goal-heavy
+   league (this league's normal), only ties at the top could produce two high ratings.
+
+**Rating Model v3** keeps the entire points engine — ladder (§1), timing (§2), scarcity,
+decisiveness, win/loss influence — and replaces only the mapping (§4):
+
+1. **Absolute saturating curve.** `points` map directly to a rating through
+   `BASE ± SPAN × (1 − e^(−|points|/SCALE))`. Nobody else's score is in the formula, the
+   two-pass normalization collapses to a single pass, and several players can rate 9+ in the
+   same goal-fest — a feature of the league, not an anomaly to normalize away.
+2. **True 10s are back, and earned.** `UP_SPAN = 4.2` overshoots the 10.0 clamp so ≈16 points
+   — five solo goals and change on a win — prints an actual 10. The v2.1 "no perfect 10s"
+   rule is deliberately repealed.
+3. **Collective team-defence term (§3b).** Computed from goals conceded and shared by the
+   whole team: a clean sheet pays +0.8, fading to zero at three conceded, then a capped drag.
+   This is what finally separates a passenger in a 2-0 win from a passenger in a 7-6 win.
+   Deliberately **not** position-weighted: declared positions are unverifiable and gameable,
+   and the scarcity multipliers already reward the rare scorer from observed behaviour.
+4. **The transient and final ratings now share one scale.** `computeMatchRating(...)` runs the
+   same curve, so the completion response no longer disagrees wildly with the persisted value
+   (timing and scarcity refinements still apply only on the authoritative pass).
+
+**Net effect (v3)** — lone scorer on a win, flat path, neutral scarcity:
+
+| Performance | v2.2 | v3 |
+|---|---|---|
+| Passenger, 0-0 draw | ~8.0¹ | **6.59** |
+| Passenger, 2-0 win | ~6.6 | **6.97** |
+| Passenger, 7-6 win | ~6.6 | **~6.2** |
+| Passenger, 0-2 loss | ~5.7 | **4.89** |
+| 1 goal | 8.30 | **8.24** |
+| Brace | 8.90 | **9.04** |
+| Hat-trick | 9.50 | **9.54** |
+| 4 goals | 9.50 | **9.84** |
+| 5 goals | 9.50 | **10.00** |
+| Own-goal catastrophe | 1.0² | **→ 4.0 asymptote** |
+
+¹ v2's lone-passenger-on-a-draw mapped to the minimum ceiling (8.0) — itself an artefact of
+the ratio being 1.0 for any sole player. ² v2's "all RAW non-positive" special case sent
+everyone to 1.0; the curve needs no special case.
+
+**Candidate v3.1 (deferred):** pace-aware timing — weighting the defence term by how long a
+team held out between conceded goals, and the attack by scoring droughts. Blocked on a
+denominator: match duration is not recorded, so "held out for 40 minutes" cannot be
+normalized. Options if wanted: record kickoff/final-whistle, or assume nominal duration per
+match type. Per-goal *impact* timing (late-game, go-ahead, equalizer) is already in v2.2+.
+
 ---
 
 ## Trigger: When Does Calculation Run?
@@ -106,16 +165,16 @@ When `PATCH /api/matches/{id}/complete` is called:
    the transient completion response.
 2. `MatchService` publishes a `MatchCompletedEvent` (Spring Application Event).
 3. `MatchEventListener` picks up the event and calls
-   `CalculationService.recalculateMatchRatings(matchId)`, which performs the **authoritative,
-   match-wide proportional normalization**, updates player `skillRating`, streaks, and career
-   aggregates, and writes the history trail.
+   `CalculationService.recalculateMatchRatings(matchId)`, which performs the **authoritative
+   calculation** (timing- and scarcity-aware points through the absolute curve), updates player
+   `skillRating`, streaks, and career aggregates, and writes the history trail.
 
-> 🔑 **RAW vs. normalized — read this.** The public `computeMatchRating(...)` overloads return
-> the **RAW pre-normalization score** clamped to `[1.0, 10.0]`. This is used only transiently
-> by `MatchService` for the immediate completion response. The **authoritative** value that is
-> persisted on `player_stats.rating` and drives `skillRating` is the **normalized** value
-> written by `recalculateMatchRatings` once the match transaction commits. Where the two
-> differ, the normalized value wins. See [RAW vs. Normalized](#raw-vs-normalized--two-values-one-truth).
+> 🔑 **Transient vs. authoritative — read this.** Since v3 the public
+> `computeMatchRating(...)` overloads run the **same absolute curve** as the persisted path,
+> so the transient completion response and the final rating share one scale. The
+> **authoritative** value persisted on `player_stats.rating` is still the one written by
+> `recalculateMatchRatings` once the match transaction commits — only that pass sees goal
+> timing and scarcity — and where the two differ, it wins.
 
 ### On Season End
 
@@ -149,7 +208,7 @@ so the automatic completion path behaves exactly as before.
 **Reverse phase** (for players with a prior `skill_rating_history` row for this match):
 `skillRating -= changeAmount`; `totalMatchesPlayed -= 1`; `totalGoals`/`totalAssists` decremented by
 this match's contribution; this match's history rows deleted; streaks recomputed from the chain
-(never reversed arithmetically). **Reapply phase** then runs the existing normalization → EMA →
+(never reversed arithmetically). **Reapply phase** then runs the existing points → curve → EMA →
 aggregate → history logic verbatim.
 
 **Guarantees (run-twice = run-once):**
@@ -217,15 +276,15 @@ The rung says *how many*. How the goal was scored then varies its value:
 and then a real goal still gets the first rung for the real one. An own goal credits the
 *opponent's* scoreboard and subtracts `0.50` from the scorer's RAW score.
 
-### Ladder units vs RAW units
+### Ladder units vs points units
 
-The table above is authored on a human-readable scale where "a goal is worth 0.7". RAW lives on a
-different scale, anchored by `RAW_BASE_POINTS` (7.5) and `RAW_LOSS_PENALTY` (2.2), so a single
-constant converts between them:
+The table above is authored on a human-readable scale where "a goal is worth 0.7". The points
+total lives on a different scale, anchored by `RAW_LOSS_PENALTY` (2.2) and the curve's
+`UP_SCALE` (5.3), so a single constant converts between them:
 
-| Constant           | Value | Meaning                                   |
-|--------------------|-------|--------------------------------------------|
-| `STAT_POINTS_GAIN` | `2.0` | Multiplies ladder points into RAW points   |
+| Constant           | Value | Meaning                                     |
+|--------------------|-------|----------------------------------------------|
+| `STAT_POINTS_GAIN` | `2.0` | Multiplies ladder points into points units   |
 
 Keeping the two scales separate means the ladder can be retuned without touching the
 result-influence tuning, and vice versa. **`STAT_POINTS_GAIN` is also the dial for how far apart
@@ -324,130 +383,122 @@ asking why a scorer rated badly needs to be able to find it.
 
 ---
 
-## 3. RAW Per-Player Score (unbounded, pre-normalization)
+## 3. Per-Player Points Total (v3 — unbounded, zero-centred)
 
 ```
-rawStatPoints = (timing-weighted ladder points  OR  mean-rung ladder points)
-              − ownGoals × OWN_GOAL_PENALTY_POINTS × STAT_POINTS_GAIN
+statPoints = (timing-weighted ladder points  OR  mean-rung ladder points)
+           − ownGoals × OWN_GOAL_PENALTY_POINTS × STAT_POINTS_GAIN
 
-raw = RAW_BASE_POINTS                                          (7.5 — v2.1: elevated from 1.0)
-    + rawStatPoints
-    + min(decisiveness, DECISIVENESS_CAP) × DECISIVENESS_WEIGHT
-    + RAW_WIN_BONUS         (+0.4, if WIN — v2.1: reduced from 1.0)
-    − RAW_LOSS_PENALTY      (−2.2, if LOSS — v2.1: increased from 0.75)   (0 for DRAW)
-    ± goalDiffBonus         (min(|goalDiff| × 0.10, 0.50))     (+ if winning/drawing, − if losing)
+points = statPoints
+       + min(decisiveness, DECISIVENESS_CAP) × DECISIVENESS_WEIGHT
+       + RAW_WIN_BONUS         (+0.4, if WIN)
+       − RAW_LOSS_PENALTY      (−2.2, if LOSS)   (0 for DRAW)
+       ± goalDiffBonus         (min(|goalDiff| × 0.10, 0.50))  (+ if winning/drawing, − if losing)
+       + teamDefenseTerm       (see §3b)
 ```
 
-There is intentionally **no upper roof** on `raw`.
+**Zero points is the reference performance: a passenger on a goalless draw** (before the
+defence term, which lifts that exact case by its clean sheet). v2's `RAW_BASE_POINTS = 7.5`
+is gone — it existed only to anchor the ratio mapping. There is intentionally **no upper
+roof** on `points`.
 
-| Constant               | Value (v2.1) | Description                                              |
-|------------------------|--------------|----------------------------------------------------------|
-| `RAW_BASE_POINTS`      | `7.5`        | Elevated base — non-contributors anchor near 6.0 final   |
-| `DECISIVENESS_WEIGHT`  | `1.0`        | Scales the (capped) decisiveness into the RAW score      |
-| `DECISIVENESS_CAP`     | `1.5`        | Cap applied to decisiveness before scaling               |
-| `RAW_WIN_BONUS`        | `0.4`        | Added for every player on the winning team               |
-| `RAW_LOSS_PENALTY`     | `2.2`        | Subtracted for every player on the losing team           |
-| `RAW_GOAL_DIFF_PER_GOAL`| `0.10`      | Per goal of margin                                       |
-| `RAW_MAX_GOAL_DIFF`    | `0.50`       | Cap on the goal-difference nudge (unchanged from v1)     |
+| Constant               | Value | Description                                              |
+|------------------------|-------|----------------------------------------------------------|
+| `DECISIVENESS_WEIGHT`  | `1.0` | Scales the (capped) decisiveness into the points total   |
+| `DECISIVENESS_CAP`     | `1.5` | Cap applied to decisiveness before scaling               |
+| `RAW_WIN_BONUS`        | `0.4` | Added for every player on the winning team               |
+| `RAW_LOSS_PENALTY`     | `2.2` | Subtracted for every player on the losing team           |
+| `RAW_GOAL_DIFF_PER_GOAL`| `0.10`| Per goal of margin                                      |
+| `RAW_MAX_GOAL_DIFF`    | `0.50`| Cap on the goal-difference nudge                         |
+
+### 3b. Team-Defence Term (v3)
+
+The attacking stats cannot see the defensive night: a passenger in a 2-0 win and a passenger
+in a 7-6 win used to rate identically. Defence in amateur football is collective — no
+per-player defensive stat exists — so the term is computed from the **team's goals conceded**
+and shared equally by everyone on the team:
+
+```
+conceded ≤ 3:  +CLEAN_SHEET_BONUS × (1 − conceded / CLEAN_SHEET_FADE_GOALS)
+conceded > 3:  −min((conceded − 3) × CONCEDED_DRAG_PER_GOAL, CONCEDED_MAX_DRAG)
+```
+
+| Constant                 | Value | Description                                          |
+|--------------------------|-------|------------------------------------------------------|
+| `CLEAN_SHEET_BONUS`      | `0.8` | Shared by the whole team at 0 conceded               |
+| `CLEAN_SHEET_FADE_GOALS` | `3.0` | Conceded count at which the bonus reaches zero       |
+| `CONCEDED_DRAG_PER_GOAL` | `0.1` | Drag per conceded goal beyond the fade point         |
+| `CONCEDED_MAX_DRAG`      | `0.5` | Cap on the drag                                      |
+
+Deliberately **not** weighted by declared favourite positions: those are self-reported,
+unverifiable and gameable. The scarcity multipliers already reward the player who rarely
+scores — from what they actually do rather than what their profile claims. When the match
+scoreboard is unknown (null scores) the term stays neutral.
 
 ---
 
-## 4. Proportional Normalization & Stats-Dependent Ceiling (v2.1 — Compressed Mapping)
+## 4. Absolute Saturating Curve (v3 — replaces proportional normalization)
 
-After every player's RAW score is known (a match-wide first pass inside
-`recalculateMatchRatings`), the **top RAW performer** defines the scale:
+The points total maps **directly** to a rating; nobody else's night is in the formula:
 
 ```
-topRaw        = max(raw across all players)
-topStatPoints = the stat-points of that same top performer
-
-ceiling     = CEILING_MIN + (CEILING_MAX − CEILING_MIN)
-                          × clamp(topStatPoints / DOMINANCE_FULL_POINTS, 0, 1)
-
-finalRating = RATING_FLOOR + (raw / topRaw) × (ceiling − RATING_FLOOR)
-            = 4.0 + (raw / topRaw) × (ceiling − 4.0)
-
-finalRating = clamp(finalRating, MIN_RATING, MAX_RATING)
+points ≥ 0:  rating = BASE_RATING + UP_SPAN   × (1 − e^(−points / UP_SCALE))
+points < 0:  rating = BASE_RATING − DOWN_SPAN × (1 − e^(+points / DOWN_SCALE))
+rating = clamp(rating, MIN_RATING, MAX_RATING)
 ```
 
-| Constant               | Value (v2.1) | Description                                                     |
-|------------------------|--------------|-----------------------------------------------------------------|
-| `RATING_FLOOR`         | `4.0`        | NEW — lower bound of compressed mapping (realistic floor)      |
-| `CEILING_MIN`          | `8.0`        | Lowest possible ceiling (was 6.5 — v2.1: raised)                |
-| `CEILING_MAX`          | `9.5`        | Highest possible ceiling (was 10.0 — v2.1: reduced)             |
-| `DOMINANCE_FULL_POINTS`| `7.0`        | Stat-points at which the top performer reaches `CEILING_MAX` (was 9.0 — v2.2: rescaled with the ladder) |
-| `MIN_RATING`           | `1.0`        | Hard rating floor (unchanged)                                   |
-| `MAX_RATING`           | `10.0`       | Hard rating ceiling (unchanged)                                 |
+| Constant      | Value  | Description                                                        |
+|---------------|--------|--------------------------------------------------------------------|
+| `BASE_RATING` | `6.0`  | The reference rating (passenger on a goalless draw, pre-defence)   |
+| `UP_SPAN`     | `4.2`  | Overshoots the 10.0 clamp so ≈16 points prints a **true 10**       |
+| `UP_SCALE`    | `5.3`  | Points at which ~63% of the upward span is earned                  |
+| `DOWN_SPAN`   | `2.0`  | Floor asymptote at 6.0 − 2.0 = **4.0** (the v2.1 realistic floor)  |
+| `DOWN_SCALE`  | `2.5`  | Negative points at which ~63% of the downward span is incurred     |
+| `MIN_RATING`  | `1.0`  | Hard rating floor (unchanged)                                      |
+| `MAX_RATING`  | `10.0` | Hard rating ceiling (unchanged)                                    |
 
-**Key v2.1 changes:**
+Properties, each load-bearing:
 
-1. **Compressed mapping formula**: instead of `raw/topRaw × ceiling` (which maps `[0, topRaw]`
-   to `[0, ceiling]`), v2.1 uses `RATING_FLOOR + (raw/topRaw) × (ceiling − RATING_FLOOR)`,
-   which maps `[0, topRaw]` to **`[4.0, ceiling]`**.
-2. **Compressed ceiling band**: `[8.0, 9.5]` instead of `[6.5, 10.0]` — eliminates perfect 10s
-   and reduces extreme-score variance.
-3. **Result:** the worst performer in a match lands on `RATING_FLOOR = 4.0` (instead of a
-   proportionally-tiny value), and the top performer reaches the ceiling (now max 9.5, not 10.0).
+- **Absolute** — a player's rating depends only on their own points, so several players can
+  rate 9+ in the same goal-fest and a passenger's number never moves with a team-mate's haul.
+- **Monotone** — within-match ordering always follows the points, exactly as v2 ordered raws.
+- **Saturating** — mid-range nights stay well separated while the very top compresses; the
+  down-curve approaches the 4.0 floor asymptotically, with **no special case** for v2's
+  "all RAW non-positive" scenario.
+- **Single-pass** — no `topRaw`, no ceiling, no match-wide first pass.
 
-**Behavioral examples (v2.2):**
+**Behavioral examples (v3)** — lone scorer on a 3-1 win, flat path, neutral scarcity
+(decisiveness capped 1.5, +0.4 win, +0.2 gd, +0.533 defence for 1 conceded):
 
-A lone scorer is always the top RAW performer, so their ratio is `1.0` and they map exactly onto
-their own ceiling — which makes the ladder directly visible:
+| Sole performer | Stat-points | Points | Rating |
+|----------------|-------------|--------|--------|
+| 1 solo goal    | `1.40`  | `4.03`  | **8.24** |
+| 2 solo goals   | `4.20`  | `6.83`  | **9.04** |
+| 3 solo goals   | `7.20`  | `9.83`  | **9.54** |
+| 4 solo goals   | `10.40` | `13.03` | **9.84** |
+| 5 solo goals   | `13.80` | `16.43` | **10.00** |
+| 1 goal + 1 assist  | `2.20` | `4.83` | **8.51** |
+| 1 goal + 3 assists | `5.50` | `8.13` | **9.29** |
 
-| Sole performer | Ladder | Stat-points | Ceiling = final rating |
-|----------------|--------|-------------|------------------------|
-| 1 solo goal    | `0.70` | `1.40` | `8.0 + 1.5 × (1.40/7) = 8.30` |
-| 2 solo goals   | `2.10` | `4.20` | `8.0 + 1.5 × (4.20/7) = 8.90` |
-| 3 solo goals   | `3.60` | `7.20` | saturates at `9.50` |
-| 1 goal + 1 assist | `1.10` | `2.20` | `8.0 + 1.5 × (2.20/7) = 8.47` |
-| 1 goal + 3 assists | `2.75` | `5.50` | `8.0 + 1.5 × (5.50/7) = 9.18` |
-
-**One goal no longer nearly maxes the match out** (8.30, not the old 8.50 on a much flatter curve),
-and the climb from one goal to two is now worth a clear `+0.60`.
-
-### The v2.2 passenger drift
-
-Because the final rating is a **ratio** against the top RAW score and `RAW_BASE_POINTS` did *not*
-move, shrinking the stat-point scale mechanically narrows the gap between a contributor and a
-passenger. Measured across representative 5-a-side scorelines, v2.2 vs v2.1:
-
-| Player | v2.1 | v2.2 |
-|--------|------|------|
-| Non-contributor on a draw | ~6.3 | ~6.6 |
-| Non-contributor on a win | 6.4 – 7.0 | 6.6 – 7.3 |
-| Non-contributor on a loss | 5.6 – 6.0 | 5.7 – 6.2 |
-| One-goal top scorer | 8.50 | 8.30 |
-| Brace as the best performance | 9.00 | 8.90 |
-| Hat-trick | 9.50 | 9.50 |
-
-Passengers gain roughly **+0.2 to +0.3**, scorers lose roughly **−0.1 to −0.3**. This is the direct
-consequence of asking for lower goal weights against an unchanged base, not a separate bug.
-`STAT_POINTS_GAIN` is the dial: **raise it** to re-widen the gap between contributors and
-passengers, **lower it** to compress the field further. Lowering `RAW_BASE_POINTS` does *not* work
-as a counter-lever — it shrinks the numerator and the denominator of the ratio together, so the
-passenger barely moves.
-
-### Guard: non-scalable matches
-
-If **every** RAW score is non-positive (e.g. an all-own-goals or heavy-loss scenario where
-`topRaw ≤ 0`), proportional scaling is undefined and **every player lands on `MIN_RATING`
-(1.0)**.
+Every haul is distinguishable — the v2 lid that flattened everything dominant onto exactly
+9.5 is gone, and the five-goal night the league actually produces finally prints a 10.
 
 ---
 
-## RAW vs. Normalized — Two Values, One Truth
+## Transient vs. Authoritative — One Scale, One Truth
 
-| Aspect            | RAW (public `computeMatchRating`)      | Normalized (`recalculateMatchRatings`)          |
-|-------------------|-----------------------------------------|-------------------------------------------------|
-| When              | Synchronously, during completion        | Asynchronously, after the match commits (event) |
-| Scope             | One player in isolation                 | Whole match, two-pass                           |
-| Ceiling           | Flat clamp to `[1.0, 10.0]`             | Stats-dependent ceiling `[8.0, 9.5]`            |
-| Goal timing       | No (mean-rung ladder points)            | Yes (when `Goal` rows exist)                    |
-| Persisted?        | No — transient response only            | **Yes** — written to `player_stats.rating`      |
-| Authoritative?    | No                                      | **Yes** — this drives `skillRating`             |
+| Aspect            | Transient (public `computeMatchRating`) | Authoritative (`recalculateMatchRatings`)       |
+|-------------------|------------------------------------------|-------------------------------------------------|
+| When              | Synchronously, during completion         | Asynchronously, after the match commits (event) |
+| Scope             | One player in isolation                  | Whole match, single pass                        |
+| Curve             | Same absolute curve                      | Same absolute curve                             |
+| Goal timing       | No (mean-rung ladder points)             | Yes (when `Goal` rows exist)                    |
+| Scarcity          | Only if the caller passes multipliers    | Yes (pre-match career snapshot)                 |
+| Persisted?        | No — transient response only             | **Yes** — written to `player_stats.rating`      |
+| Authoritative?    | No                                       | **Yes** — this drives `skillRating`             |
 
-> For **isolated numeric reasoning** about a single player's stat line, reason about the
-> **RAW** value. The persisted rating is always the normalized value.
+> Since v3 the two share one scale and differ only by timing/scarcity refinements. Where they
+> differ, the persisted value wins.
 
 ---
 
@@ -508,118 +559,74 @@ assistScarcityMult = 1.0 + scarcityRatio × ASSIST_SCARCITY_WEIGHT    ∈ [1.0, 
 
 ---
 
-## Worked Examples (v2.2 — Escalating Ladder)
+## Worked Examples (v3 — Absolute Curve)
 
-> ⚠️ **These sums omit two terms the code applies, and the mid-table numbers below are therefore
-> low.** Verified against the implementation on 2026-08-24, when the code review noted this service
-> had been read for structure and never checked numerically.
->
-> Each RAW line here reads `base + stats + result` and leaves out the **decisiveness** and
-> **goal-difference** contributions. That does not move the two ends — a top performer maps to the
-> ceiling whatever its RAW, and a non-contributor on a losing side barely shifts — but it moves
-> everyone in between:
->
-> | Example A player | Written below | Measured |
-> |---|---|---|
-> | 3 goals + 2 assists | 9.5 | **9.5** ✅ |
-> | 1 goal | 6.62 | **6.863** |
-> | nothing, winning | 6.23 | **6.360** |
-> | nothing, losing | 5.49 | **5.486** ✅ |
->
-> **The code is right and this example is incomplete** — which is worth stating plainly, because
-> anyone checking one against the other would reach the opposite conclusion. The examples are kept
-> as written rather than silently recomputed: they are pedagogically clear about the ladder, which
-> is what they exist to explain, and adding every term would bury that. Read them for the *shape*
-> and take the numbers from `CalculationServiceTest`, which now pins Example A against the real
-> implementation.
+> All examples assume **neutral scarcity** (`mult = 1.0`), the **flat** (mean-rung) path, and
+> a 3-1 scoreboard unless stated. Every term the code applies is included — decisiveness,
+> result, goal-diff, defence — and `CalculationServiceTest` pins Example A against the real
+> implementation. There is no "top performer" special role any more: each player's rating is
+> the curve over their own points.
 
-> All examples below assume **neutral scarcity** (`mult = 1.0`) and treat the described
-> player as the **top RAW performer** in the match. For a single-player (or clear top)
-> performer, `raw / topRaw = 1`, so the final rating equals `RATING_FLOOR + (ceiling − RATING_FLOOR)`.
+### Example A — 3-1 Victory: four players, each rated on their own night
 
-### Example A — 3-1 Victory: Rating Distribution Fix
+- Player 1: 3 goals + 2 assists │ Player 2: 1 goal │ Player 3: passenger (win) │ Player 4: passenger (loss)
 
-Imagine a 3-1 victory with these contributions:
-- Player 1: 3 goals + 2 assists (top performer)
-- Player 2: 1 goal
-- Player 3: 0 stats (non-contributor on winning team)
-
-**Player 1 (top performer):**
+**Player 1 (3g + 2a, WIN, conceded 1):**
 ```
-Ladder: goals 0.70+1.40+1.50 = 3.60 ; assists 0.40+0.80 = 1.20  →  4.80
-Stat points: 4.80 × 2.0 gain = 9.60
-RAW = 7.5 (base) + 9.60 (stats) + 0.4 (win) = 19.5
-topStatPoints = 9.60 → ceiling = 8.0 + 1.5 × clamp(9.60 / 7.0, 0, 1) = 9.5
-finalRating = 4.0 + (19.5 / 19.5) × (9.5 − 4.0) = 4.0 + 5.5 = 9.5 ✅
+Ladder: goals 0.70+1.40+1.50 = 3.60 ; assists 0.40+0.80 = 1.20  →  4.80 × 2.0 gain = 9.60
+points = 9.60 + 1.175 (decis) + 0.4 (win) + 0.2 (gd) + 0.533 (defence) = 11.908
+rating = 6.0 + 4.2 × (1 − e^(−11.908/5.3)) ≈ 9.76
 ```
 
 **Player 2 (1 goal):**
 ```
-Ladder: 0.70 (first rung only) → stat points = 1.40
-RAW = 7.5 + 1.40 + 0.4 = 9.3
-finalRating = 4.0 + (9.3 / 19.5) × 5.5 = 4.0 + 0.477 × 5.5 ≈ 6.62
-(v2.1: 7.0 — one goal is deliberately worth less now)
+points = 1.40 + 0.325 + 0.4 + 0.2 + 0.533 = 2.858 → rating ≈ 7.75
 ```
 
-**Player 3 (non-contributor, WIN):**
+**Player 3 (passenger, WIN):**
 ```
-Stat points = 0
-RAW = 7.5 + 0 + 0.4 = 7.9
-finalRating = 4.0 + (7.9 / 19.5) × 5.5 = 4.0 + 0.405 × 5.5 ≈ 6.23
-(v2.1: 6.18)
+points = 0.4 + 0.2 + 0.533 = 1.133 → rating ≈ 6.81
 ```
 
-**Non-contributor on losing team (hypothetical):**
+**Player 4 (passenger, LOSS, conceded 3 → no defence lift):**
 ```
-RAW = 7.5 + 0 − 2.2 = 5.3
-finalRating = 4.0 + (5.3 / 19.5) × 5.5 = 4.0 + 0.272 × 5.5 ≈ 5.49
-(v2.1: 5.46)
+points = −2.2 − 0.2 = −2.4 → rating = 6.0 − 2.0 × (1 − e^(−2.4/2.5)) ≈ 4.77
 ```
 
-Note what the ladder did here: Player 1's stat points fell only 20% (12.0 → 9.60) because three
-goals and two assists climb the rungs, while Player 2's single goal fell 53% (3.0 → 1.40). The gap
-between the two widened from 2.5 to 2.9 rating points — which is the whole intent.
+The ladder's gap survives (9.76 vs 7.75), the passenger quadrants separate (6.81 win vs 4.77
+loss), and none of the four numbers would move if any other player's line changed.
 
-### Example B — Ceiling guard: 1 goal + 1 assist never reaches 10 (or even 9.5)
-
-```
-Ladder: goal 0.70 + assist 0.40 = 1.10 → stat points = 1.10 × 2.0 = 2.20
-
-topStatPoints = 2.20
-ceiling = 8.0 + 1.5 × clamp(2.20 / 7.0, 0, 1)
-        = 8.0 + 1.5 × 0.3143
-        = 8.0 + 0.47
-        = 8.47
-
-As the top performer: finalRating = 4.0 + 1 × (8.47 − 4.0) = 8.47
-```
-
-Even as the single best performer in the match, a 1 goal + 1 assist line **cannot reach 9.5** —
-its absolute stat quality caps the ceiling at 8.47.
-
-### Example C — A dominant display approaches CEILING_MAX
+### Example B — The curve's mid-range: 1 goal + 1 assist stays under 9
 
 ```
-Ladder: 0.70 + 1.40 + 1.50 = 3.60 → stat points = 7.20   (≥ DOMINANCE_FULL_POINTS = 7.0)
-
-topStatPoints = 7.20
-ceiling = 8.0 + 1.5 × clamp(7.20 / 7.0, 0, 1) = 8.0 + 1.5 = 9.5
-
-As the top performer: finalRating = 4.0 + 1 × (9.5 − 4.0) = 9.5
+statPoints = (0.70 + 0.40) × 2.0 = 2.20 ; decisiveness 1.5 (sole contributor)
+points = 2.20 + 1.5 + 0.4 + 0.2 + 0.533 = 4.833 → rating ≈ 8.51
 ```
 
-**A hat-trick is the threshold for a 9.5, and only just.** Two goals cap out at 8.90.
+### Example C — The ladder up the curve: a five-goal night prints a true 10
+
+Lone scorer on a 3-1-style win (decisiveness capped, conceded 1):
+
+| Goals | Points | Rating |
+|-------|--------|--------|
+| 1 | 4.03  | 8.24 |
+| 2 | 6.83  | 9.04 |
+| 3 | 9.83  | 9.54 |
+| 4 | 13.03 | 9.84 |
+| 5 | 16.43 | **10.00** |
+
+Under v2 the last three rows were all exactly 9.5. `UP_SPAN = 4.2` overshoots the clamp
+precisely so that last row can land.
 
 ---
 
 ## Edge Cases & Behavioral Notes
 
-1. **Single-player matches always normalize to the compressed ceiling.** With one player (or a clear
-   solo top performer) `raw / topRaw = 1`, so `finalRating = RATING_FLOOR + (ceiling − RATING_FLOOR)`.
-   Use the **RAW** value for isolated numeric reasoning.
-2. **A 0-0 no-stats draw normalizes to `8.0` (`CEILING_MIN`), not 6.5 or 5.0.** With no stat points,
-   `topStatPoints = 0` → `ceiling = 8.0`, and every RAW is equal → `raw/topRaw = 1` → all players
-   land on `4.0 + (8.0 − 4.0) = 8.0` (v2.1 compressed mapping).
+1. **A lone player rates from their own points, like everyone else.** v2's "sole player maps
+   to the ceiling" artefact is gone; there is no ceiling.
+2. **A 0-0 no-stats draw lands on ≈6.59, not 8.0.** Points = the clean sheet's `0.8` and
+   nothing else — v2's `CEILING_MIN` artefact (a passenger printing 8.0 for a goalless draw)
+   is gone.
 3. **Goal-diff bonus cap is `0.50`** (unchanged from v2); the **own-goal penalty is `−0.50` ladder
    points** — `−1.0` on the RAW score after the gain (v2.2: rescaled from `−2.0`).
 4. **No `Goal` rows** → graceful FLAT fallback (mean-rung ladder pricing); nothing breaks.
