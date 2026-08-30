@@ -133,6 +133,16 @@ best rating of the match rather than every rating, which only repeated what the 
 *order*, so a team called "Reds" got a blue one. Team names are free text: any palette can contradict
 the name beside it, so the band and the winner chip separate the sides instead.
 
+**The table's columns are declared, not inferred** — `table-layout: fixed`, and that is load-bearing.
+Under the default `auto`, the player cell's `truncate` carries `white-space: nowrap`, so that column's
+minimum width is *the whole name* and the table can never be narrower than the longest name plus the
+four figure columns. Through `2.5.0` it measured 347px against the 326px panel of a 390px phone, and
+the column that fell off the right edge was the rating — behind a horizontal scroll nothing
+advertised, and worse with every longer name, which is why it showed on a real group and not on the
+test fixtures. It now fits from 360px reading and 390px editing, and below that scrolls with the name
+column held at a readable floor. **Editing needs more room than reading**: four inputs do not fit
+where four figures do, so edit mode widens the figure columns through a modifier.
+
 ### Three ways to correct a match
 
 All added in `1.4.0`–`1.4.1`, and each is a different scope with a different grant:
