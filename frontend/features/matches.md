@@ -140,9 +140,16 @@ All added in `1.4.0`–`1.4.1`, and each is a different scope with a different g
 | Control | Where | Grant | Writes |
 |---|---|---|---|
 | **Edit details** | Modal header | `MANAGER` | `PATCH /api/matches/{id}` — description, kickoff, location |
-| **Edit sheet** | Scoresheet tab bar | `GROUP_ADMIN` | One `PATCH …/stats/{statId}` per changed row, on Save |
+| **Edit sheet** | Scoresheet toolbar | `GROUP_ADMIN` | One `PATCH …/stats/{statId}` per changed row, on Save |
 | **Edit lineup** | Squads tab | `GROUP_ADMIN` | `POST …/lineup/swap` or `…/lineup/replace` |
 | **Delete match** | Below the tabs | `GROUP_ADMIN` | `DELETE /api/matches/{id}` |
+
+**Each edit control sits in the surface it governs**, not in the tab bar. Edit sheet spent
+`1.4.0`–`2.5.0` as a fifth child of the tablist: a button that is not a tab, counted as one by
+assistive technology, in a row that neither wraps nor scrolls — so on a phone, where the four tab
+labels already fill it, the button was pushed off the right edge and clipped mid-word. It now has
+its own toolbar at the top of the scoresheet panel, matching the one the squads tab has carried
+since `2.2.0`. The tab row scrolls rather than clips, which the translated labels need anyway.
 
 **Editing the sheet stages its changes.** Each row's save used to fire its own request, and each one
 replayed the rating engine over the whole match — so correcting three players meant three
