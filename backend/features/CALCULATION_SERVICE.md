@@ -147,10 +147,14 @@ the ratio being 1.0 for any sole player. ² v2's "all RAW non-positive" special 
 everyone to 1.0; the curve needs no special case.
 
 **Candidate v3.1 (deferred):** pace-aware timing — weighting the defence term by how long a
-team held out between conceded goals, and the attack by scoring droughts. Blocked on a
-denominator: match duration is not recorded, so "held out for 40 minutes" cannot be
-normalized. Options if wanted: record kickoff/final-whistle, or assume nominal duration per
-match type. Per-goal *impact* timing (late-game, go-ahead, equalizer) is already in v2.2+.
+team held out between conceded goals, and the attack by scoring droughts. The denominator
+**exists**: `Match.kickedOffAt` and `Match.fullTimeAt` (both nullable, written by the watch
+shortcuts — an earlier revision of this note wrongly said duration was unrecorded), so
+`duration = fullTimeAt − kickedOffAt` on clocked matches. Design constraints when built:
+neutral fallback when either timestamp is missing (same all-or-nothing doctrine as the
+goal-event completeness guard — a half-known clock must not zero anybody), and a sanity clamp
+on the duration (a final whistle registered hours late must not dilute every gap to nothing).
+Per-goal *impact* timing (late-game, go-ahead, equalizer) is already in v2.2+.
 
 ---
 
