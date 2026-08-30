@@ -146,15 +146,25 @@ decisiveness, win/loss influence — and replaces only the mapping (§4):
 the ratio being 1.0 for any sole player. ² v2's "all RAW non-positive" special case sent
 everyone to 1.0; the curve needs no special case.
 
-**Candidate v3.1 (deferred):** pace-aware timing — weighting the defence term by how long a
-team held out between conceded goals, and the attack by scoring droughts. The denominator
-**exists**: `Match.kickedOffAt` and `Match.fullTimeAt` (both nullable, written by the watch
-shortcuts — an earlier revision of this note wrongly said duration was unrecorded), so
-`duration = fullTimeAt − kickedOffAt` on clocked matches. Design constraints when built:
-neutral fallback when either timestamp is missing (same all-or-nothing doctrine as the
-goal-event completeness guard — a half-known clock must not zero anybody), and a sanity clamp
-on the duration (a final whistle registered hours late must not dilute every gap to nothing).
-Per-goal *impact* timing (late-game, go-ahead, equalizer) is already in v2.2+.
+**v3.1 (shipped with v3):** pace-aware timing on fully-clocked matches
+(`duration = fullTimeAt − kickedOffAt`, both watch-written and nullable):
+
+- **Defensive resistance** — the defence term is modulated by the team's *longest clean
+  stretch* (bookended by kickoff and the whistle) against the even-spread baseline `D/(c+1)`:
+  an early collapse followed by an hour of holding out inflates the bonus / softens the drag
+  by up to ±`DEFENSE_PACE_RANGE` (0.5); a steady leak earns nothing. The mean gap is `D/(c+1)`
+  by construction and carries no information — the longest stretch is the signal.
+- **Drought-breaker** — the per-goal impact carries an extra factor of up to
+  `+DROUGHT_BREAKER_MAX` (0.25) for the goal that ends a long team barren spell (gap before it
+  vs `D/(n+1)`); the assister inherits it through the timing share.
+- **All-or-nothing fallback**, same doctrine as the goal-event completeness guard: pace needs
+  both whistle marks AND `occurredAt` on every goal, or the whole match rates pace-neutral —
+  a forgotten final whistle costs nothing. Duration sanity: below
+  `PACE_MIN_DURATION_MINUTES` (20) the clock is treated as garbage (pace off); above
+  `PACE_MAX_DURATION_MINUTES` (150) it is clamped, so a whistle registered while packing up
+  cannot dilute every gap toward nothing.
+
+Per-goal *impact* timing (late-game, go-ahead, equalizer) is unchanged from v2.2+.
 
 ---
 
