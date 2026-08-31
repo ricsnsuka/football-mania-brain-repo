@@ -1,8 +1,9 @@
 # Project Status
 
-**Snapshot: 2026-08-31, after 3.1.0 — empty direct threads collected by retention, the plan
-modal's player rows straightened, and the thin-main CI shape, deployed and confirmed on both
-halves the same day 3.0.0 was.** The repos are one version, both at `3.1.0`.
+**Snapshot: 2026-08-31, after 3.1.1 — a frontend-only patch (like 2.3.1 was) finishing the modal
+button layout the owner caught after 3.1.0 shipped unchecked.** Backend stays at `3.1.0`; the
+frontend is at `3.1.1`. Three releases in one day: 3.0.0 in the small hours, 3.1.0 mid-morning,
+this after lunch.
 ⚠️ Honest gap: **2.5.0 (2026-08-29, the Ballon d'Or release) shipped without this file being
 updated** — its facts were true in the CHANGELOG and the platforms all along, but this page
 skipped from 2.4.0 straight to here. Update it when the answers change, not on a schedule — a
@@ -18,15 +19,29 @@ read back from both platforms, and the evidence is in the table.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `f1b25a6` — identical to `main`, checked: `git log next..main` prints nothing | `f1e45f0` — identical to `main`, checked: the same check passes |
-| Release | **`3.1.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`3.1.0`** — `package.json` via `npm version`, lockfile moved with it |
-| Running in production | **`f1b25a6`, confirmed by asking the platform.** Heroku release **v76 = Deploy f1b25a6f**. `/api/version` reports `3.1.0` (build `2026-08-31T10:16:16Z`), `/api/health` is `UP` and reports `3.1.0`, `heroku ps` shows `web.1` up since 11:17:01 +0100. No new migration, so `flyway_schema_history` is unchanged from 2.5.0 | **`f1e45f0`, confirmed by asking the platform** — the stronger claim 3.0.0 lacked: Netlify's API reports production deploy `6a9552e3601b7b0008e926b2` `ready`, `commit_ref` equal to this merge commit, published `2026-08-31T10:10:31Z` |
-| `main` head | `f1b25a6` — **3.1.0**: empty direct threads collected at 24h, thin-main CI + Release Gate | `f1e45f0` — **3.1.0**: plan-modal player rows (chip out of the button row, Remove behind a ⋯ menu), thin-main CI |
+| `next` head | `f1b25a6` — identical to `main`, checked: `git log next..main` prints nothing | `e6f3a83` — identical to `main`, checked: the same check passes |
+| Release | **`3.1.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`3.1.1`** — `package.json` via `npm version`, lockfile moved with it |
+| Running in production | **`f1b25a6`, confirmed by asking the platform.** Heroku release **v76 = Deploy f1b25a6f**. `/api/version` reports `3.1.0` (build `2026-08-31T10:16:16Z`), `/api/health` is `UP` and reports `3.1.0`, `heroku ps` shows `web.1` up since 11:17:01 +0100. No new migration, so `flyway_schema_history` is unchanged from 2.5.0 | **`e6f3a83`, confirmed by asking the platform**: Netlify's API reports production deploy `6a95757a032ea30008f3be1e` `ready`, `commit_ref` equal to this merge commit, published `2026-08-31T12:38:02Z` |
+| `main` head | `f1b25a6` — **3.1.0**: empty direct threads collected at 24h, thin-main CI + Release Gate | `e6f3a83` — **3.1.1**: guest ⋯ menu beside the name + a tour step teaching guest removal, player-modal action shelves gathered into one manage row |
 | Working tree | clean | clean |
 | Tests | **`./gradlew build` green** locally and all CI jobs green on `#250`, `#251` and the `#252` promotion — `CalculationServiceTest` at 90 tests with every v3 expectation re-derived from the formula | **1064 tests, all passing**, `npm run build` green throughout. ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7 |
 | Latest migration | **`V45__match_clock.sql`** — unchanged; 3.0.0 ships no migration, so **rollback is a redeploy** (ratings recalculated under v3 keep their numbers until recalculated again) | — |
 | Deployed through | **`V45`**, unchanged. The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence) and **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.1.1 — shipped and confirmed 2026-08-31, after lunch (frontend only)
+
+**The button layout 3.1.0 shipped unchecked, finished properly — and checked this time.** The
+owner caught two things live: the guest row's ⋯ menu broke the Confirm/Decline columns (a
+reserved-spacer fix was tried and superseded), and the player modal's admin actions sat scattered
+across five shelves with alternating alignments. The owner's call put the ⋯ **beside the guest's
+name** (`FootMania-Simple-Front#122`), making every row's actions block identical — the alignment
+question ends structurally — and the modal tour gained a step teaching guest removal, since the ⋯
+is where it lives and nothing else says so. The player modal's routine controls (status, details,
+link/unlink) now share one neutral left-aligned row; colour arrives only with consequence, in the
+confirm panels. Verified on a local dev pair against the real backend before release — the check
+3.1.0 skipped. Backend untouched, like 2.3.1: no backend CHANGELOG entry, backend tag stays
+`v3.1.0`. Netlify deploy `6a95757a` read back from the API, `commit_ref` = `e6f3a83`.
 
 ## 3.1.0 — shipped and confirmed 2026-08-31, mid-morning
 
