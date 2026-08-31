@@ -1,9 +1,11 @@
 # Project Status
 
-**Snapshot: 2026-08-29, just past midnight, after 2.4.0 — the match clock and the timeline's
-centred ladder, deployed and confirmed on both halves.** The repos are one version again after
-2.3.1's deliberate split. Update it when the answers change, not on a schedule — a status page
-nobody trusts is worse than none.
+**Snapshot: 2026-08-31, after 3.0.0 — rating model v3, the guided tours, and the match-dialog
+fixes, deployed and confirmed on both halves.** The repos are one version, both at `3.0.0`.
+⚠️ Honest gap: **2.5.0 (2026-08-29, the Ballon d'Or release) shipped without this file being
+updated** — its facts were true in the CHANGELOG and the platforms all along, but this page
+skipped from 2.4.0 straight to here. Update it when the answers change, not on a schedule — a
+status page nobody trusts is worse than none.
 
 ⚠️ **The old-tag backlog is still outstanding, and is marked where it appears.** **Seven tags** —
 `v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend, `v1.7.0` in the frontend — exist
@@ -15,15 +17,39 @@ read back from both platforms, and the evidence is in the table.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `456c071` — identical to `main`, checked: `git log next..main` prints nothing | `7b507ff` — identical to `main`, checked: the same check passes |
-| Release | **`2.4.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`2.4.0`** — `package.json`, with the lockfile's root version moved to match. The repos are one version again after 2.3.1's deliberate one-patch split |
-| Running in production | **`456c071`, confirmed by asking the platform.** Heroku release **v73**, `Deploy 456c0716`, 2026-08-29 00:25:02 +0100. `/api/version` reports `2.4.0` (build `2026-08-28T23:24:45.029Z`), `/api/health` is `UP`, `heroku ps` shows `web.1` up running **`football-2.4.0.jar`**, and `flyway_schema_history`'s newest row is **`V45__match_clock.sql`, success** | **`7b507ff`, confirmed against Netlify:** deploy `6a921a6485f38400086ad103`, `ready`, context `production`, `commit_ref` matching, published `2026-08-28T23:32:32Z`. Read back from the live site too — `/profile` answers `200` while a nonsense path answers `404` |
-| `main` head | `456c071` — **2.4.0**: the match clock (`POST /{id}/clock`, API-only) and derived goal minutes | `7b507ff` — **2.4.0**: the timeline rebuilt as a centred ladder |
+| `next` head | `7eca59f` — identical to `main`, checked: `git log next..main` prints nothing | `e3c7470` — identical to `main`, checked: the same check passes |
+| Release | **`3.0.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so. Major bump: the rating semantics changed (Model v3) | **`3.0.0`** — `package.json` via `npm version`, lockfile moved with it |
+| Running in production | **`7eca59f`, confirmed by asking the platform.** Heroku release **v75**. `/api/version` reports `3.0.0` (build `2026-08-31T01:05:05.438Z`), `/api/health` is `UP` and reports `3.0.0`, `heroku ps` shows `web.1` up running **`football-3.0.0.jar`** since 02:05:45 +0100. No new migration, so `flyway_schema_history` is unchanged from 2.5.0 | **`e3c7470`, confirmed by fingerprint + owner.** The live site's CSS chunk (`1h7-6cfqe9qtg.css`) serves the `app-tour-popover`/`app-tour-host` classes that exist only in 3.0.0, and the owner confirmed the Netlify deploy completing. ⚠️ The deploy id was **not** read back from Netlify's API this time — a weaker claim than 2.4.0's, said so rather than dressed up |
+| `main` head | `7eca59f` — **3.0.0**: rating model v3 + v3.1 (absolute curve, team-defence term, pace-aware timing) | `e3c7470` — **3.0.0**: guided tours everywhere, MOTM-as-MVP on the scoresheet, match-dialog fixes |
 | Working tree | clean | clean |
-| Tests | **`./gradlew build` green** on the feature and release branches; all thirteen CI jobs green on the promotion, Integration (Testcontainers) included — which is what exercised `V45` against real PostgreSQL before production did | **1045 tests, all passing**, and CI runs `npm run build` since 2.3.1's cycle, so the stylesheet compiles before anything merges. ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7 |
-| Latest migration | **`V45__match_clock.sql`** — two nullable columns on `matches`, no backfill | — |
-| Deployed through | **`V45`**, read from `flyway_schema_history` after v73 booted: newest row `V45__match_clock.sql`, success. ✅ **Additive and nullable, so rollback is a redeploy.** The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`) and **`v2.4.0`** (`456c071`) — on the remote, at the deployed commits. ⚠️ Only `v1.8.0`, `v1.9.0`, `v1.9.1` and `v1.9.2` are missing | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`) and **`v2.4.0`** (`7b507ff`). ⚠️ `v1.8.0`, `v1.9.1` and `v1.7.0` are missing |
+| Tests | **`./gradlew build` green** locally and all CI jobs green on `#250`, `#251` and the `#252` promotion — `CalculationServiceTest` at 90 tests with every v3 expectation re-derived from the formula | **1064 tests, all passing**, `npm run build` green throughout. ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7 |
+| Latest migration | **`V45__match_clock.sql`** — unchanged; 3.0.0 ships no migration, so **rollback is a redeploy** (ratings recalculated under v3 keep their numbers until recalculated again) | — |
+| Deployed through | **`V45`**, unchanged. The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) and **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) and **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence). ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.0.0 — shipped and confirmed 2026-08-31, in the small hours
+
+**The rating becomes the player's own, and the app learns to introduce itself.** The major bump
+is rating model v3 (`FootMania-Back#250`, released by `#251`/`#252`): the proportional
+normalization that rated everybody against the match's best performer is gone, replaced by an
+absolute saturating curve — every dominant haul used to flatten onto exactly 9.5, and a
+passenger's number depended on somebody else's night. The points engine (ladder, timing,
+scarcity, decisiveness) is untouched; a collective team-defence term from goals conceded and
+v3.1's pace-aware timing (clocked matches only, all-or-nothing fallback) ship with it. A
+five-goal night now prints a true 10. **No migration; ratings apply to newly completed or
+explicitly recalculated matches only** — applying v3 to history is a deliberate admin action.
+
+The frontend's share (`FootMania-Simple-Front#113`/`#112`/`#114`, released by `#115`/`#116`):
+first-visit guided tours across six pages plus three modal mini-tours (driver.js over the native
+`<dialog>` top layer via the Popover API — the inertness lesson is in the tour hook's comments),
+a "Replay tutorials" entry in Settings, the crowd's MOTM shown as the MVP on the scoresheet, and
+three match-dialog fixes: the Edit-sheet control moved into the scoresheet's own toolbar, the
+tab bar no longer collapses under a tall scoresheet (flex automatic-minimum-size, from the tab
+bar becoming scrollable), and the dialog is top-anchored so switching tabs no longer moves the
+tabs out from under the pointer.
+
+Model doc rewritten as v3 in [backend/features/CALCULATION_SERVICE.md](backend/features/CALCULATION_SERVICE.md);
+the recalculation API contract's engine wording updated in the same PR as the code.
 
 ## 2.4.0 — shipped and confirmed 2026-08-29, just past midnight
 
