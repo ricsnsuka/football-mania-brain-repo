@@ -92,6 +92,14 @@ have decided, not when `next` is green.
 3. **Merge `next` into `main`** in both repos. Fast-forward if it can. **The release branch merges
    into `next` first** — it is a pull request like any other, and merging it straight into `main` is
    what broke this on 2026-08-05 (see below).
+
+   Since 2026-08-31 the release PR into `main` does **not** re-run the test pipeline — full CI
+   runs on the `next` side, where green still gates something. The PR runs only a **Release
+   Gate** (plus the backend's Version Check): a job asserting `main` is an ancestor of the PR
+   head, which is what makes skipping the re-run safe rather than assumed. A red gate means
+   `main` holds a commit that never went through `next` — the merge result would be a tree
+   nobody tested. Bring that commit into `next` first, or run the workflow manually via
+   `workflow_dispatch`. Step 7 done properly is exactly what keeps this gate green.
 4. **The backend deploys itself** from `main` — automatic deployment was turned on 2026-08-05, so
    step 3 already shipped it. **Confirm it anyway**: `heroku releases -a footmania` for the commit
    that actually landed, and `/api/version` for what the running process says it is. A deploy that
