@@ -229,6 +229,15 @@ reader can tell a decision from a default.
    direct conversations persist as empty containers, and their messages still expire at 24h. That
    is also what makes messaging somebody again continue the same thread rather than opening a
    second one. `ChatConversation.expiresOnInactivity()` is the single place this lives.
+
+   > **Partially reversed 2026-08-31**, after a week of the shipped feature: the empty containers
+   > were the problem — a permanent "no messages" row in the list for every person ever messaged
+   > once. Direct threads are now collected after **24 hours** of silence (one full message
+   > lifespan, so only an empty shell ever goes; a thread with a readable message is untouchable
+   > by construction). Not the 12-hour group rule: `expiresOnInactivity()` still answers `false`
+   > for `DIRECT`, because no readable message is ever destroyed by the thread's death. What
+   > survives of the original reasoning: opening a thread stays idempotent *while it exists*; a
+   > collected one is simply recreated fresh on the next message.
 2. **What is "all"? — A permanent group-wide channel.** One `EVERYONE` conversation per
    organization, created lazily on first use, never deleted and exempt from the inactivity clock.
    Enforced by a partial unique index rather than a service check, because lazy creation makes two
