@@ -106,6 +106,23 @@ Notable keys:
 - `matches.pagination.of` — "of N pages"
 - `matches.pagination.perPage` — "per page" label in the size selector
 
+## Row status chips (`matchPhase`)
+
+Every uncompleted list row carries one chip, chosen by `matchPhase()` in `types/match.ts` — the
+checks run in order of authority:
+
+| Chip | Phase | Condition |
+|------|-------|-----------|
+| ⏳ Upcoming (blue) | `UPCOMING` | Before the scheduled kickoff, no play signals |
+| ● Live (red) | `LIVE` | A running score, **or** a recorded kickoff (`kickedOffAt`) without a recorded full time |
+| 📋 Awaiting results (violet) | `AWAITING_RESULTS` | Full time signalled (`fullTimeAt`), or scheduled time passed with no signal — the match is presumed played; the scoresheet is what is missing |
+
+The clock signals come from `POST /api/matches/{id}/clock` (the watch shortcut — no screen calls
+it): KICKOFF makes the match live before any goal, FULL_TIME ends it with **no app interaction
+required**. All field checks are loose `!= null`, because list responses omit null fields entirely
+(`non_null` serialization) — a strict `!== null` once made every planned match in list data read as
+live. `now` is snapshotted on card mount, the dashboard's determinism trade.
+
 ## Match modal
 
 The `MatchModal` has three display modes depending on match state:
