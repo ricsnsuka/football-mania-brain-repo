@@ -12,7 +12,7 @@ An overview of what is happening and what needs you. One page for every role.
 | Question | Widget |
 |----------|--------|
 | Is anything waiting on me? | `AwaitingYou` |
-| When is the next match, and am I in it? | `NextMatchCard` |
+| When is the next match, and am I in it? | `NextMatchSection` (plan → `NextMatchCard`, settled/live → `SettledMatchCard`) |
 | How am I doing? | `YourStats` |
 | What happened recently? | `RecentResults` |
 
@@ -37,14 +37,29 @@ It can carry three things, in this order:
    rather than implied.
 3. **An open draft session.**
 
-### NextMatchCard
+### NextMatchSection (the match spotlight)
 
-The next `PENDING` match plan whose `proposedDate` is still in the future, soonest first. RSVP is
-answerable **here**, not only on the Match Plans page: the point of an overview is that the obvious
-next action does not require navigating somewhere else first.
+One section, three shapes, chosen by `pickSpotlight()` (pure, unit-tested) in `useDashboardData`:
 
-`pollOpen: false` replaces the buttons with an explanation — a plan can stop taking responses while
-still being pending, and live buttons then would be a lie.
+- **A plan is next** (`NextMatchCard`): the chronologically next upcoming plan, **`PENDING` or
+  `CONFIRMED`**. It used to be `PENDING` only, which treated confirming a plan as if it had already
+  become a match — confirming Friday's game made the dashboard skip ahead to some later pending
+  plan. RSVP is answerable **here**, not only on the Match Plans page: the point of an overview is
+  that the obvious next action does not require navigating somewhere else first. `pollOpen: false`
+  replaces the buttons with an explanation — a plan can stop taking responses while still being
+  pending, and live buttons then would be a lie.
+- **A settled match is next** (`SettledMatchCard`): teams generated, `Match` row waiting to be
+  played. Match details — kickoff, venue, match type, team names — instead of an RSVP card;
+  confirmations are settled business by then. Settled matches and plans compete on kickoff time
+  alone; a dead heat goes to the settled match as the more decided fact.
+- **A match is live**: the section becomes a horizontal snap carousel with dots — the live match
+  first (title **Live match**, live chip, running score), the next fixture behind it. Auto-rotates
+  every 5 s; each panel carries its own title, so the heading switches with the panel. Paused on
+  hover/focus, interval restarts on a manual swipe, honors `prefers-reduced-motion`. "Live" is
+  `isLive()` in `types/match.ts`: uncompleted, and either a running score or a recorded kickoff
+  (`kickedOffAt`) without a recorded full time.
+
+The tour's `data-tour="next-match"` anchor is on the section wrapper, not on any card.
 
 ### YourStats
 
@@ -69,7 +84,8 @@ queries, and having each one call them independently made the fetch pattern impo
 | Source | Notes |
 |--------|-------|
 | `usePlayers` | Shaped with `select` off the one canonical query — no extra request |
-| `useMatchPlans({ status: 'PENDING' })` | Only `PENDING` can still be responded to |
+| `useMatchPlans({ status: 'PENDING,CONFIRMED', timeframe: 'upcoming', size: 5 })` | Server windows and sorts ascending — the old unbounded `PENDING`-only query could page-truncate the real next plan behind stale ones |
+| `useMatches({ completed: false, size: 50, sort: ['matchDate,asc'] })` | Group-wide open matches: the live one, and settled fixtures. `useMatches` polls every 30 s while any listed match is live |
 | `useMatches({ completed: true, size: 3 })` | |
 | `useDraftSessions` | |
 | `useMvpVote` | **Most recent completed match only** — see below |
@@ -91,8 +107,8 @@ silently retiring the card while somebody is looking at it.
 |-------|------|
 | Route | `src/app/(app)/dashboard/page.tsx` |
 | Page component | `src/features/dashboard/DashboardOverview.tsx` |
-| Reads | `src/features/dashboard/useDashboardData.ts` |
-| Widgets | `AwaitingYou.tsx`, `NextMatchCard.tsx`, `YourStats.tsx`, `RecentResults.tsx` |
+| Reads | `src/features/dashboard/useDashboardData.ts` (incl. `pickSpotlight`) |
+| Widgets | `AwaitingYou.tsx`, `NextMatchSection.tsx`, `NextMatchCard.tsx`, `SettledMatchCard.tsx`, `YourStats.tsx`, `RecentResults.tsx` |
 | Admin panel | `src/features/dashboard/UnlinkedPlayersPanel.tsx`, `LinkPlayerModal.tsx` |
 
 `LinkedPlayerBanner` and `SelfLinkPlayerModal` moved to `src/features/settings/` — managing your
@@ -112,5 +128,7 @@ player link is an account action. See [settings](settings.md).
 
 ## CSS
 
-`.overview*` and `.awaiting*` in `globals.css`. `.dashboard-greeting` and `.dashboard-role-badge`
-survive from the old page and are still used by the header.
+`.overview*` and `.awaiting*` in `globals.css` — including `.overview-carousel*` (the live
+carousel: hidden-scrollbar snap track, 44 px dot buttons) and `.overview-match__*` (the settled
+card's teams row). `.dashboard-greeting` and `.dashboard-role-badge` survive from the old page and
+are still used by the header.
