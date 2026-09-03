@@ -70,6 +70,13 @@ than to fix.
 - **BUG-3 completes an empty scoresheet 0–0.** Owner's decision, against the recommendation. A
   recorder who never used the app completes on a fiction and moves everyone's rating, silently.
   Recoverable via amend + `POST /api/matches/{id}/recalculate` — manually, and nothing announces it.
+- **Releasing without a browser check is deliberate, and these documents should stop counting it.**
+  Owner's decision, 2026-09-03: the group has one user, who reads the app on a phone and is content
+  to find things in production. There is no preview environment and none is planned for this, so
+  "went out dark" describes the normal case rather than a hazard — 3.3.0 and both 3.4.0 features
+  were flagged that way three times over, which is three warnings about a choice already made.
+  **What still belongs in the record is what a look actually found**, as the FEAT-5 section does:
+  the bug is history worth keeping, the missing preview environment is not a finding.
 
 ## FEAT-5, built 2026-09-03 — what the spec did not know
 
@@ -203,11 +210,12 @@ as did every other check on both PRs.
   reachable more often. Not fixable by treating `403` as logout: `403` also means "you lack that
   role", and signing people out of pages they merely cannot access is worse. Needs the two cases
   distinguished on the API side.
-- **Nothing user-facing has had a browser check for three releases** — 3.3.0, and both features in
-  3.4.0. No preview environment. **This is no longer a hypothetical cost:** the first real look at
-  the FEAT-5 chart was in production and it was wrong twice, in ways no test caught because every
-  test that touched the ordering supplied the list already ordered (see the FEAT-5 section). A
-  preview environment is the standing item this keeps arguing for.
+- **Shipping without a browser check is settled, and is no longer listed here as a gap** — see
+  the decision below. What is still open is narrower and worth keeping: **no test caught the
+  rating-chart bug because every test that touched the ordering supplied the list already
+  ordered.** A mock returns what it was handed, in the order it was handed; the `ORDER BY` was the
+  thing under test and the only tier that can hold an opinion about it is the one with a database.
+  `RatingHistoryOrderIT` is that test now.
 - **FEAT-1, FEAT-2** are unbuilt. **FEAT-5 and FEAT-6 shipped in 3.4.0** — see above. FEAT-2 (three teams / winner-stays-on) remains
   the largest job on the page and touches generation, `Match`/`MatchTeam`, scoring, stats and the
   rating engine.

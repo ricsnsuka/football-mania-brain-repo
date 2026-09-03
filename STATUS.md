@@ -18,14 +18,16 @@ went through, pushes to `refs/tags/*` were answered `403`. Place both tags at th
 once the backend line is confirmed — `40eedf8` backend, `a68b889` frontend — and annotate them
 with the evidence, per step 6 of the release procedure.
 
-⚠️ **Both features went out dark, and the first real look found a bug.** Neither was opened in a
-browser before release — no preview environment, the third release in a row. The FEAT-5 chart
-dated every point in a career the same day and drew segments climbing where the rating fell: one
-cause, `skill_rating_history.created_at` being a write timestamp that a recalculation resets.
-Fixed in **[Back#269](https://github.com/ricsnsuka/FootMania-Back/pull/269)**, open against `next`
-and **not yet released** — production still has it. The detail is in the FEAT-5 section of
-[product/backlog-2026-09.md](product/backlog-2026-09.md). The chat button's placement and the
-dark-theme colours still have not been looked at.
+**Both features went out dark, which is the normal case here** — one user, who reads the app on a
+phone and is content to find things in production. Recorded as a decision in
+[the backlog](product/backlog-2026-09.md#decisions-taken-so-they-are-not-silently-re-litigated) so
+that release notes stop flagging it.
+
+**The first look found one bug, fixed in 3.4.1.** The FEAT-5 chart dated every point in a career
+the same day and drew segments climbing where the rating fell — one cause,
+`skill_rating_history.created_at` being a write timestamp a recalculation resets. Back#269. The
+detail, and the part worth keeping about how a correct-sounding tie-break fixed the wrong half, is
+in the FEAT-5 section of [product/backlog-2026-09.md](product/backlog-2026-09.md).
 
 ⚠️ **This file skipped 3.2.0 too** — a frontend release between 3.1.1 and this one, never recorded
 here. That is the *second* such gap, after 2.5.0, and the pattern is now clear enough to name:
