@@ -12,7 +12,7 @@ disagree this file is newer.
 |---|---|
 | [Bug backlog + feature shortlist](https://claude.ai/code/artifact/85d243aa-db3c-433c-8a4b-e96f1b527ee6) | The whole batch — all six bugs and four features, with the corrections written in place |
 | [FEAT-1 · Date polling spec](https://claude.ai/code/artifact/3a046dc4-8384-4ef6-829b-b531eb5f270a) | **Not built.** Decide *when* to play, in the app |
-| [FEAT-5 · Rating history chart spec](https://claude.ai/code/artifact/d7e37060-db6d-4870-ba5e-72f3a950a2e6) | **Not built.** Skill rating over matches, on the profile card |
+| [FEAT-5 · Rating history chart spec](https://claude.ai/code/artifact/d7e37060-db6d-4870-ba5e-72f3a950a2e6) | **Built, in review** — Back#265, Front#136. Skill rating over matches, on the profile card |
 | [FEAT-6 · Match chat spec](https://claude.ai/code/artifact/93e823b5-78b5-4305-ac76-bd751ad72880) | **Not built.** A chat opened from a match |
 
 > ⚠️ **FEAT-6's spec calls its migration `V46`. That number is taken** — `V46` is session
@@ -70,6 +70,43 @@ than to fix.
   recorder who never used the app completes on a fiction and moves everyone's rating, silently.
   Recoverable via amend + `POST /api/matches/{id}/recalculate` — manually, and nothing announces it.
 
+## FEAT-5, built 2026-09-03 — what the spec did not know
+
+Backend [Back#265](https://github.com/ricsnsuka/FootMania-Back/pull/265), frontend
+[Front#136](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/136), both into `next`,
+backend first. No migration, as the spec predicted. Its four open decisions all went the way it
+recommended: hand-drawn SVG (D1), career by default with `?seasonId=` available (D2),
+`isAuthenticated()` (D3).
+
+Three things the spec got wrong or did not reach, all found by building it:
+
+- **"Evict it wherever `MATCHES` is" is not sufficient.** `SeasonService.finalise()` writes a
+  transition row per player and touches no match, so it evicts `RANKINGS`/`LEADERBOARDS`/
+  `PLAYERS`/`PLAYER_PROFILE` and never `MATCHES`. Following the rule to the letter would have
+  left the chart missing the one point that explains the largest movement of the year, for up to
+  ten minutes. The eviction is now explicit there. **The general lesson matches the one 3.3.0
+  already learned:** a rule of the form "do X wherever Y is" is only as good as whether Y actually
+  covers every writer, and nobody had checked.
+
+- **`role="img"` on the chart would have made it unreadable to a screen reader.** `img` is a
+  leaf role: it removes every descendant from the accessibility tree, including the focusable
+  points the spec's §09 requires to announce their date, result, goals, assists and movement. The
+  acceptance test caught it. It ships as `role="group"`.
+
+- **D4 was not implementable as written.** It recommended the tooltip name "result and scoreline",
+  but the DTO in §04 carries no scoreline field, and §09 requires the response carry no field the
+  chart does not draw. Built to §04 — result, no scoreline. Adding one is a new field and a join
+  to `Match`, on a read the same decision argues should stay cheap. **Open**, if anybody wants it.
+
+Also worth recording: the ordering needed an `id` tie-break that the spec did not mention. A bulk
+recalculation writes a whole career's rows inside the same instant, so `created_at` alone does not
+determine the order the line is drawn in. `findAllByPlayerAndSeason` gained the same tie-break —
+its javadoc already promised the first entry is the season's start rating.
+
+⚠️ **Neither half was opened in a browser.** No preview environment; the animation, the tooltip
+placement and the dark-theme colours want a local look before release — the same gap 3.3.0 shipped
+with, and the reason it is written down here rather than left implied.
+
 ## Still open after 3.3.0
 
 - **Plans drafted before BUG-1 are not backfilled** — still `CONFIRMED`, still unbilled.
@@ -81,6 +118,6 @@ than to fix.
   distinguished on the API side.
 - **3.3.0 shipped without a browser check.** No preview environment; three user-facing surfaces
   changed — the logout button, the cost panel on a kicked-off plan, and the dashboard card.
-- **FEAT-1, FEAT-2, FEAT-5, FEAT-6** are unbuilt. FEAT-2 (three teams / winner-stays-on) remains
+- **FEAT-1, FEAT-2, FEAT-6** are unbuilt. **FEAT-5 is built and in review** — see below. FEAT-2 (three teams / winner-stays-on) remains
   the largest job on the page and touches generation, `Match`/`MatchTeam`, scoring, stats and the
   rating engine.
