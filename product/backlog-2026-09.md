@@ -109,6 +109,38 @@ its javadoc already promised the first entry is the season's start rating.
 placement and the dark-theme colours want a local look before release — the same gap 3.3.0 shipped
 with, and the reason it is written down here rather than left implied.
 
+### Found on the first real look, 2026-09-03 — Back#269
+
+**The first time anybody opened the chart was in production, and it was wrong twice.** Every point
+in a career was dated the same day, and segments were drawn climbing where the tooltip said the
+rating fell. One cause under both.
+
+`skill_rating_history.created_at` is when a **row was written**. A recalculation deletes a match's
+rows and inserts fresh ones, so a movement from a match played months ago comes back stamped with
+today — and a bulk recalculation replays a whole career in one pass, giving every row in it one
+instant. That is the dates. A **season transition is the one row nothing rewrites**, so it keeps
+its original timestamp and sorted in front of every recalculated match, however long ago that
+season ended. That breaks the chain the line is drawn through — a segment is positioned by the
+previous row's `ratingAfter` and coloured by its own `change`, and those agree only in application
+order. That is the colours. The chart opened on two season ends and then contradicted itself.
+
+Now dated and ordered by `COALESCE(match.matchDate, history.createdAt)`, tie-broken by `id`, in
+one place (`SkillRatingHistory.occurredAt()`) and for every read of that table that means "career
+order" — including `CalculationService`, which took the season's first entry as where a player
+stood when the season began and could get another night's rating instead.
+
+⚠️ **The `id` tie-break was added for exactly the right reason and fixed the wrong half.** The
+contract stated the hazard correctly — *"a bulk recalculation writes a whole career's rows inside
+the same instant, and they are drawn in the order they happened only if the id decides it"* — and
+breaking a tie only makes the order deterministic **among rows that share an instant**. It says
+nothing about the comparison between rows that do not, which is precisely the transitions.
+
+**That is this feature's second bug of one shape**, after "evict it wherever `MATCHES` is" missed
+`SeasonService.finalise()`. Both were rules that were right about the thing they named and silent
+about whether it covered the cases — and both were written down as *decisions*, which is what made
+them look settled. The eviction one was caught while building. This one needed somebody to look at
+the screen.
+
 ## FEAT-6, built 2026-09-03 — what the spec did not know
 
 Backend [Back#266](https://github.com/ricsnsuka/FootMania-Back/pull/266), frontend
@@ -171,8 +203,11 @@ as did every other check on both PRs.
   reachable more often. Not fixable by treating `403` as logout: `403` also means "you lack that
   role", and signing people out of pages they merely cannot access is worse. Needs the two cases
   distinguished on the API side.
-- **3.3.0 shipped without a browser check.** No preview environment; three user-facing surfaces
-  changed — the logout button, the cost panel on a kicked-off plan, and the dashboard card.
+- **Nothing user-facing has had a browser check for three releases** — 3.3.0, and both features in
+  3.4.0. No preview environment. **This is no longer a hypothetical cost:** the first real look at
+  the FEAT-5 chart was in production and it was wrong twice, in ways no test caught because every
+  test that touched the ordering supplied the list already ordered (see the FEAT-5 section). A
+  preview environment is the standing item this keeps arguing for.
 - **FEAT-1, FEAT-2** are unbuilt. **FEAT-5 and FEAT-6 shipped in 3.4.0** — see above. FEAT-2 (three teams / winner-stays-on) remains
   the largest job on the page and touches generation, `Match`/`MatchTeam`, scoring, stats and the
   rating engine.
