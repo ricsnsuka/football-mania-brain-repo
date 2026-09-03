@@ -1,8 +1,31 @@
 # Project Status
 
-**Snapshot: 2026-09-03, after 3.3.0 — one batched backlog release, both halves together.** Six
-bugs and two features cut and deployed in a single pass. **Both repos are on `3.3.0`**; the backend
-skipped 3.2.0 to get there, which is how the two are back in step.
+**Snapshot: 2026-09-03, after 3.4.0 — two features, cut the day after 3.3.0 rather than held.** The
+rating history chart (FEAT-5) and the match chat (FEAT-6), both halves promoted the same night.
+**Both repos are on `3.4.0`**, and `next` is identical to `main` in both again.
+
+⚠️ **The backend's running version was not read back for this release, and the frontend went out
+on the owner's say-so rather than on that evidence.** The session that cut 3.4.0 could reach
+GitHub and Netlify but not Heroku — `*.herokuapp.com`, `api.heroku.com` and GitHub's deployments
+API were all refused by its network policy — so neither `/api/version` nor the Heroku release
+number is in the table below. The owner directed the frontend release to proceed. **Fill in the
+backend line from `heroku releases -a footmania` and `/api/version`, and expect `3.4.0`**; if the
+running commit is not `40eedf8`, that is the first thing to fix. The frontend line is confirmed by
+asking Netlify, as every release since 3.0.0 has been.
+
+⚠️ **`v3.4.0` is not tagged in either repo.** Same session, same policy: pushes to `refs/heads/*`
+went through, pushes to `refs/tags/*` were answered `403`. Place both tags at the deployed commits
+once the backend line is confirmed — `40eedf8` backend, `a68b889` frontend — and annotate them
+with the evidence, per step 6 of the release procedure.
+
+⚠️ **Both features went out dark, and the first real look found a bug.** Neither was opened in a
+browser before release — no preview environment, the third release in a row. The FEAT-5 chart
+dated every point in a career the same day and drew segments climbing where the rating fell: one
+cause, `skill_rating_history.created_at` being a write timestamp that a recalculation resets.
+Fixed in **[Back#269](https://github.com/ricsnsuka/FootMania-Back/pull/269)**, open against `next`
+and **not yet released** — production still has it. The detail is in the FEAT-5 section of
+[product/backlog-2026-09.md](product/backlog-2026-09.md). The chat button's placement and the
+dark-theme colours still have not been looked at.
 
 ⚠️ **This file skipped 3.2.0 too** — a frontend release between 3.1.1 and this one, never recorded
 here. That is the *second* such gap, after 2.5.0, and the pattern is now clear enough to name:
@@ -31,15 +54,41 @@ read back from both platforms, and the evidence is in the table.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `3eeddb0` â identical to `main`, checked against the remote: `git log next..origin/main` prints nothing | `0999bd3` â identical to `main`, same check against `origin/main`, not a stale local ref |
-| Release | **`3.3.0`** â `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`3.3.0`** â `package.json` and both root `version` entries in `package-lock.json`, via `npm install --package-lock-only` |
-| Running in production | **`3eeddb0`.** `/api/version` reports `3.3.0` (build `2026-09-02T23:55:20.239Z`) and `/api/health` is `UP` on `3.3.0` â read from the running process, so the jar that booted is the right one. â ï¸ **Heroku's own release number was not read back**: the CLI wanted an interactive login. Fill it in from `heroku releases -a footmania`. The health check doubles as the migration evidence â Flyway runs on boot, so `UP` means V46âV48 applied | **`0999bd3`, confirmed by asking Netlify**: deploy `6a98b86013e2130008d24c82`, `ready`, context `production`, `commit_ref` `0999bd35a5a3c4670225bd9b61d12e7b004e79a8` â equal to this merge commit â published `2026-09-03T00:00:17.301Z`, 47s build |
-| `main` head | `3eeddb0` â **3.3.0**: drafted matches retire their plan and bill (BUG-1), FULL_TIME completes the match (BUG-3), session revocation + `POST /api/auth/logout` (BUG-5), the poll stays open to team generation and reserves are told (FEAT-3), weekly fee reminders off by default (FEAT-4), and `tomcat-embed-core` past three CRITICAL advisories | `0999bd3` â **3.3.0**: cost controls survive kickoff (BUG-2), the dashboard card says whether you are playing and offers a lone withdraw past the deadline (FEAT-3), logout ends the session server-side (BUG-5), names for `FEE_REMINDER` and `RESERVE_PROMOTED`, `browserslist` past its advisory |
+| `next` head | `40eedf8` — identical to `main`, fast-forwarded to the promotion merge the same minute; `git log next..main` prints nothing | `a68b889` — identical to `main`, same check |
+| Release | **`3.4.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job said so on #267 and again on the promotion | **`3.4.0`** — `package.json` and both root `version` entries in `package-lock.json`, via `npm install --package-lock-only` (which also wrote the two `@emnapi` entries `npm ci` had been refusing over) |
+| Running in production | ⚠️ **Not read back.** `main` is `40eedf8` (the merge of #268, 2026-09-03 ~03:0x UTC) and Heroku builds every push to `main`, so the deploy started; whether it booted the `3.4.0` jar and applied `V49` was not observable from the session that cut it (see the snapshot). **Fill in from `heroku releases -a footmania`, `/api/version` (expect `3.4.0`) and `/api/health` (`UP` is the V49 evidence)** | **`a68b889`, confirmed by asking Netlify**: deploy `6a98f68341e5490008f98a01`, `ready`, context `production`, `commit_ref` `a68b8891575211e60067210d2d1af104f7f53d8f` — equal to the promotion merge — published `2026-09-03T04:25:25.329Z`, 47s build |
+| `main` head | `40eedf8` — **3.4.0**: `GET /api/players/{id}/rating-history` (FEAT-5), `POST /api/matches/{id}/chat` and `DELETE /api/chat/conversations/{id}/me` (FEAT-6), `V49` | `a68b889` — **3.4.0**: the rating history chart on the profile card (FEAT-5); the match chat button, match-dated chat titles and leaving a group chat (FEAT-6) |
 | Working tree | clean | clean |
-| Tests | **`./gradlew build` green** on `next` after every merge, and all CI jobs green on `#257`â`#264`. Exit codes read directly rather than through a pipe â a piped `\| tail` reports the pager's status and a failed build reads as green, which cost one false "passed" report this release | **1118 tests across 115 files, all passing**, `npm run build` green and `npm audit --audit-level=high` at 0 vulnerabilities on `next` after all five merges. â ï¸ Visual: baselines **not** re-verified â see hazard 7. â ï¸ **No browser check before shipping**: three user-facing surfaces changed and none was opened |
-| Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
-| Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+| Tests | **`./gradlew build` green** locally on the FEAT-6 branch (SpotBugs included), and every CI job green on `#265`–`#268` including Testcontainers, which is the only place `MatchChatIT` has ever run — Docker was not available where it was written | **1140 tests across 116 files, all passing**, `npm run build`, `type-check` and `lint` green on `#136`–`#139`. ⚠️ **No browser check before shipping**, third release running |
+| Latest migration | **`V49__match_chat.sql`**. One this release: a nullable `match_id` on `chat_conversations` with a partial unique index and `ON DELETE SET NULL`. Additive, so the 3.3.0 jar starts against this schema unchanged and **rollback stays a redeploy**. Numbered V49 because the spec's V46 had become session revocation in 3.3.0 | — |
+| Deployed through | ⚠️ **`V49` expected, not confirmed** — applied on boot if the 3.4.0 jar booted; `/api/health` `UP` on `3.4.0` is the evidence to collect. Confirmed through `V48` as of 3.3.0. The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ **`v3.4.0` not yet placed** — belongs at `40eedf8` once the running commit is confirmed; the cutting session could not push tags (403 on `refs/tags`). ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ **`v3.4.0` not yet placed** — belongs at `a68b889`, Netlify deploy `6a98f683`; same 403 on tags. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.4.0 — shipped 2026-09-03, frontend confirmed, backend not read back
+
+**A match has a chat, and a rating has a history you can see.** FEAT-5 and FEAT-6 from the 2026-09
+backlog, cut the morning after 3.3.0 rather than held for a bigger batch — Back#267/Front#138 into
+`next`, Back#268/Front#139 promoting `next` → `main`, backend first. One migration, `V49`. Both
+Release Gates green; no open pull requests in either repo at the cut, nothing from Dependabot
+waiting on `main`. `next` fast-forwarded to `main` in both repos within the same minute as each
+promotion, so step 7 was not left for later this time.
+
+**What is weaker than usual, and why.** The frontend is confirmed the normal way — Netlify deploy
+`6a98f683`, `ready`, `commit_ref` equal to the promotion merge, published `04:25:25Z`. The backend
+is not: the session that ran the release had no route to Heroku at all, so step 4 of the
+procedure — confirm the dyno booted the right jar before the frontend goes — was put to the owner,
+who directed the frontend release to proceed. Both 3.4.0 features call endpoints 3.3.0 does not
+have; if the backend deploy had not landed, the chart would show its error state and the chat
+button would toast a failure rather than anything worse, which is the reason this was an
+acceptable risk and not the reason it was taken. **`/api/version` and the Heroku release number
+are the two lines to fill in above**, and `v3.4.0` waits on them in both repos — tags could not be
+pushed from that session either.
+
+**What building it taught, recorded in [the backlog](product/backlog-2026-09.md):** the match
+chat's race has a second half the group-wide channel's never had (the roster commits with the
+conversation, or the *winner* loses), FEAT-5's "evict wherever `MATCHES` is" missed the season
+transition, and the frontend's `npm ci` had been refusing `next`'s lockfile for a release without
+CI noticing, because CI runs `npm install`.
 
 ## 3.1.1 — shipped and confirmed 2026-08-31, after lunch (frontend only)
 
