@@ -155,7 +155,9 @@ Also worth recording:
 ⚠️ **Neither half was opened in a browser.** No preview environment — the third feature in a row
 shipped this way. ⚠️ **The integration tests were not run locally either**: Docker is not available
 in the session that built this, so `MatchChatIT` (nine cases, including the race and the retention
-clock) and the two new `ChatSchemaIT` cases are proved by CI's Testcontainers job alone.
+clock) and the two new `ChatSchemaIT` cases are proved by CI's Testcontainers job alone — which
+**passed on Back#266** ([run 33705595030](https://github.com/ricsnsuka/FootMania-Back/actions/runs/33705595030)),
+as did every other check on both PRs.
 
 ## Still open after 3.3.0
 
