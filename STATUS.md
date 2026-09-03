@@ -5,11 +5,13 @@ bugs and two features cut and deployed in a single pass. **Both repos are on `3.
 skipped 3.2.0 to get there, which is how the two are back in step.
 
 ⚠️ **Since 2026-09-03 `next` is ahead of production in both repos, and this is the first snapshot
-where it is.** FEAT-5 — the rating history chart — is merged into `next` on both sides (backend
-`095d553`, frontend `eab6f90`) and released on neither. `main` did not move, so the running
-version is still exactly 3.3.0. ⚠️ **Neither half has been opened in a browser** — no preview
-environment, the same gap 3.3.0 shipped with; the detail is in the FEAT-5 section of
-[product/backlog-2026-09.md](product/backlog-2026-09.md).
+where it is.** Two features are merged into `next` on both sides and released on neither: FEAT-5,
+the rating history chart (backend `095d553`, frontend `eab6f90`), and FEAT-6, the match chat
+(backend `1552c31`, frontend `a309003`). `main` did not move, so the running version is still
+exactly 3.3.0. FEAT-6 carries **`V49`**, the first migration since the release — additive, so the
+3.3.0 jar starts against it unchanged. ⚠️ **Neither feature has been opened in a browser** — no
+preview environment, the same gap 3.3.0 shipped with; the detail is in the FEAT-5 and FEAT-6
+sections of [product/backlog-2026-09.md](product/backlog-2026-09.md).
 
 ⚠️ **This file skipped 3.2.0 too** — a frontend release between 3.1.1 and this one, never recorded
 here. That is the *second* such gap, after 2.5.0, and the pattern is now clear enough to name:
@@ -38,7 +40,7 @@ read back from both platforms, and the evidence is in the table.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `095d553` — **ahead of `main` by FEAT-5** (#265, merged 2026-09-03): `GET /api/players/{id}/rating-history`, no migration | `eab6f90` — **ahead of `main` by FEAT-5** (#136, merged 2026-09-03): the rating chart on the profile card |
+| `next` head | `1552c31` — **ahead of `main` by FEAT-5 and FEAT-6** (#265, #266, merged 2026-09-03): `GET /api/players/{id}/rating-history`; `POST /api/matches/{id}/chat`, `DELETE /api/chat/conversations/{id}/me`, **`V49`** | `a309003` — **ahead of `main` by FEAT-5 and FEAT-6** (#136, #137, merged 2026-09-03): the rating chart on the profile card; the match chat button, match-dated chat titles, leaving a group chat |
 | Release | **`3.3.0`** â `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`3.3.0`** â `package.json` and both root `version` entries in `package-lock.json`, via `npm install --package-lock-only` |
 | Running in production | **`3eeddb0`.** `/api/version` reports `3.3.0` (build `2026-09-02T23:55:20.239Z`) and `/api/health` is `UP` on `3.3.0` â read from the running process, so the jar that booted is the right one. â ï¸ **Heroku's own release number was not read back**: the CLI wanted an interactive login. Fill it in from `heroku releases -a footmania`. The health check doubles as the migration evidence â Flyway runs on boot, so `UP` means V46âV48 applied | **`0999bd3`, confirmed by asking Netlify**: deploy `6a98b86013e2130008d24c82`, `ready`, context `production`, `commit_ref` `0999bd35a5a3c4670225bd9b61d12e7b004e79a8` â equal to this merge commit â published `2026-09-03T00:00:17.301Z`, 47s build |
 | `main` head | `3eeddb0` â **3.3.0**: drafted matches retire their plan and bill (BUG-1), FULL_TIME completes the match (BUG-3), session revocation + `POST /api/auth/logout` (BUG-5), the poll stays open to team generation and reserves are told (FEAT-3), weekly fee reminders off by default (FEAT-4), and `tomcat-embed-core` past three CRITICAL advisories | `0999bd3` â **3.3.0**: cost controls survive kickoff (BUG-2), the dashboard card says whether you are playing and offers a lone withdraw past the deadline (FEAT-3), logout ends the session server-side (BUG-5), names for `FEE_REMINDER` and `RESERVE_PROMOTED`, `browserslist` past its advisory |
