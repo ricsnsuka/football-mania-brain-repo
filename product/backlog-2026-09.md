@@ -13,7 +13,7 @@ disagree this file is newer.
 |---|---|
 | [Bug backlog + feature shortlist](https://claude.ai/code/artifact/85d243aa-db3c-433c-8a4b-e96f1b527ee6) | The whole batch — all six bugs and four features, with the corrections written in place |
 | [FEAT-1 · Date polling spec](https://claude.ai/code/artifact/3a046dc4-8384-4ef6-829b-b531eb5f270a) | **Not built.** Decide *when* to play, in the app |
-| [FEAT-5 · Rating history chart spec](https://claude.ai/code/artifact/d7e37060-db6d-4870-ba5e-72f3a950a2e6) | **Shipped in 3.4.0**, 2026-09-03 — Back#265, Front#136. Skill rating over matches, on the profile card |
+| [FEAT-5 · Rating history chart spec](https://claude.ai/code/artifact/d7e37060-db6d-4870-ba5e-72f3a950a2e6) | **Shipped in 3.4.0**, 2026-09-03 — Back#265, Front#136; **dates and ordering fixed in 3.4.1** (Back#269). Skill rating over matches, on the profile card |
 | [FEAT-6 · Match chat spec](https://claude.ai/code/artifact/93e823b5-78b5-4305-ac76-bd751ad72880) | **Shipped in 3.4.0**, 2026-09-03 — Back#266, Front#137. A chat opened from a match |
 
 > ⚠️ **FEAT-6's spec calls its migration `V46`. That number was taken** — `V46` is session
@@ -116,7 +116,7 @@ its javadoc already promised the first entry is the season's start rating.
 placement and the dark-theme colours want a local look before release — the same gap 3.3.0 shipped
 with, and the reason it is written down here rather than left implied.
 
-### Found on the first real look, 2026-09-03 — Back#269
+### Found on the first real look, 2026-09-03 — fixed in 3.4.1 (Back#269)
 
 **The first time anybody opened the chart was in production, and it was wrong twice.** Every point
 in a career was dated the same day, and segments were drawn climbing where the tooltip said the

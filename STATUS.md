@@ -1,8 +1,10 @@
 # Project Status
 
-**Snapshot: 2026-09-03, after 3.4.0 — two features, cut the day after 3.3.0 rather than held.** The
-rating history chart (FEAT-5) and the match chat (FEAT-6), both halves promoted the same night.
-**Both repos are on `3.4.0`**, and `next` is identical to `main` in both again.
+**Snapshot: 2026-09-03, after 3.4.1 — two features and, hours later, the fix for what opening one
+of them found.** The rating history chart (FEAT-5) and the match chat (FEAT-6) shipped in 3.4.0;
+3.4.1 is the backend-only follow-up that dates the chart by when its matches were played.
+**The backend is on `3.4.1`, the frontend on `3.4.0`** — the fix needed no client change — and
+`next` is identical to `main` in both.
 
 ⚠️ **The backend's running version was not read back for this release, and the frontend went out
 on the owner's say-so rather than on that evidence.** The session that cut 3.4.0 could reach
@@ -56,15 +58,38 @@ read back from both platforms, and the evidence is in the table.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `40eedf8` — identical to `main`, fast-forwarded to the promotion merge the same minute; `git log next..main` prints nothing | `a68b889` — identical to `main`, same check |
-| Release | **`3.4.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job said so on #267 and again on the promotion | **`3.4.0`** — `package.json` and both root `version` entries in `package-lock.json`, via `npm install --package-lock-only` (which also wrote the two `@emnapi` entries `npm ci` had been refusing over) |
-| Running in production | ⚠️ **Not read back.** `main` is `40eedf8` (the merge of #268, 2026-09-03 ~03:0x UTC) and Heroku builds every push to `main`, so the deploy started; whether it booted the `3.4.0` jar and applied `V49` was not observable from the session that cut it (see the snapshot). **Fill in from `heroku releases -a footmania`, `/api/version` (expect `3.4.0`) and `/api/health` (`UP` is the V49 evidence)** | **`a68b889`, confirmed by asking Netlify**: deploy `6a98f68341e5490008f98a01`, `ready`, context `production`, `commit_ref` `a68b8891575211e60067210d2d1af104f7f53d8f` — equal to the promotion merge — published `2026-09-03T04:25:25.329Z`, 47s build |
-| `main` head | `40eedf8` — **3.4.0**: `GET /api/players/{id}/rating-history` (FEAT-5), `POST /api/matches/{id}/chat` and `DELETE /api/chat/conversations/{id}/me` (FEAT-6), `V49` | `a68b889` — **3.4.0**: the rating history chart on the profile card (FEAT-5); the match chat button, match-dated chat titles and leaving a group chat (FEAT-6) |
+| `next` head | `b187910` — identical to `main`, fast-forwarded to the promotion merge the same minute; `git log next..main` prints nothing | `a68b889` — identical to `main`, same check |
+| Release | **`3.4.1`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job said so on #270 and again on the promotion | **`3.4.0`** — unchanged by 3.4.1, which needed no client change. `package.json` and both root `version` entries in `package-lock.json` agree, via `npm install --package-lock-only` |
+| Running in production | ⚠️ **Not read back, twice now.** `main` is `b187910` (the merge of #271, 2026-09-03 ~05:15 UTC) and Heroku builds every push to `main`, so the deploy started; the same network policy blocked confirming it. **Fill in from `heroku releases -a footmania` and `/api/version` (expect `3.4.1`).** `V49` shipped with 3.4.0 and 3.4.1 adds none, so `/api/health` `UP` remains the migration evidence | **`a68b889`, confirmed by asking Netlify**: deploy `6a98f68341e5490008f98a01`, `ready`, context `production`, `commit_ref` `a68b8891575211e60067210d2d1af104f7f53d8f` — equal to the promotion merge — published `2026-09-03T04:25:25.329Z`, 47s build |
+| `main` head | `b187910` — **3.4.1**: the rating history dated and ordered by when each movement happened. On top of **3.4.0** (`40eedf8`): `GET /api/players/{id}/rating-history` (FEAT-5), `POST /api/matches/{id}/chat` and `DELETE /api/chat/conversations/{id}/me` (FEAT-6), `V49` | `a68b889` — **3.4.0**: the rating history chart on the profile card (FEAT-5); the match chat button, match-dated chat titles and leaving a group chat (FEAT-6) |
 | Working tree | clean | clean |
-| Tests | **`./gradlew build` green** locally on the FEAT-6 branch (SpotBugs included), and every CI job green on `#265`–`#268` including Testcontainers, which is the only place `MatchChatIT` has ever run — Docker was not available where it was written | **1140 tests across 116 files, all passing**, `npm run build`, `type-check` and `lint` green on `#136`–`#139`. ⚠️ **No browser check before shipping**, third release running |
+| Tests | **`./gradlew build` green** locally on every branch, and every CI job green on `#265`–`#271` including Testcontainers — the only place `MatchChatIT` and `RatingHistoryOrderIT` have ever run, Docker being unavailable where both were written. `RatingHistoryOrderIT` is the reproduction of the 3.4.1 bug and passed on the fix branch, which is what makes the fix proved rather than argued | **1140 tests across 116 files, all passing**, `npm run build`, `type-check` and `lint` green on `#136`–`#139`. Untouched by 3.4.1 |
 | Latest migration | **`V49__match_chat.sql`**. One this release: a nullable `match_id` on `chat_conversations` with a partial unique index and `ON DELETE SET NULL`. Additive, so the 3.3.0 jar starts against this schema unchanged and **rollback stays a redeploy**. Numbered V49 because the spec's V46 had become session revocation in 3.3.0 | — |
 | Deployed through | ⚠️ **`V49` expected, not confirmed** — applied on boot if the 3.4.0 jar booted; `/api/health` `UP` on `3.4.0` is the evidence to collect. Confirmed through `V48` as of 3.3.0. The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ **`v3.4.0` not yet placed** — belongs at `40eedf8` once the running commit is confirmed; the cutting session could not push tags (403 on `refs/tags`). ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ **`v3.4.0` not yet placed** — belongs at `a68b889`, Netlify deploy `6a98f683`; same 403 on tags. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ **`v3.4.0` and `v3.4.1` not yet placed** — at `40eedf8` and `b187910` once the running commit is confirmed; the cutting session could not push tags (403 on `refs/tags`, both times). ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ **`v3.4.0` not yet placed** — belongs at `a68b889`, Netlify deploy `6a98f683`; same 403 on tags. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.4.1 — shipped 2026-09-03, backend only, not read back
+
+**What opening the chart for the first time found.** Every point in a career was dated the same
+day, and segments were drawn climbing where the tooltip said the rating fell. One cause:
+`skill_rating_history.created_at` is when a row was *written*, and a recalculation deletes a
+match's rows and inserts fresh ones — so a career replayed in one pass carries a single instant,
+and the season transitions, the one kind of row nothing rewrites, sort in front of every
+recalculated match and break the chain the line is drawn through.
+
+Now dated and ordered by `COALESCE(match.matchDate, history.createdAt)`, tie-broken by `id`, in one
+place (`SkillRatingHistory.occurredAt()`) and for every read of that table that means career order.
+**One of those is not cosmetic:** `CalculationService` reads the season's first entry as where a
+player stood when it began, and a season holding one recalculated match had that match sorted last.
+Back#269, cut in #270, promoted in #271. No migration, no client change — the frontend stays on
+3.4.0.
+
+⚠️ **Not read back**, same network policy as 3.4.0, and `v3.4.1` could not be pushed either.
+
+The part worth keeping is in the FEAT-5 section of
+[product/backlog-2026-09.md](product/backlog-2026-09.md): the `id` tie-break was added for exactly
+the right reason and fixed the wrong half, and no test caught it because every test that touched
+the ordering handed the list over already ordered.
 
 ## 3.4.0 — shipped 2026-09-03, frontend confirmed, backend not read back
 
