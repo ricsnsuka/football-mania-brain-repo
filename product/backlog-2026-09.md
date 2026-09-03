@@ -1,7 +1,8 @@
 # The 2026-09 batched backlog
 
-**Opened 2026-09-02 against `f1b25a6`. Closed 2026-09-03 with 3.3.0.** Six bugs and two features,
-batched into one release rather than a version per fix.
+**Opened 2026-09-02 against `f1b25a6`. Closed 2026-09-03 with 3.3.0** — six bugs and two features,
+batched into one release rather than a version per fix — **and reopened the same day for 3.4.0**,
+which shipped two more of its features.
 
 ## The artifacts
 
@@ -12,8 +13,8 @@ disagree this file is newer.
 |---|---|
 | [Bug backlog + feature shortlist](https://claude.ai/code/artifact/85d243aa-db3c-433c-8a4b-e96f1b527ee6) | The whole batch — all six bugs and four features, with the corrections written in place |
 | [FEAT-1 · Date polling spec](https://claude.ai/code/artifact/3a046dc4-8384-4ef6-829b-b531eb5f270a) | **Not built.** Decide *when* to play, in the app |
-| [FEAT-5 · Rating history chart spec](https://claude.ai/code/artifact/d7e37060-db6d-4870-ba5e-72f3a950a2e6) | **Built and merged to `next`** 2026-09-03 — Back#265, Front#136. **Not released.** Skill rating over matches, on the profile card |
-| [FEAT-6 · Match chat spec](https://claude.ai/code/artifact/93e823b5-78b5-4305-ac76-bd751ad72880) | **Built and merged to `next`** 2026-09-03 — Back#266, Front#137. **Not released.** A chat opened from a match |
+| [FEAT-5 · Rating history chart spec](https://claude.ai/code/artifact/d7e37060-db6d-4870-ba5e-72f3a950a2e6) | **Shipped in 3.4.0**, 2026-09-03 — Back#265, Front#136. Skill rating over matches, on the profile card |
+| [FEAT-6 · Match chat spec](https://claude.ai/code/artifact/93e823b5-78b5-4305-ac76-bd751ad72880) | **Shipped in 3.4.0**, 2026-09-03 — Back#266, Front#137. A chat opened from a match |
 
 > ⚠️ **FEAT-6's spec calls its migration `V46`. That number was taken** — `V46` is session
 > `token_version`, shipped in 3.3.0. It was built as **`V49`**.
@@ -74,8 +75,8 @@ than to fix.
 
 Backend [Back#265](https://github.com/ricsnsuka/FootMania-Back/pull/265), frontend
 [Front#136](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/136), both merged into `next`
-on 2026-09-03, backend first — `095d553` and `eab6f90`. **Merged is not deployed:** neither half is
-on `main`, so production is still 3.3.0 and FEAT-5 arrives with the next release. No migration, as
+on 2026-09-03, backend first — `095d553` and `eab6f90` — and **shipped in 3.4.0** the same night
+(see [STATUS.md](../STATUS.md) for what was and was not confirmed). No migration, as
 the spec predicted. Its four open decisions all went the way it recommended: hand-drawn SVG (D1),
 career by default with `?seasonId=` available (D2), `isAuthenticated()` (D3).
 
@@ -112,8 +113,8 @@ with, and the reason it is written down here rather than left implied.
 
 Backend [Back#266](https://github.com/ricsnsuka/FootMania-Back/pull/266), frontend
 [Front#137](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/137), both merged into `next`
-on 2026-09-03, backend first — `1552c31` and `a309003`. **Merged is not deployed:** neither half is
-on `main`, so production is still 3.3.0 and FEAT-6 arrives with the next release, alongside FEAT-5.
+on 2026-09-03, backend first — `1552c31` and `a309003` — and **shipped in 3.4.0** the same night
+(see [STATUS.md](../STATUS.md) for what was and was not confirmed).
 One migration (`V49`, not the spec's `V46`), one column, one endpoint — and one
 more endpoint the spec recommended alongside it. All four open decisions went the way it
 recommended: any match with a team sheet gets the button (D1), organisers are seeded and
@@ -172,7 +173,6 @@ as did every other check on both PRs.
   distinguished on the API side.
 - **3.3.0 shipped without a browser check.** No preview environment; three user-facing surfaces
   changed — the logout button, the cost panel on a kicked-off plan, and the dashboard card.
-- **FEAT-1, FEAT-2** are unbuilt. **FEAT-5 and FEAT-6 are built and merged to `next`,
-  unreleased** — see above. FEAT-2 (three teams / winner-stays-on) remains
+- **FEAT-1, FEAT-2** are unbuilt. **FEAT-5 and FEAT-6 shipped in 3.4.0** — see above. FEAT-2 (three teams / winner-stays-on) remains
   the largest job on the page and touches generation, `Match`/`MatchTeam`, scoring, stats and the
   rating engine.
