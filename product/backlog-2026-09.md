@@ -13,10 +13,10 @@ disagree this file is newer.
 | [Bug backlog + feature shortlist](https://claude.ai/code/artifact/85d243aa-db3c-433c-8a4b-e96f1b527ee6) | The whole batch — all six bugs and four features, with the corrections written in place |
 | [FEAT-1 · Date polling spec](https://claude.ai/code/artifact/3a046dc4-8384-4ef6-829b-b531eb5f270a) | **Not built.** Decide *when* to play, in the app |
 | [FEAT-5 · Rating history chart spec](https://claude.ai/code/artifact/d7e37060-db6d-4870-ba5e-72f3a950a2e6) | **Built and merged to `next`** 2026-09-03 — Back#265, Front#136. **Not released.** Skill rating over matches, on the profile card |
-| [FEAT-6 · Match chat spec](https://claude.ai/code/artifact/93e823b5-78b5-4305-ac76-bd751ad72880) | **Not built.** A chat opened from a match |
+| [FEAT-6 · Match chat spec](https://claude.ai/code/artifact/93e823b5-78b5-4305-ac76-bd751ad72880) | **Built, in review** — Back#266, Front#137. A chat opened from a match |
 
-> ⚠️ **FEAT-6's spec calls its migration `V46`. That number is taken** — `V46` is session
-> `token_version`, shipped in 3.3.0. Renumber to `V49` or later when it is built.
+> ⚠️ **FEAT-6's spec calls its migration `V46`. That number was taken** — `V46` is session
+> `token_version`, shipped in 3.3.0. It was built as **`V49`**.
 
 ## What shipped in 3.3.0
 
@@ -108,6 +108,55 @@ its javadoc already promised the first entry is the season's start rating.
 placement and the dark-theme colours want a local look before release — the same gap 3.3.0 shipped
 with, and the reason it is written down here rather than left implied.
 
+## FEAT-6, built 2026-09-03 — what the spec did not know
+
+Backend [Back#266](https://github.com/ricsnsuka/FootMania-Back/pull/266), frontend
+[Front#137](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/137), both into `next`,
+backend first. One migration (`V49`, not the spec's `V46`), one column, one endpoint — and one
+more endpoint the spec recommended alongside it. All four open decisions went the way it
+recommended: any match with a team sheet gets the button (D1), organisers are seeded and
+`DELETE /api/chat/conversations/{id}/me` ships in the same change so they can leave (D2),
+`ORGANIZER` only, not `GROUP_ADMIN` (D3), and only the match's players and the organisers may
+press it — a bystander is a `403`, not a `404`, because the match was never a secret (D4).
+
+Two things the spec did not reach, both found by building it:
+
+- **The race has a second half the spec's `everyoneChannel` analogy does not have.** The
+  group-wide channel is one row; a match chat is one row *and its roster*. Committing the
+  conversation in its own transaction and seeding the participants afterwards — the obvious
+  spelling — leaves a window in which the loser re-reads a committed chat with no participants,
+  joins it with one row for themselves, and then the winner's seed arrives carrying that same
+  person: `uq_chat_participants` refuses the winner's insert and takes the *winner's* request
+  down. `MatchChatProvisioner` therefore commits the roster together with the conversation, so
+  the loser only ever sees a chat that is already fully seeded. The lesson is the same shape as
+  FEAT-5's: an existing pattern is only as reusable as the invariant it protects, and this one
+  protected one row, not two tables.
+
+- **The provisioner's entity cannot be handed back across the transaction boundary.** It carries
+  a lazy proxy for the match, bound to a persistence context that has already closed; describing
+  it would throw. Ids in, id out, and the caller re-reads in its own transaction. Not visible in a
+  unit test with mocked repositories, which is one more reason `MatchChatIT` exists.
+
+Also worth recording:
+
+- **`MembershipRepository.findActiveUserIdsWithRole` was not "genuinely new".** FEAT-4 had already
+  added `findActiveUserIdsHolding(tenantId, roles)` for the fee-reminder digest. Reused.
+- **The frontend already avoids `useSearchParams`** (the login form reads `window.location`
+  inside a handler to stay out of a Suspense boundary). `/chat?conversation=9` follows that
+  precedent: read once in the state initialiser, and never rendered directly, so the server's
+  `null` and the client's id cannot disagree on screen.
+- **The button is gated client-side on the same two facts the server checks** — a linked player
+  on the sheet, or `ORGANIZER` — so it never `403`s on use. A member with no linked player is not
+  "on the sheet", whatever their name, and sees no button.
+- **`playersWithoutAccount` counts suspended members too.** The spec's worked example (14 → 11
+  linked → 10 active → "4 can't be added") already did; the field's name under-describes it, and
+  the DTO javadoc says so.
+
+⚠️ **Neither half was opened in a browser.** No preview environment — the third feature in a row
+shipped this way. ⚠️ **The integration tests were not run locally either**: Docker is not available
+in the session that built this, so `MatchChatIT` (nine cases, including the race and the retention
+clock) and the two new `ChatSchemaIT` cases are proved by CI's Testcontainers job alone.
+
 ## Still open after 3.3.0
 
 - **Plans drafted before BUG-1 are not backfilled** — still `CONFIRMED`, still unbilled.
@@ -119,6 +168,7 @@ with, and the reason it is written down here rather than left implied.
   distinguished on the API side.
 - **3.3.0 shipped without a browser check.** No preview environment; three user-facing surfaces
   changed — the logout button, the cost panel on a kicked-off plan, and the dashboard card.
-- **FEAT-1, FEAT-2, FEAT-6** are unbuilt. **FEAT-5 is built and merged to `next`, unreleased** — see below. FEAT-2 (three teams / winner-stays-on) remains
+- **FEAT-1, FEAT-2** are unbuilt. **FEAT-5 is built and merged to `next`, unreleased; FEAT-6 is
+  built and in review** — see above. FEAT-2 (three teams / winner-stays-on) remains
   the largest job on the page and touches generation, `Match`/`MatchTeam`, scoring, stats and the
   rating engine.
