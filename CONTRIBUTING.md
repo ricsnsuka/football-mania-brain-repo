@@ -49,8 +49,8 @@ Both code repos use the same two permanent branches, and nothing else is permane
 
 | Branch | Means |
 |---|---|
-| `main` | production. For the frontend, pushing it **is** a deploy |
-| `next` | integration. Every pull request bases here |
+| `main` | production. For the frontend, pushing it **is** a deploy. Reachable only by a release |
+| `next` | integration, and **the default branch** since 2026-09-03 — every pull request bases here, and now defaults here |
 | `vX.Y.Z` | a tag, not a branch — immutable, one per release |
 | `release/X.Y.x` | cut from a tag **only** when a shipped release needs a patch and `next` has moved on |
 
@@ -78,41 +78,55 @@ rename and will fail silently:
 CI trigger lists are the third: a workflow still filtering on a branch that no longer exists does
 not fail, it stops running, and an unchecked pull request looks exactly like a passing one.
 
-### Dependabot pull requests base on `main`, and must not be merged there
+### `next` is the default branch — since 2026-09-03, and Dependabot is why
 
 Dependabot was turned on in 2026-09. It is configured through GitHub's interface rather than a
-`dependabot.yml`, so **it opens every pull request against the default branch — `main`.** That is
+`dependabot.yml`, so it opens every pull request **against the default branch** — which was `main`,
 the one branch nothing is allowed to enter except a release.
 
-**Change the base to `next` before doing anything else with it.** GitHub allows this on an open
-pull request: *Edit* beside the title, then pick `next`. After that it is an ordinary pull request
-and goes through review, CI and a release like any other work.
-
-Merging one as it arrives puts a commit on `main` that never went through `next`, which:
+Merging one as it arrived would put a commit on `main` that never went through `next`, which:
 
 - breaks the Release Gate on the *next* release, not on the merge — the failure lands on somebody
   else, later, looking like an unrelated problem;
-- means production is running a dependency tree that `next` has never built or tested.
+- means production runs a dependency tree `next` has never built or tested.
 
-This is not hypothetical. `main` already held one such commit from the #127 promotion, and the
-Release Gate refused the 3.3.0 frontend promotion until `main` was merged back into `next`. The
-gate did its job; the point is that nothing else would have noticed.
+Not hypothetical: `main` already held one such commit from the #127 promotion, and the gate refused
+the 3.3.0 frontend promotion until `main` was merged back into `next`. The gate did its job; the
+point is that nothing else would have noticed.
 
-**A dependency bump still has to be in the release.** It is not exempt from the version bump or
-the changelog — a release that quietly carries a dependency change nobody wrote down is one nobody
-can bisect later. Treat it as a line in the changelog's release note, even a short one.
+**So the default branch was changed rather than the symptom managed.** `next` is where every pull
+request belongs, so `next` is what a pull request should default to — for Dependabot, for a
+drive-by contributor, and for anyone cloning. A `dependabot.yml` would not have done it:
+`target-branch` there governs *version* updates only, and GitHub's *security* updates follow the
+default branch regardless. Changing the default fixes both at once, and adds no file to keep in
+step.
+
+**What was checked first**, because CONTRIBUTING's own warning is that deploy settings do not
+follow branch changes and fail silently:
+
+| Checked | Result |
+|---|---|
+| CI workflow triggers | Explicit `[main, next]` in both repos — no `default_branch` reference, so nothing moved |
+| Netlify production branch | `main`, stored in site settings independently of the repo default — unaffected |
+| Heroku deploy branch | Configured on the GitHub integration, not derived from the default |
+| Branch protection | None on `main` in either repo, so nothing was attached to the default-branch pattern |
+| After the change | `main` still at the deployed commits, `/api/health` `UP` on 3.3.0, frontend `200` |
+
+**`main` is unchanged in meaning.** It is still production, still the only branch a release moves,
+and still what both platforms deploy from. Only the *default* moved.
+
+⚠️ **One consequence worth knowing:** GitHub's dependency graph and security alerts analyse the
+default branch, so they now describe `next` rather than production. Between releases `next` is
+ahead, which means an advisory surfaces sooner — but an alert on `next` is not by itself a
+statement about what is deployed. Check `main` when that distinction matters.
+
+**A dependency bump still has to be in the release.** It is not exempt from the version bump or the
+changelog — a release that quietly carries a dependency change nobody wrote down is one nobody can
+bisect later.
 
 **Check for open ones as step 0 of a release**, below. An open Dependabot pull request at release
 time is a fix that is not shipping, and a security one is a fix that is not shipping *while an
 advisory is public*.
-
-> **Worth deciding, not yet decided:** making `next` the default branch would fix this at the
-> source — Dependabot and every drive-by contributor would target it automatically, and `main`
-> would be reachable only by a release. The catch is that `target-branch` in a `dependabot.yml`
-> governs *version* updates only; GitHub's *security* updates follow the default branch regardless.
-> So the config file alone does not solve it and may narrow what Dependabot does at all. Confirm
-> the current behaviour against GitHub's documentation before changing either setting — turning
-> security updates off by accident is a worse outcome than retargeting a pull request by hand.
 
 ### Cutting a release
 
