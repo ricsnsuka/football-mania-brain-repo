@@ -78,15 +78,70 @@ rename and will fail silently:
 CI trigger lists are the third: a workflow still filtering on a branch that no longer exists does
 not fail, it stops running, and an unchecked pull request looks exactly like a passing one.
 
+### Dependabot pull requests base on `main`, and must not be merged there
+
+Dependabot was turned on in 2026-09. It is configured through GitHub's interface rather than a
+`dependabot.yml`, so **it opens every pull request against the default branch — `main`.** That is
+the one branch nothing is allowed to enter except a release.
+
+**Change the base to `next` before doing anything else with it.** GitHub allows this on an open
+pull request: *Edit* beside the title, then pick `next`. After that it is an ordinary pull request
+and goes through review, CI and a release like any other work.
+
+Merging one as it arrives puts a commit on `main` that never went through `next`, which:
+
+- breaks the Release Gate on the *next* release, not on the merge — the failure lands on somebody
+  else, later, looking like an unrelated problem;
+- means production is running a dependency tree that `next` has never built or tested.
+
+This is not hypothetical. `main` already held one such commit from the #127 promotion, and the
+Release Gate refused the 3.3.0 frontend promotion until `main` was merged back into `next`. The
+gate did its job; the point is that nothing else would have noticed.
+
+**A dependency bump still has to be in the release.** It is not exempt from the version bump or
+the changelog — a release that quietly carries a dependency change nobody wrote down is one nobody
+can bisect later. Treat it as a line in the changelog's release note, even a short one.
+
+**Check for open ones as step 0 of a release**, below. An open Dependabot pull request at release
+time is a fix that is not shipping, and a security one is a fix that is not shipping *while an
+advisory is public*.
+
+> **Worth deciding, not yet decided:** making `next` the default branch would fix this at the
+> source — Dependabot and every drive-by contributor would target it automatically, and `main`
+> would be reachable only by a release. The catch is that `target-branch` in a `dependabot.yml`
+> governs *version* updates only; GitHub's *security* updates follow the default branch regardless.
+> So the config file alone does not solve it and may narrow what Dependabot does at all. Confirm
+> the current behaviour against GitHub's documentation before changing either setting — turning
+> security updates off by accident is a worse outcome than retargeting a pull request by hand.
+
 ### Cutting a release
 
 `next` accumulates finished work for as long as it needs to. Releasing is a decision someone makes,
 not something that follows automatically from work being done — so the steps below start when you
 have decided, not when `next` is green.
 
+0. **Sweep the open pull requests, in both repos.**
+
+   ```bash
+   gh pr list --state open --json number,title,author,baseRefName \
+     -q '.[] | "#\(.number) [\(.author.login)] -> \(.baseRefName): \(.title)"'
+   ```
+
+   Anything from `app/dependabot` is **based on `main`** and has to be retargeted to `next` and
+   merged before the release, or it is a fix that is not shipping — and for a security advisory,
+   one that is not shipping while the advisory is public. Anything else still open is a decision
+   about whether it waits for the next release; make it deliberately rather than by omission.
+
+   Check a Dependabot bump has not already been made by hand before merging it. `browserslist` was
+   raised manually on 2026-09-02 to unblock four pull requests whose audit was failing, which left
+   Dependabot's own PR redundant *and* conflicting — it was closed rather than merged.
+
 1. **Bump the version.** Backend: `build.gradle` *and* the jar name in `Procfile` — the Version
-   Check job fails the build if they disagree. Frontend: `package.json`. Bump at release time, not
-   while work accumulates.
+   Check job fails the build if they disagree. Frontend: `package.json`, **and the two root
+   `version` entries in `package-lock.json`** — `npm install --package-lock-only` does it. A stale
+   lockfile version is harmless right up until somebody reads it to answer "what version is this"
+   and gets a different answer from the file beside it. Bump at release time, not while work
+   accumulates.
 2. **Close the CHANGELOG section.** `[Unreleased]` becomes `[X.Y.Z] — date`, and the note says what
    shipped, including whether it went out dark.
 3. **Merge `next` into `main`** in both repos. Fast-forward if it can. **The release branch merges

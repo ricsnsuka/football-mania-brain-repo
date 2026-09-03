@@ -1,13 +1,25 @@
 # Project Status
 
-**Snapshot: 2026-08-31, after 3.1.1 — a frontend-only patch (like 2.3.1 was) finishing the modal
-button layout the owner caught after 3.1.0 shipped unchecked.** Backend stays at `3.1.0`; the
-frontend is at `3.1.1`. Three releases in one day: 3.0.0 in the small hours, 3.1.0 mid-morning,
-this after lunch.
-⚠️ Honest gap: **2.5.0 (2026-08-29, the Ballon d'Or release) shipped without this file being
-updated** — its facts were true in the CHANGELOG and the platforms all along, but this page
-skipped from 2.4.0 straight to here. Update it when the answers change, not on a schedule — a
-status page nobody trusts is worse than none.
+**Snapshot: 2026-09-03, after 3.3.0 — one batched backlog release, both halves together.** Six
+bugs and two features cut and deployed in a single pass. **Both repos are on `3.3.0`**; the backend
+skipped 3.2.0 to get there, which is how the two are back in step.
+
+⚠️ **This file skipped 3.2.0 too** — a frontend release between 3.1.1 and this one, never recorded
+here. That is the *second* such gap, after 2.5.0, and the pattern is now clear enough to name:
+**this page is updated when somebody remembers, and a release is exactly when nobody does.** Step 8
+exists for it, and it is the step most often skipped because everything is already deployed by then
+and the pressure is off.
+
+⚠️ Honest gap, kept from the previous snapshot: **2.5.0 (2026-08-29, the Ballon d'Or release)
+shipped without this file being updated** — its facts were true in the CHANGELOG and the platforms
+all along, but this page skipped from 2.4.0 straight to 3.1.1. Update it when the answers change,
+not on a schedule — a status page nobody trusts is worse than none.
+
+⚠️ **One evidence line below is weaker than the rest and is marked as such.** The Heroku release
+number for 3.3.0 was not read back: the CLI wanted an interactive login in the session that cut the
+release. `/api/version` and `/api/health` were both read from the running process — the stronger of
+the two checks the procedure asks for — but the platform's own release number is missing. Fill it
+in from `heroku releases -a footmania`.
 
 ⚠️ **The old-tag backlog is still outstanding, and is marked where it appears.** **Seven tags** —
 `v1.8.0`/`v1.9.1` in both repos, `v1.9.0`/`v1.9.2` in the backend, `v1.7.0` in the frontend — exist
@@ -19,15 +31,15 @@ read back from both platforms, and the evidence is in the table.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `f1b25a6` — identical to `main`, checked: `git log next..main` prints nothing | `e6f3a83` — identical to `main`, checked: the same check passes |
-| Release | **`3.1.0`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`3.1.1`** — `package.json` via `npm version`, lockfile moved with it |
-| Running in production | **`f1b25a6`, confirmed by asking the platform.** Heroku release **v76 = Deploy f1b25a6f**. `/api/version` reports `3.1.0` (build `2026-08-31T10:16:16Z`), `/api/health` is `UP` and reports `3.1.0`, `heroku ps` shows `web.1` up since 11:17:01 +0100. No new migration, so `flyway_schema_history` is unchanged from 2.5.0 | **`e6f3a83`, confirmed by asking the platform**: Netlify's API reports production deploy `6a95757a032ea30008f3be1e` `ready`, `commit_ref` equal to this merge commit, published `2026-08-31T12:38:02Z` |
-| `main` head | `f1b25a6` — **3.1.0**: empty direct threads collected at 24h, thin-main CI + Release Gate | `e6f3a83` — **3.1.1**: guest ⋯ menu beside the name + a tour step teaching guest removal, player-modal action shelves gathered into one manage row |
+| `next` head | `3eeddb0` â identical to `main`, checked against the remote: `git log next..origin/main` prints nothing | `0999bd3` â identical to `main`, same check against `origin/main`, not a stale local ref |
+| Release | **`3.3.0`** â `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`3.3.0`** â `package.json` and both root `version` entries in `package-lock.json`, via `npm install --package-lock-only` |
+| Running in production | **`3eeddb0`.** `/api/version` reports `3.3.0` (build `2026-09-02T23:55:20.239Z`) and `/api/health` is `UP` on `3.3.0` â read from the running process, so the jar that booted is the right one. â ï¸ **Heroku's own release number was not read back**: the CLI wanted an interactive login. Fill it in from `heroku releases -a footmania`. The health check doubles as the migration evidence â Flyway runs on boot, so `UP` means V46âV48 applied | **`0999bd3`, confirmed by asking Netlify**: deploy `6a98b86013e2130008d24c82`, `ready`, context `production`, `commit_ref` `0999bd35a5a3c4670225bd9b61d12e7b004e79a8` â equal to this merge commit â published `2026-09-03T00:00:17.301Z`, 47s build |
+| `main` head | `3eeddb0` â **3.3.0**: drafted matches retire their plan and bill (BUG-1), FULL_TIME completes the match (BUG-3), session revocation + `POST /api/auth/logout` (BUG-5), the poll stays open to team generation and reserves are told (FEAT-3), weekly fee reminders off by default (FEAT-4), and `tomcat-embed-core` past three CRITICAL advisories | `0999bd3` â **3.3.0**: cost controls survive kickoff (BUG-2), the dashboard card says whether you are playing and offers a lone withdraw past the deadline (FEAT-3), logout ends the session server-side (BUG-5), names for `FEE_REMINDER` and `RESERVE_PROMOTED`, `browserslist` past its advisory |
 | Working tree | clean | clean |
-| Tests | **`./gradlew build` green** locally and all CI jobs green on `#250`, `#251` and the `#252` promotion — `CalculationServiceTest` at 90 tests with every v3 expectation re-derived from the formula | **1064 tests, all passing**, `npm run build` green throughout. ⚠️ Visual: baselines are **not** re-verified for this release either — see hazard 7 |
-| Latest migration | **`V45__match_clock.sql`** — unchanged; 3.0.0 ships no migration, so **rollback is a redeploy** (ratings recalculated under v3 keep their numbers until recalculated again) | — |
-| Deployed through | **`V45`**, unchanged. The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+| Tests | **`./gradlew build` green** on `next` after every merge, and all CI jobs green on `#257`â`#264`. Exit codes read directly rather than through a pipe â a piped `\| tail` reports the pager's status and a failed build reads as green, which cost one false "passed" report this release | **1118 tests across 115 files, all passing**, `npm run build` green and `npm audit --audit-level=high` at 0 vulnerabilities on `next` after all five merges. â ï¸ Visual: baselines **not** re-verified â see hazard 7. â ï¸ **No browser check before shipping**: three user-facing surfaces changed and none was opened |
+| Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
+| Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
 
 ## 3.1.1 — shipped and confirmed 2026-08-31, after lunch (frontend only)
 
