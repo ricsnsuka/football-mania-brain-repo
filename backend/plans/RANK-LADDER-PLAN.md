@@ -1,10 +1,16 @@
 # Rank Ladder — Tiers and Form Points in place of the raw rating
 
 **Date:** 2026-09-04
-**Status:** 🟡 **Step 1 merged into `next` — [FootMania-Back#275](https://github.com/ricsnsuka/FootMania-Back/pull/275)
-(2026-09-04), not released, not deployed.** The engine, V50, the replay hook, the
-simulation test and the calibration SQL; nothing reads the ladder yet and no contract changed.
-Steps 2–5 unbuilt. Owner decisions taken 2026-09-04 (§9), including the five edge-case decisions
+**Status:** 🟡 **Step 1 and calibration round 1 merged into `next`
+([#275](https://github.com/ricsnsuka/FootMania-Back/pull/275),
+[#277](https://github.com/ricsnsuka/FootMania-Back/pull/277)) and step 2 merged —
+[FootMania-Back#278](https://github.com/ricsnsuka/FootMania-Back/pull/278) (2026-09-04). Not
+released, not deployed.** Step 2 is the read surface behind `RANKING_LADDER_ENABLED` (off by
+default), `GET /api/rankings/ladder`, the `RANK_CHANGED` notification, and **start finalises**
+(§10.2) — contract `docs/api/RANKING-TIERS-API-CONTRACT.md`. Steps 3–5 unbuilt; the frontend
+half of step 2 (rung chip, ladder chart, settings toggle, `RANK_CHANGED` label, the start modal's
+warning in three locales) is listed in the backend's `FRONTEND_ENDPOINT_CHANGES.md` and belongs
+to step 3. Owner decisions taken 2026-09-04 (§9), including the five edge-case decisions
 in §10. Every constant except the 75 FP division is a placeholder until the step 1 replay (§8)
 reports the real rating distribution.
 
