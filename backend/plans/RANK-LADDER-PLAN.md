@@ -1,9 +1,12 @@
 # Rank Ladder — Tiers and Form Points in place of the raw rating
 
 **Date:** 2026-09-04
-**Status:** 📋 **SPECIFIED, not built.** Owner decisions taken 2026-09-04 (§9). Every constant
-except the 75 FP division is a placeholder until the step 1 replay (§8) reports the real rating
-distribution.
+**Status:** 📋 **SPECIFIED, not built.** Owner decisions taken 2026-09-04 (§9), including the five
+edge-case decisions in §10. Every constant except the 75 FP division is a placeholder until the
+step 1 replay (§8) reports the real rating distribution.
+**⚠️ Changes the seasons feature:** starting a season now finalises the one running (§4, §10.2).
+The seasons contract, the start modal and [FE seasons](../../frontend/features/seasons.md) all
+change with it.
 **Rendered proposal:** [claude.ai artifact 994f0454](https://claude.ai/code/artifact/994f0454-dfb5-498a-918d-deb8a89df3cb)
 (Rev 3). This file is the canonical copy; the artifact is the pretty one.
 **Target release:** `3.5.0`, off `next` — additive API, new feature, no breaking change.
@@ -149,10 +152,18 @@ number of matches the table requires before it gives a player a position
 (`RankingService.MINIMUM_MATCHES_TO_QUALIFY = 3`), so the concept replaces "unqualified" rather
 than adding to it.
 
-### Season start: the soft reset
+### Finalise: the soft reset
 
-Every player drops before placements begin. How far depends on the tier, and where they land inside
+The reset runs inside **finalise**, on the same per-player transition row that carries the rating
+movement. Every player drops, active or not, played or not — a season away is a season of no form,
+and two seasons away is two drops (§10.3). How far depends on the tier, and where they land inside
 the new tier depends on the FP they held.
+
+**Starting a season finalises the one running** (owner decision, 2026-09-04 — see §10.2). Today
+start only clears the current flag and the displaced season's ratings are never taken; that
+"starting is not finalising" rule goes. The one exception: a displaced season with **no completed
+match** is displaced only, nothing to take. The standalone finalise endpoint stays, for a group
+that wants a break between seasons.
 
 | Was | Lands in | Which division |
 |---|---|---|
@@ -222,7 +233,7 @@ is a second quantity carried through the same pipeline.
 | Table | Change | Notes |
 |---|---|---|
 | `players` | + `rank_tier` smallint, `rank_division` smallint (null for Master), `form_points` int, `rank_shield_left` smallint, `season_placements_played` smallint | Current state lives beside `skill_rating`, exactly as the rating does today. Best of the Crop is derived at read time from active-player count and the Masters' FP, never stored |
-| `skill_rating_history` | + `fp_before`, `fp_after`, `tier_before`, `division_before`, `tier_after`, `division_after`, `rank_event` (PROMOTED, DEMOTED, PLACED, SEASON_RESET, null) | One row per player per match already exists. Extending it keeps rating and ladder movement in one record and gives the chart its series; season-transition rows carry the reset |
+| `skill_rating_history` | + `fp_before`, `fp_after`, `tier_before`, `division_before`, `tier_after`, `division_after`, `rank_event` (PROMOTED, DEMOTED, PLACED, SEASON_RESET, null) | One row per player per match already exists. Extending it keeps rating and ladder movement in one record and gives the chart its series. The per-player **season-transition row** (match null, written by finalise) carries the reset: `*_before` is the pre-reset state, `*_after` the post-reset state, `rank_event = SEASON_RESET` |
 | Migration | `V10__rank_ladder.sql`, nullable columns with a backfill in step 1 | Additive. Rolls out under a tenant setting, so the columns can exist before the feature does. Record it in [database-migrations](../../architecture/database-migrations.md) |
 
 ### Engine
@@ -235,6 +246,16 @@ is a second quantity carried through the same pipeline.
   unwound row, then the forward pass re-applies. The whole-set unwind from 3.4.2 (#272) is the
   prerequisite that makes this safe; without it a partial unwind would restore a snapshot that
   later rows still assume.
+- **Transition rows are half carried, half recomputed.** The replay already lifts a transition row
+  inside a player's span and re-anchors its rating movement on the way forward, because that
+  movement averaged the whole group at a moment that has passed. The ladder half of the same row
+  is deterministic from the FP the rebuilt chain has reached, so the re-anchor **recomputes** the
+  reset (§4) rather than carrying it.
+- **Deleting or amending a completed match needs no ladder rule.** `MatchService` already unwinds
+  that match plus everything after it, newest first, deletes or amends, and re-applies the rest.
+  The ladder rides that span like any replay.
+- **Guests are not special-cased in the engine** (§10.3). Their ladder is maintained like their
+  rating; only the reads hide it.
 - Admin edits to the base rating and manual rating adjustments do not move tiers. They change the
   anchor, which changes what the next matches pay.
 - The ladder is switched per tenant: `ranking.mode = RATING | TIERS` in platform settings. In
@@ -285,11 +306,15 @@ Contract file `docs/api/RANKING-TIERS-API-CONTRACT.md` and an entry in
 ## 7. Rollout
 
 1. **Engine, migration, replay backfill, switched off.** Ship the service and columns under
-   `ranking.mode = RATING`. Replay every tenant's history to fill the ladder columns and print the
-   tier distribution. Calibrate bands and multipliers here, on real matches, before anyone sees a
-   tier. Verify with a full `./gradlew build`, never `test` alone.
+   `ranking.mode = RATING`. The backfill is **the existing bulk recalculation with an empty body,
+   called once per group** (§10.1) — no new tooling. Run it on a staging copy first and read the
+   calibration SQL (§8); calibrate bands and multipliers there, on real matches, before anyone
+   sees a tier. Verify with a full `./gradlew build`, never `test` alone.
 2. **API and contract.** Additive fields on rankings and rating history, the notification category,
-   the contract file and the frontend changelog entry.
+   the contract file and the frontend changelog entry. **Plus the seasons change** (§10.2): start
+   finalises, the seasons contract's "Starting is not finalising" section is rewritten, and the
+   start modal's warning says what will now happen — ratings taken, awards computed, poll opened,
+   ladder reset — in all three locales.
 3. **Rankings, chip, chart and profile UI.** The rankings page, the shared tier chip with its hover,
    the ladder chart, the admin form. There is no preview environment, so the owner checks the UI
    locally before the release is cut.
@@ -310,6 +335,22 @@ The step 1 replay answers the questions this document cannot:
 - Does the anchor dominate? If two players with the same nights end up three divisions apart
   purely on `skillRating`, the ±0.5 clamp is too wide.
 
+**The report is SQL on a staging copy** (owner decision, §10.5): a script in `scripts/database/`
+run after the backfill on a production copy made with the existing `copy-prod-to-staging.ps1`. No
+API surface, easy to iterate, and the ladder columns on `players` and `skill_rating_history` hold
+everything it needs. It prints, per group:
+
+- tier and division counts for qualified players, and the raw-rating histogram against the bands;
+- per player per season: net FP, divisions moved, and the share of movement that came from the
+  anchor term versus result and form (recomputable from the row's rating and match rating);
+- the archetype check: players whose rating sits a tier above their rung, players at level, and
+  passengers on a 50% record — how many divisions each group moved.
+
+**A deterministic simulation test** ships with the engine: synthetic seasons, archetype players,
+and assertions on the targets above (three or four divisions for the over-rated, roughly zero at
+level). It is what stops the constants drifting silently in a later change; the SQL is what sets
+them in the first place.
+
 Record the distribution and the constants finally chosen in this file under a "Calibrated" heading,
 with the date.
 
@@ -324,4 +365,88 @@ with the date.
 | Division size | ✅ decided | 75 FP. Overflow cap and demotion landing scaled to 20 and 40 |
 | Soft reset | ✅ decided | Master → Platinum, Diamond → Gold, Platinum → Silver, the rest up to three divisions. More FP means a smaller drop, or a higher landing division for Masters. FP inside the division carries over |
 | Progression chart | ✅ decided | Tier and FP over time, on absolute ladder position with tier bands, raw rating on hover |
+| Backfill vehicle | ✅ decided | The existing bulk recalculation, empty body, once per group (§10.1) |
+| Reset trigger | ✅ decided | Inside finalise; **starting a season finalises the running one** unless it has no completed match; standalone finalise stays (§10.2) |
+| Guests | ✅ decided | Ladder maintained like their rating, hidden from rankings, never a seat, never counted for seat size (§10.3) |
+| Skipped seasons | ✅ decided | Every player resets at every finalise, played or not (§10.3) |
+| Calibration report | ✅ decided | SQL on a staging copy, plus a simulation test in the engine (§10.5, §8) |
 | Other constants | 🟡 calibrate | Result base, form weight, tier gains, pace, anchor and the rating bands wait for the step 1 replay (§8) |
+
+## 10. Edge cases and the replay — decided 2026-09-04
+
+Five things the proposal left unstated, walked through one by one with the owner. Each was checked
+against the code before the question was asked; where the code already had the answer, that is
+recorded rather than a new rule.
+
+### 10.1 Where the replay gets the match rating
+
+Nowhere stored. The whole-set replay (#272) unwinds every selected match newest-first and re-rates
+them oldest-first, computing each player's match rating inside the forward pass. `RankLadderService`
+hooks into that pass right after the rating is written, so the input is always fresh and nothing is
+read back from `player_stats.rating` or reconstructed from history rows.
+
+**Consequence:** the backfill is not a tool. It is one bulk recalculation of every completed match
+with the ladder switched on for the tenant — `POST /api/matches/recalculate` with an empty body,
+called by a group admin once per group. That is also the calibration run and the recovery path if
+the constants change later. A completed match with no stat rows is already skipped by the rating
+replay, so it pays nothing on the ladder either. The replay deletes and re-inserts every touched
+history row; the write timestamp changes, the match timestamp is preserved, and the chart reads
+the preserved one.
+
+*Rejected:* a platform-operator one-shot across tenants (surface to build and secure, pays off only
+with many groups); a startup migration job (a long replay inside boot on a Basic dyno).
+
+### 10.2 Season resets inside a recalculation — and the seasons change
+
+The rating engine's transition row is *carried* through a replay, never recomputed, because it
+averages the whole group at a moment that has passed. The ladder reset is deterministic from the
+player's FP at that point, so the replay **recomputes** it when it re-anchors the row.
+
+That needed a concrete trigger, and the owner chose one that changes the seasons feature:
+**starting a season finalises the one running**, in one transaction — rating transition, awards,
+Ballon d'Or poll, end date, and now the ladder reset and the placement counter zeroed. The
+"starting is not finalising" rule that the seasons surface was built around goes, with these
+refinements:
+
+- a displaced season with **no completed match** is displaced only — nothing to take, no awards
+  for nobody, no poll with nobody in it;
+- the standalone `POST /api/seasons/{id}/finalise` **stays**, so a group can close its books and
+  take a break with no current season, as today;
+- a match recorded into an already finalised season still pays FP against the live ladder, exactly
+  as it already moves the live rating; a replay puts it back in its place before the reset.
+
+What changes with it, same commit: `SEASONS-API-CONTRACT.md` (the start endpoint and its
+"Starting is not finalising" section), the `StartSeasonModal` warning in `en`/`pt`/`es`,
+`SeasonService.start`'s javadoc, and [FE seasons](../../frontend/features/seasons.md).
+
+*Rejected:* lazy reset at a player's first match of a newer season (robust to a never-finalised
+season, but the owner wants the season closed properly instead); reset on start as a bare event
+(leaves a never-started season unreset with no trace).
+
+### 10.3 The players the rules did not mention
+
+| Who | Rule | Why |
+|---|---|---|
+| **Guests** | Ladder maintained silently, hidden from rankings, never a Best of the Crop seat, never counted for seat size. A promoted guest appears with what they earned | The rating engine does not special-case guests either: they earn a rating, streaks and totals, are excluded from the rankings and the group mean, and keep everything on promotion. Same shape, no engine branch |
+| **Mid-season joiners** | Nothing special | Placement counter starts at 0, so their first three completed matches are placements, seeded from the admin-assigned rating |
+| **Inactive players** | Reset like everyone; out of the rankings and ineligible for a seat while inactive; back in on reactivation | The rating transition already applies to all players, active and inactive |
+| **A whole season away** | Reset at every finalise, played or not — two seasons away is two drops. Placements at 2× are the way back | Simplest rule, and a ladder about form should not remember a Master who has not played in a year. *Rejected:* reset only if they played (a Master could hold Master through years of absence); a softer one-division dormancy drop (a third rule to explain, test and replay) |
+| **Deleted or amended matches** | Nothing special | `MatchService` already unwinds the match plus everything after it, newest first, and re-applies the rest. The ladder restores each player's pre-span snapshot from the earliest unwound row |
+| **Anonymised players** | Nothing special | History rows survive anonymisation today; the ladder columns on them do too |
+
+### 10.4 Nights with no performance signal
+
+There are none. A match has no walkover or abandoned state, every player placed in a team gets a
+stat row when the match is created, and the engine rates every stat row on completion. Anyone on
+the roster of a completed match has a match rating, so the FP formula always has its input.
+
+**Inherited limitation, not a ladder rule:** a no-show left on the roster is rated as a passenger
+today, because the app has no "did not play" flag, and will earn passenger FP tomorrow. If that
+ever matters, the fix is a flag on `player_stats` that the rating engine honours, and the ladder
+follows for free.
+
+### 10.5 How calibration is judged
+
+SQL on a staging copy, plus the simulation test — both specified in §8. *Rejected:* an admin
+endpoint (API surface with a contract to maintain for a one-time exercise); a log dump at the end
+of the replay (Heroku logs are awkward at length and gone once they scroll).
