@@ -1,8 +1,8 @@
 # Rank Ladder — Tiers and Form Points in place of the raw rating
 
 **Date:** 2026-09-04
-**Status:** 🟡 **Step 1 built, in review — [FootMania-Back#275](https://github.com/ricsnsuka/FootMania-Back/pull/275)
-(2026-09-04), nothing merged, nothing deployed.** The engine, V50, the replay hook, the
+**Status:** 🟡 **Step 1 merged into `next` — [FootMania-Back#275](https://github.com/ricsnsuka/FootMania-Back/pull/275)
+(2026-09-04), not released, not deployed.** The engine, V50, the replay hook, the
 simulation test and the calibration SQL; nothing reads the ladder yet and no contract changed.
 Steps 2–5 unbuilt. Owner decisions taken 2026-09-04 (§9), including the five edge-case decisions
 in §10. Every constant except the 75 FP division is a placeholder until the step 1 replay (§8)
