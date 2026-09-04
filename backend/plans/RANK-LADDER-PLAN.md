@@ -341,8 +341,8 @@ Contract file `docs/api/RANKING-TIERS-API-CONTRACT.md` and an entry in
 
 1. **Engine, migration, replay backfill, switched off.** Ship the service and columns under
    `ranking.mode = RATING`. The backfill is **the existing bulk recalculation with an empty body,
-   called once per group** (§10.1) — no new tooling. Run it on a staging copy first and read the
-   calibration SQL (§8); calibrate bands and multipliers there, on real matches, before anyone
+   called once per group** (§10.1) — no new tooling. Run it, then read the
+   calibration SQL in place (§8, production reading); calibrate bands and multipliers on real matches, before anyone
    sees a tier. Verify with a full `./gradlew build`, never `test` alone.
 2. **API and contract.** Additive fields on rankings and rating history, the notification category,
    the contract file and the frontend changelog entry. **Plus the seasons change** (§10.2): start
@@ -369,7 +369,7 @@ The step 1 replay answers the questions this document cannot:
 - Does the anchor dominate? If two players with the same nights end up three divisions apart
   purely on `skillRating`, the ±0.5 clamp is too wide.
 
-**The report is SQL on a staging copy** (owner decision, §10.5): a script in `scripts/database/`
+**The report is SQL** (owner decision, §10.5) — first written for a staging copy, since 2026-09-04 run **in place** (see the production reading below): a script in `scripts/database/`
 run after the backfill on a production copy made with the existing `copy-prod-to-staging.ps1`. No
 API surface, easy to iterate, and the ladder columns on `players` and `skill_rating_history` hold
 everything it needs. It prints, per group:
@@ -465,6 +465,50 @@ every rating was still converging from the default. Re-read after 2026/2027 has 
 and read the bands then too. The simulation test now runs its at-level archetype against a 6.3
 league baseline and asserts it hovers, which it does.
 
+### Production reading — group 1, read in place, 2026-09-04
+
+**The copy is retired.** Copying the production database to a laptop to run the report moves
+every member's personal data off the platform for a reading that needs none of it, so the owner
+decided (2026-09-04) that calibration is read *in place*: the same four questions as
+`scripts/database/rank-ladder-calibration.sql`, rewritten as
+`scripts/database/rank-ladder-calibration-inplace.sql` — one `READ ONLY` transaction through
+`heroku pg:psql`, ladder arithmetic inlined (no functions, no views: even a temporary view is DDL
+and the read-only transaction refuses it), player **ids** instead of names, `ROLLBACK` at the end.
+§10.5's "staging copy" is superseded by this. The backfill itself ran on production first
+(`POST /api/matches/recalculate` with `{}`, 11 completed matches, every replay `SUCCESS`).
+
+**Production is not the local copy.** Group 1 has 11 completed matches, all in one season named
+2025/26, and its ratings sit higher than the copy's did; the two readings above are of a different
+data set and are not comparable match for match.
+
+**Where the ratings sit** (23 players with three or more matches): Bronze 1, Silver 6, **Gold 12**,
+Platinum 2, Diamond 2. Iron and Master empty. Half the group inside the Gold band (6.36–6.89),
+the whole group inside 5.44–8.12. Same shape as the copy one band up: one band holds half the
+league. The bands stay as they are, per round 1 — read them again with twenty matches of
+2026/2027.
+
+**The ladder as it stands: nobody is placed.** The tier/division table came back empty, which is
+the ladder saying every player is inside placements for the current season — the 11 matches all
+belong to 2025/26, so the season that displaced it has no completed match yet and the reset zeroed
+`season_placements_played` for everyone. Consequence for the switch-on: the rankings table will
+show placement chips for the whole group until each player has three matches this season, and
+the first three nights pay 2×. That is the design, not a fault; it is what the owner will see.
+
+**Season 2025/26 movement** (11 players with five or more matches, 5–8 each): net FP from +302
+to −174, **+0.78 divisions on average**, 21 promotions against 10 demotions. The top player
+(rated 8.12, the group's highest) climbed four divisions in six matches with four promotions and
+no demotion; the bottom player (rated 6.05) fell 2.3 divisions in six with three demotions; four
+of eleven are net negative. Per match that is roughly the +0.14 divisions the copy showed after
+round 1 (+1.59 over ~11 matches), so the two readings agree.
+
+**Archetypes: all eleven read "at level"**, for the reason round 1 found — the group was born on
+one night, every seed fell back to the 5.0 default into Bronze with a 5.0 rating, and everything
+since is a first season converging from the default. The check says nothing new until a season
+starts from settled ratings.
+
+**Decision unchanged:** no constant moves. Next: flip `RANKING_LADDER_ENABLED` for group 1;
+re-read in place once 2026/2027 has twenty matches, bands included.
+
 ## 9. Decisions
 
 | Decision | Status | Outcome |
@@ -480,7 +524,7 @@ league baseline and asserts it hovers, which it does.
 | Reset trigger | ✅ decided | Inside finalise; **starting a season finalises the running one** unless it has no completed match; standalone finalise stays (§10.2) |
 | Guests | ✅ decided | Ladder maintained like their rating, hidden from rankings, never a seat, never counted for seat size (§10.3) |
 | Skipped seasons | ✅ decided | Every player resets at every finalise, played or not (§10.3) |
-| Calibration report | ✅ decided | SQL on a staging copy, plus a simulation test in the engine (§10.5, §8) |
+| Calibration report | ✅ decided | SQL read in place on production (staging copy retired 2026-09-04, GDPR), plus a simulation test in the engine (§10.5, §8) |
 | Other constants | 🟡 calibrate | Result base, form weight, tier gains, pace, anchor and the rating bands wait for the step 1 replay (§8) |
 
 ## 10. Edge cases and the replay — decided 2026-09-04
@@ -558,6 +602,6 @@ follows for free.
 
 ### 10.5 How calibration is judged
 
-SQL on a staging copy, plus the simulation test — both specified in §8. *Rejected:* an admin
+SQL, plus the simulation test — both specified in §8. First on a staging copy; since 2026-09-04 **in place** on production, read-only and ids only, because a copy moves every member's personal data off the platform for a report that needs none of it (§8, production reading). *Rejected:* an admin
 endpoint (API surface with a contract to maintain for a one-time exercise); a log dump at the end
 of the replay (Heroku logs are awkward at length and gone once they scroll).
