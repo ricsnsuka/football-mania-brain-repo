@@ -371,6 +371,51 @@ them in the first place.
 Record the distribution and the constants finally chosen in this file under a "Calibrated" heading,
 with the date.
 
+### First reading — local copy of production, 2026-09-04
+
+Run on the owner's machine against a local copy of group 1: 19 completed matches (16 in Season 1,
+finalised; 3 in 2026/2027, current), 18 players, 223 history rows. The backfill was
+`POST /api/matches/recalculate` with `{}`; all 19 replayed. **The constants have not been changed
+on the strength of this** — one young group is a signal, not a distribution — but it is the first
+real evidence and it points one way.
+
+**Where the ratings sit** (15 qualified players): Bronze 2, **Silver 10**, Gold 2, Platinum 1.
+Iron, Diamond and Master empty. Two thirds of the group inside one 0.75-wide band (5.61–6.07).
+
+**Season 1 movement: everyone climbed.** Net FP per player from −25 to +585; the top player was
+promoted nine times in 15 matches; 66 promotions against 18 demotions across the group. Every
+player started the season *at level* (all seeded from the 5.0 default into Bronze, with a 5.0
+rating) and still moved **+2.4 divisions on average in ~11 matches**. §2's target says at level
+hovers. Four things stack up on a league this young:
+
+1. **The whole group is inside the novice fade.** Nobody has 20 career matches, so every match of
+   the season paid 1.5×; placements paid 2× on top of the first three.
+2. **The form baseline sits below this league's mean night.** Match ratings average 7.31 on a win,
+   6.63 on a draw, 5.01 on a loss — roughly 6.3 overall against a baseline of 6.0 — so the form
+   term is net positive before result and pace touch it. The win/loss bases (+15/−10) lean the
+   same way.
+3. **The anchor chased ratings that were themselves rising from the default.** Ratings climbed
+   from 5.0 towards 6.0 over the season, so a Bronze player carrying a Silver-grade rating gained
+   at 1.5× and lost at 0.5× for most of it. That is the anchor working as designed on a seed that
+   was too low; it will not repeat once seeds come from settled ratings, and it argues for seeding
+   a *new* player from the group's median rather than the 5.0 default.
+4. **The carry cap dominates a strong player's chain.** Nearly every promotion landed on exactly
+   20 FP because the overflow was clipped. Not wrong; worth knowing when the gains are tuned.
+
+**The reset behaved.** Gold I with 24 FP → Silver I with 24 FP, shield and placements zeroed;
+placements at 2× then took the top player back to Gold I inside four matches.
+
+**What to decide before switching on**, in order of leverage: (a) the seed for players with no
+history — group median vs. the 5.0 default; (b) whether the novice fade should exist at all in a
+group where *everyone* is a novice, or key off the group's age instead; (c) the form baseline —
+the engine's 6.0 or the group's own mean match rating; (d) the bands, once (a)–(c) have moved
+the numbers. Re-run after each with the reseed block in the script, since seeds are taken once.
+
+**Found in the script itself:** the archetype table compared against the *live* columns, which
+right after a finalise are the reset's output, so nearly everyone read "above". Fixed to use the
+rung and rating each player started the season on
+([FootMania-Back#276](https://github.com/ricsnsuka/FootMania-Back/pull/276), merged).
+
 ## 9. Decisions
 
 | Decision | Status | Outcome |
