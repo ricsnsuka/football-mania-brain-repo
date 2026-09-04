@@ -3,7 +3,7 @@
 **Date:** 2026-09-04
 **Status:** 🟡 **Step 1 and calibration round 1 merged into `next`
 ([#275](https://github.com/ricsnsuka/FootMania-Back/pull/275),
-[#277](https://github.com/ricsnsuka/FootMania-Back/pull/277)); step 2 built and in review —
+[#277](https://github.com/ricsnsuka/FootMania-Back/pull/277)) and step 2 merged —
 [FootMania-Back#278](https://github.com/ricsnsuka/FootMania-Back/pull/278) (2026-09-04). Not
 released, not deployed.** Step 2 is the read surface behind `RANKING_LADDER_ENABLED` (off by
 default), `GET /api/rankings/ladder`, the `RANK_CHANGED` notification, and **start finalises**
