@@ -4,9 +4,10 @@
 **Status:** 🟡 **Step 1 and calibration round 1 merged into `next`
 ([#275](https://github.com/ricsnsuka/FootMania-Back/pull/275),
 [#277](https://github.com/ricsnsuka/FootMania-Back/pull/277)) and step 2 merged —
-[FootMania-Back#278](https://github.com/ricsnsuka/FootMania-Back/pull/278); step 3 built and in
-review — [FootMania-Simple-Front#143](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/143)
-(2026-09-04). Not released, not deployed.** Step 2 is the read surface behind
+[FootMania-Back#278](https://github.com/ricsnsuka/FootMania-Back/pull/278); step 3 merged into
+the frontend's `next` —
+[FootMania-Simple-Front#143](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/143)
+(2026-09-04). Not released, not deployed, in either repo.** Step 2 is the read surface behind
 `RANKING_LADDER_ENABLED` (off by default), `GET /api/rankings/ladder`, the `RANK_CHANGED`
 notification, and **start finalises** (§10.2) — contract `docs/api/RANKING-TIERS-API-CONTRACT.md`.
 Step 3 is the frontend: the rung chip on the table, the profile card and the player modal with
