@@ -416,6 +416,36 @@ right after a finalise are the reset's output, so nearly everyone read "above". 
 rung and rating each player started the season on
 ([FootMania-Back#276](https://github.com/ricsnsuka/FootMania-Back/pull/276), merged).
 
+### Calibration round 1 — 2026-09-04, owner decisions (a)–(c) taken with the defaults
+
+Three engine changes, the bands left alone, then the same local copy reseeded and replayed:
+
+| | Was | Now |
+|---|---|---|
+| Seed for a first rung | the player's own rating (the 5.0 default for almost everyone) | the **group's median** qualified rating; own rating only while the group has no qualified member |
+| Novice fade | 1.5× fading to 1× over 20 career matches | **removed** — placements already give a newcomer three matches at 2× |
+| Form baseline | the engine's fixed 6.0 | the **league's own mean night**: last 120 stat rows before the kickoff, 6.0 until a group has 30 |
+
+**Result on the same 16 players, Season 1:** average movement for players who started at level
+fell from **+2.41 to +1.59 divisions**; the top player from +585 to +510 FP and eight promotions;
+the bottom of the table now actually drops (three players net negative, the lowest −85 FP). The
+engine change that did most of the work was the baseline: the fade and the median seed barely
+touched this group, and for a reason worth knowing.
+
+**Why it is still +1.6 and not zero: this group was born on two nights.** Sixteen of seventeen
+players debuted on 21–22 May, when nobody had three matches, so every seed fell back to the 5.0
+default into Bronze II regardless of the new rule — the one late debut, in September, seeded into
+Silver II from the median as designed. Every rating then rose from 5.0 towards 6.0 over the
+season, so the anchor read "rated above your rung" for months and paid 1.5× on gains. That is the
+anchor working correctly on a group whose ratings had not settled; it is a one-off of any group's
+first season and no constant fixes it. The remaining structural push is the +15/−10 result
+asymmetry, worth about +2.5 FP per match at a 50% record, which is small and deliberate.
+
+**Decision:** stop tuning on this group. The at-level target cannot be read off a season in which
+every rating was still converging from the default. Re-read after 2026/2027 has twenty matches,
+and read the bands then too. The simulation test now runs its at-level archetype against a 6.3
+league baseline and asserts it hovers, which it does.
+
 ## 9. Decisions
 
 | Decision | Status | Outcome |
