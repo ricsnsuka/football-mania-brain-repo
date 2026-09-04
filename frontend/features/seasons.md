@@ -75,17 +75,31 @@ out, nobody has kicked a ball. A create that also made the new season current wo
 every match recorded in that gap. So `POST /api/seasons` returns a season with `current: false`,
 and the modal says so in the subtitle rather than leaving it to be discovered.
 
-### Start ≠ finalise
+### Start finalises the season it displaces — since 3.5.0
 
-**This is the sentence the whole screen exists to say.** Starting season 2 clears season 1's
-`is_current` and stops there. Season 1 keeps a null `end_date`, its ratings are never taken, and
-the season-end transition it was owed simply never runs — no error, no warning, and nothing
-afterwards that can tell it happened apart from the rating history rows that are not there.
+**This section used to say the opposite, and the reversal is an owner decision**
+(2026-09-04, [RANK-LADDER-PLAN §10.2](../../backend/plans/RANK-LADDER-PLAN.md)). Until 3.5.0
+starting season 2 cleared season 1's `is_current` and stopped there: null `end_date`, ratings never
+taken, no error, no warning. The rank ladder's soft reset rides the season-end transition, so a
+season that was never finalised would never reset the ladder — and the owner's answer was that a
+season being displaced is a season ending.
 
-The server cannot refuse this, and should not: a group that has genuinely abandoned a season must
-be able to move on from it. So the only place anybody will ever be warned is the confirmation, and
-the confirmation names the displaced season rather than describing it. "The current season" is a
-phrase an administrator has to resolve; "Season 1" is one they recognise.
+Now, when season 1 has **at least one completed match**, starting season 2 finalises it exactly as
+`POST /api/seasons/1/finalise` would — ratings taken, awards computed, Ballon d'Or poll opened,
+ladder reset, `end_date` set — in one transaction, then makes season 2 current. A season nobody
+played in is displaced only, as before, because there is nothing to take. The standalone finalise
+stays, for a group that wants a break with no current season.
+
+The confirmation still names the displaced season rather than describing it — "the current season"
+is a phrase an administrator has to resolve; "Season 1" is one they recognise — and now says which
+of the two things will happen to it: `seasons.start.finalises` when it has completed matches,
+`seasons.start.displacedOnly` when it has none. An absent `completedMatchCount` reads as the
+stronger warning, because "the backend cannot say" is not "zero". `seasons.start.notFinalised` is
+retired in all three locales.
+
+Frontend: `StartSeasonModal.tsx` branches on `displacing.completedMatchCount`, and
+`useStartSeason` now invalidates everything `useFinaliseSeason` does, plus `ratingHistory` and
+`ladder` — a start may have been a finalise.
 
 ---
 

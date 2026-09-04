@@ -4,13 +4,19 @@
 **Status:** 🟡 **Step 1 and calibration round 1 merged into `next`
 ([#275](https://github.com/ricsnsuka/FootMania-Back/pull/275),
 [#277](https://github.com/ricsnsuka/FootMania-Back/pull/277)) and step 2 merged —
-[FootMania-Back#278](https://github.com/ricsnsuka/FootMania-Back/pull/278) (2026-09-04). Not
-released, not deployed.** Step 2 is the read surface behind `RANKING_LADDER_ENABLED` (off by
-default), `GET /api/rankings/ladder`, the `RANK_CHANGED` notification, and **start finalises**
-(§10.2) — contract `docs/api/RANKING-TIERS-API-CONTRACT.md`. Steps 3–5 unbuilt; the frontend
-half of step 2 (rung chip, ladder chart, settings toggle, `RANK_CHANGED` label, the start modal's
-warning in three locales) is listed in the backend's `FRONTEND_ENDPOINT_CHANGES.md` and belongs
-to step 3. Owner decisions taken 2026-09-04 (§9), including the five edge-case decisions
+[FootMania-Back#278](https://github.com/ricsnsuka/FootMania-Back/pull/278); step 3 merged into
+the frontend's `next` —
+[FootMania-Simple-Front#143](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/143)
+(2026-09-04). Not released, not deployed, in either repo.** Step 2 is the read surface behind
+`RANKING_LADDER_ENABLED` (off by default), `GET /api/rankings/ladder`, the `RANK_CHANGED`
+notification, and **start finalises** (§10.2) — contract `docs/api/RANKING-TIERS-API-CONTRACT.md`.
+Step 3 is the frontend: the rung chip on the table, the profile card and the player modal with
+the rating on hover; the ladder chart on the profile; the settings switch; the `RANK_CHANGED`
+label; the start modal's new warning — all in three locales, all inert while the switch is off.
+See [FE rankings](../../frontend/features/rankings.md#with-the-rank-ladder-on--350) and
+[FE seasons](../../frontend/features/seasons.md). Steps 4–5 unbuilt. **No preview environment:
+the owner checks the UI locally before a release is cut**, and `npm run test:visual` has not been
+run against the new chip. Owner decisions taken 2026-09-04 (§9), including the five edge-case decisions
 in §10. Every constant except the 75 FP division is a placeholder until the step 1 replay (§8)
 reports the real rating distribution.
 
