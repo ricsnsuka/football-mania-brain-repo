@@ -1,9 +1,26 @@
 # Rank Ladder — Tiers and Form Points in place of the raw rating
 
 **Date:** 2026-09-04
-**Status:** 📋 **SPECIFIED, not built.** Owner decisions taken 2026-09-04 (§9), including the five
-edge-case decisions in §10. Every constant except the 75 FP division is a placeholder until the
-step 1 replay (§8) reports the real rating distribution.
+**Status:** 🟡 **Step 1 built, in review — [FootMania-Back#275](https://github.com/ricsnsuka/FootMania-Back/pull/275)
+(2026-09-04), nothing merged, nothing deployed.** The engine, V50, the replay hook, the
+simulation test and the calibration SQL; nothing reads the ladder yet and no contract changed.
+Steps 2–5 unbuilt. Owner decisions taken 2026-09-04 (§9), including the five edge-case decisions
+in §10. Every constant except the 75 FP division is a placeholder until the step 1 replay (§8)
+reports the real rating distribution.
+
+**What building step 1 added to the spec** (not known when §6 was written):
+- The replay's exactness rule is per row, not per run: the reverse restores a row's ladder
+  snapshot only when nothing later stands on the player's chain
+  (`SkillRatingHistoryRepository.existsLaterMovement`), which inside a whole-set replay is always.
+  A single-match recalculation of an old match nets the row's movement off the re-apply instead,
+  the rating's own approximation on that path. Deletion needs nothing: it already unwinds to the
+  end of every chain it touches.
+- The seed is taken once. A row's "before" records the seeded rung, so a later replay restores to
+  it rather than seeding again from a different rating — which means **recalibrating the bands
+  does nothing until the snapshots are wiped**. The calibration SQL carries the reseed block.
+- The single-match path has no way to know a transition row's reset should be recomputed unless
+  its snapshot was restored, so the row carries a transient `ladderRestored` flag from the lift
+  to the re-anchor. The first replay after V50 recomputes on "no snapshot" instead.
 **⚠️ Changes the seasons feature:** starting a season now finalises the one running (§4, §10.2).
 The seasons contract, the start modal and [FE seasons](../../frontend/features/seasons.md) all
 change with it.
