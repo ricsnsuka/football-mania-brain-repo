@@ -1,6 +1,6 @@
 # Project Status
 
-**Snapshot: 2026-09-04, after 3.5.0 — the rank ladder, shipped dark, and start-finalises.**
+**Snapshot: 2026-09-05, after 3.5.0 — the rank ladder shipped dark, group 1 backfilled and its calibration read in place on production (2026-09-04); the switch is still off.**
 **Both repos are on `3.5.0`**, read back from both platforms; the full record is the
 [3.5.0 section](#350--shipped-and-confirmed-2026-09-04-evening) below, and **the table under this
 header still describes 3.3.0** — it was not rewritten this time, deliberately, because its rows
@@ -74,15 +74,36 @@ sees a rung until a group administrator turns it on. **Live regardless of the sw
 | Tags | **`v3.5.0`** at `96a1100`, annotated with the `/api/version` + `/api/health` evidence and the missing Heroku number named as missing | **`v3.5.0`** at `0d180ca`, annotated with the Netlify deploy-id evidence |
 | Tests | `./gradlew build` green on `next` after every merge; all CI jobs green on #275, #277, #278, #279 | `type-check`, `lint`, 1213 unit tests, `npm run build` green; all four CI shards green on #143, #144, #145. ⚠️ **Visual baselines not re-verified** — the rung chip changes the rankings layout when a group switches the ladder on. ⚠️ Browser check before shipping was the owner's, on a local build with the ladder on: it produced two chip-shape fixes ([#145](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/145)), both in this release |
 
-**What the release does not do, and what has to happen next, in order:**
+**What the release did not do, and where that stands** — updated 2026-09-05 after the group 1 reading:
 
 1. **Backfill**, once per group: `POST /api/matches/recalculate` with `{}` as a group admin. The
    ladder columns are maintained from this deploy on, but every match before it has no snapshot
-   until replayed. Run it on a staging copy first.
-2. **Read the calibration report** — `scripts/database/rank-ladder-calibration.sql` on that copy.
-   Every constant except the 75-FP division is a placeholder; the first reading is in plan §8.
+   until replayed. ✅ **Group 1 done 2026-09-04 ~21:30Z by the owner, on production directly:
+   11 completed matches, every replay `SUCCESS`.**
+2. **Read the calibration report.** ✅ **Group 1 read 2026-09-04, in place.** The staging-copy
+   route is retired: the owner ruled that copying the database off the platform moves every
+   member's personal data for a report that needs none of it, so the report is now
+   `scripts/database/rank-ladder-calibration-inplace.sql` ([#281](https://github.com/ricsnsuka/FootMania-Back/pull/281),
+   in `next`, docs only) — one `READ ONLY` transaction through `heroku pg:psql -a footmania`,
+   player ids only, rolled back. The login the CLI needs must be done in an ordinary terminal.
+   What it said, recorded in full in plan §8 "Production reading":
+   - 23 players with three or more matches: Bronze 1, Silver 6, **Gold 12**, Platinum 2,
+     Diamond 2; Iron and Master empty. Half the group in one band, as on the local copy.
+   - **Nobody is placed.** The 11 matches all belong to 2025/26; the season that displaced it has
+     no completed match, so the reset zeroed every placement counter. **Switch-on day will show a
+     roster in placements, not a full ladder** — the opposite of what step 3 below promised, and
+     the design, not a fault: three matches each at 2× and the rungs appear.
+   - 2025/26: the eleven players with five or more matches moved **+0.78 divisions on average**,
+     21 promotions to 10 demotions, four net negative; top +4.0, bottom −2.3. Per match the same
+     rate the copy showed after calibration round 1. All eleven read "at level" for the known
+     first-season reason (every seed fell back to the 5.0 default).
+   - **No constant changed.** Re-read in place once 2026/2027 has about twenty matches, bands
+     included.
 3. **Switch on**, per group: `RANKING_LADDER_ENABLED` on the settings page, group tab, competition
-   rules. Day one then shows a full ladder rather than a roster in placements.
+   rules. ⏳ **Not yet flipped for group 1** — the owner's next action.
+
+**Branch state after the reading:** backend `next` is `1c6d3d1`, one docs-only merge (#281) ahead
+of `main` at `96a1100`; nothing to deploy. Frontend `next` == `main` == `0d180ca`.
 
 **Both branch pairs needed a repair before the gate would pass.** In both repos `main` held the
 previous release's promotion merge commit (`5e483d2` backend, `37fa6db` frontend) that `next` had
