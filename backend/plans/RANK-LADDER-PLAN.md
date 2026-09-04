@@ -1,9 +1,26 @@
 # Rank Ladder — Tiers and Form Points in place of the raw rating
 
 **Date:** 2026-09-04
-**Status:** 📋 **SPECIFIED, not built.** Owner decisions taken 2026-09-04 (§9), including the five
-edge-case decisions in §10. Every constant except the 75 FP division is a placeholder until the
-step 1 replay (§8) reports the real rating distribution.
+**Status:** 🟡 **Step 1 merged into `next` — [FootMania-Back#275](https://github.com/ricsnsuka/FootMania-Back/pull/275)
+(2026-09-04), not released, not deployed.** The engine, V50, the replay hook, the
+simulation test and the calibration SQL; nothing reads the ladder yet and no contract changed.
+Steps 2–5 unbuilt. Owner decisions taken 2026-09-04 (§9), including the five edge-case decisions
+in §10. Every constant except the 75 FP division is a placeholder until the step 1 replay (§8)
+reports the real rating distribution.
+
+**What building step 1 added to the spec** (not known when §6 was written):
+- The replay's exactness rule is per row, not per run: the reverse restores a row's ladder
+  snapshot only when nothing later stands on the player's chain
+  (`SkillRatingHistoryRepository.existsLaterMovement`), which inside a whole-set replay is always.
+  A single-match recalculation of an old match nets the row's movement off the re-apply instead,
+  the rating's own approximation on that path. Deletion needs nothing: it already unwinds to the
+  end of every chain it touches.
+- The seed is taken once. A row's "before" records the seeded rung, so a later replay restores to
+  it rather than seeding again from a different rating — which means **recalibrating the bands
+  does nothing until the snapshots are wiped**. The calibration SQL carries the reseed block.
+- The single-match path has no way to know a transition row's reset should be recomputed unless
+  its snapshot was restored, so the row carries a transient `ladderRestored` flag from the lift
+  to the re-anchor. The first replay after V50 recomputes on "no snapshot" instead.
 **⚠️ Changes the seasons feature:** starting a season now finalises the one running (§4, §10.2).
 The seasons contract, the start modal and [FE seasons](../../frontend/features/seasons.md) all
 change with it.
@@ -353,6 +370,83 @@ them in the first place.
 
 Record the distribution and the constants finally chosen in this file under a "Calibrated" heading,
 with the date.
+
+### First reading — local copy of production, 2026-09-04
+
+Run on the owner's machine against a local copy of group 1: 19 completed matches (16 in Season 1,
+finalised; 3 in 2026/2027, current), 18 players, 223 history rows. The backfill was
+`POST /api/matches/recalculate` with `{}`; all 19 replayed. **The constants have not been changed
+on the strength of this** — one young group is a signal, not a distribution — but it is the first
+real evidence and it points one way.
+
+**Where the ratings sit** (15 qualified players): Bronze 2, **Silver 10**, Gold 2, Platinum 1.
+Iron, Diamond and Master empty. Two thirds of the group inside one 0.75-wide band (5.61–6.07).
+
+**Season 1 movement: everyone climbed.** Net FP per player from −25 to +585; the top player was
+promoted nine times in 15 matches; 66 promotions against 18 demotions across the group. Every
+player started the season *at level* (all seeded from the 5.0 default into Bronze, with a 5.0
+rating) and still moved **+2.4 divisions on average in ~11 matches**. §2's target says at level
+hovers. Four things stack up on a league this young:
+
+1. **The whole group is inside the novice fade.** Nobody has 20 career matches, so every match of
+   the season paid 1.5×; placements paid 2× on top of the first three.
+2. **The form baseline sits below this league's mean night.** Match ratings average 7.31 on a win,
+   6.63 on a draw, 5.01 on a loss — roughly 6.3 overall against a baseline of 6.0 — so the form
+   term is net positive before result and pace touch it. The win/loss bases (+15/−10) lean the
+   same way.
+3. **The anchor chased ratings that were themselves rising from the default.** Ratings climbed
+   from 5.0 towards 6.0 over the season, so a Bronze player carrying a Silver-grade rating gained
+   at 1.5× and lost at 0.5× for most of it. That is the anchor working as designed on a seed that
+   was too low; it will not repeat once seeds come from settled ratings, and it argues for seeding
+   a *new* player from the group's median rather than the 5.0 default.
+4. **The carry cap dominates a strong player's chain.** Nearly every promotion landed on exactly
+   20 FP because the overflow was clipped. Not wrong; worth knowing when the gains are tuned.
+
+**The reset behaved.** Gold I with 24 FP → Silver I with 24 FP, shield and placements zeroed;
+placements at 2× then took the top player back to Gold I inside four matches.
+
+**What to decide before switching on**, in order of leverage: (a) the seed for players with no
+history — group median vs. the 5.0 default; (b) whether the novice fade should exist at all in a
+group where *everyone* is a novice, or key off the group's age instead; (c) the form baseline —
+the engine's 6.0 or the group's own mean match rating; (d) the bands, once (a)–(c) have moved
+the numbers. Re-run after each with the reseed block in the script, since seeds are taken once.
+
+**Found in the script itself:** the archetype table compared against the *live* columns, which
+right after a finalise are the reset's output, so nearly everyone read "above". Fixed to use the
+rung and rating each player started the season on
+([FootMania-Back#276](https://github.com/ricsnsuka/FootMania-Back/pull/276), merged).
+
+### Calibration round 1 — 2026-09-04, owner decisions (a)–(c) taken with the defaults
+
+Three engine changes, the bands left alone, then the same local copy reseeded and replayed.
+Merged into `next` as [FootMania-Back#277](https://github.com/ricsnsuka/FootMania-Back/pull/277);
+not released, not deployed.
+
+| | Was | Now |
+|---|---|---|
+| Seed for a first rung | the player's own rating (the 5.0 default for almost everyone) | the **group's median** qualified rating; own rating only while the group has no qualified member |
+| Novice fade | 1.5× fading to 1× over 20 career matches | **removed** — placements already give a newcomer three matches at 2× |
+| Form baseline | the engine's fixed 6.0 | the **league's own mean night**: last 120 stat rows before the kickoff, 6.0 until a group has 30 |
+
+**Result on the same 16 players, Season 1:** average movement for players who started at level
+fell from **+2.41 to +1.59 divisions**; the top player from +585 to +510 FP and eight promotions;
+the bottom of the table now actually drops (three players net negative, the lowest −85 FP). The
+engine change that did most of the work was the baseline: the fade and the median seed barely
+touched this group, and for a reason worth knowing.
+
+**Why it is still +1.6 and not zero: this group was born on two nights.** Sixteen of seventeen
+players debuted on 21–22 May, when nobody had three matches, so every seed fell back to the 5.0
+default into Bronze II regardless of the new rule — the one late debut, in September, seeded into
+Silver II from the median as designed. Every rating then rose from 5.0 towards 6.0 over the
+season, so the anchor read "rated above your rung" for months and paid 1.5× on gains. That is the
+anchor working correctly on a group whose ratings had not settled; it is a one-off of any group's
+first season and no constant fixes it. The remaining structural push is the +15/−10 result
+asymmetry, worth about +2.5 FP per match at a 50% record, which is small and deliberate.
+
+**Decision:** stop tuning on this group. The at-level target cannot be read off a season in which
+every rating was still converging from the default. Re-read after 2026/2027 has twenty matches,
+and read the bands then too. The simulation test now runs its at-level archetype against a 6.3
+league baseline and asserts it hovers, which it does.
 
 ## 9. Decisions
 
