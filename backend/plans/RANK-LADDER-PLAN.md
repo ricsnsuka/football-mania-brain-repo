@@ -1,13 +1,18 @@
 # Rank Ladder — Tiers and Form Points in place of the raw rating
 
 **Date:** 2026-09-04
-**Status:** 🟡 **Step 1 and calibration round 1 merged into `next`
-([#275](https://github.com/ricsnsuka/FootMania-Back/pull/275),
-[#277](https://github.com/ricsnsuka/FootMania-Back/pull/277)) and step 2 merged —
-[FootMania-Back#278](https://github.com/ricsnsuka/FootMania-Back/pull/278); step 3 merged into
-the frontend's `next` —
-[FootMania-Simple-Front#143](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/143)
-(2026-09-04). Not released, not deployed, in either repo.** Step 2 is the read surface behind
+**Status:** ✅ **Steps 1–4 shipped in 3.5.0, deployed 2026-09-04 in both repos, dark** — the
+switch is off for every group. Backend `96a1100` (`/api/version` 3.5.0, `/api/health` UP, tag
+`v3.5.0`), frontend `0d180ca` (Netlify deploy `6a9b311b`, tag `v3.5.0`); the record is in
+[STATUS.md](../../STATUS.md#350--shipped-and-confirmed-2026-09-04-evening). **What step 4 still
+needs, per group and in order: the backfill (bulk recalculation with `{}`), the calibration read
+(§8), then `RANKING_LADDER_ENABLED` on.** Step 5 (badges, season awards) unbuilt. Backend PRs
+[#275](https://github.com/ricsnsuka/FootMania-Back/pull/275),
+[#277](https://github.com/ricsnsuka/FootMania-Back/pull/277),
+[#278](https://github.com/ricsnsuka/FootMania-Back/pull/278); frontend
+[#143](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/143),
+[#145](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/145) (the owner's first look:
+the chip in three shapes).** Step 2 is the read surface behind
 `RANKING_LADDER_ENABLED` (off by default), `GET /api/rankings/ladder`, the `RANK_CHANGED`
 notification, and **start finalises** (§10.2) — contract `docs/api/RANKING-TIERS-API-CONTRACT.md`.
 Step 3 is the frontend: the rung chip on the table, the profile card and the player modal with
