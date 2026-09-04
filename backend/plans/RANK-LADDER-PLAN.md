@@ -418,7 +418,9 @@ rung and rating each player started the season on
 
 ### Calibration round 1 — 2026-09-04, owner decisions (a)–(c) taken with the defaults
 
-Three engine changes, the bands left alone, then the same local copy reseeded and replayed:
+Three engine changes, the bands left alone, then the same local copy reseeded and replayed.
+Merged into `next` as [FootMania-Back#277](https://github.com/ricsnsuka/FootMania-Back/pull/277);
+not released, not deployed.
 
 | | Was | Now |
 |---|---|---|
