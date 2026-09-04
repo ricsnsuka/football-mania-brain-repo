@@ -1,8 +1,20 @@
 # Project Status
 
-**Snapshot: 2026-09-03, after 3.3.0 — one batched backlog release, both halves together.** Six
-bugs and two features cut and deployed in a single pass. **Both repos are on `3.3.0`**; the backend
-skipped 3.2.0 to get there, which is how the two are back in step.
+**Snapshot: 2026-09-04, after 3.5.0 — the rank ladder, shipped dark, and start-finalises.**
+**Both repos are on `3.5.0`**, read back from both platforms; the full record is the
+[3.5.0 section](#350--shipped-and-confirmed-2026-09-04-evening) below, and **the table under this
+header still describes 3.3.0** — it was not rewritten this time, deliberately, because its rows
+carry mojibake from an earlier edit and a partial rewrite would leave two truths side by side.
+The 3.5.0 section carries every row the procedure asks for.
+
+⚠️ **This file skipped 3.4.0, 3.4.1 and 3.4.2 as well** — three backend-and-frontend releases
+between 3.3.0 and this one (the rating chart's replay fix among them), never recorded here. Fourth
+gap now, same cause as the first three.
+
+*The previous snapshot, kept for its two honest gaps:* **Snapshot: 2026-09-03, after 3.3.0 — one
+batched backlog release, both halves together.** Six bugs and two features cut and deployed in a
+single pass. Both repos were on `3.3.0`; the backend skipped 3.2.0 to get there, which is how the
+two got back in step.
 
 ⚠️ **This file skipped 3.2.0 too** — a frontend release between 3.1.1 and this one, never recorded
 here. That is the *second* such gap, after 2.5.0, and the pattern is now clear enough to name:
@@ -40,6 +52,53 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.5.0 — shipped and confirmed 2026-09-04, evening
+
+**The rank ladder, shipped dark — and one thing that is live from the moment it deployed.**
+Backend steps 1–3 of [RANK-LADDER-PLAN](backend/plans/RANK-LADDER-PLAN.md): V50, the engine with
+calibration round 1, the read surface behind `RANKING_LADDER_ENABLED`, `GET /api/rankings/ladder`,
+`RANK_CHANGED`; and the frontend's rung chip in three shapes, the ladder chart, the settings switch
+and the start-season warning in three locales. **The switch is off for every group**, so no player
+sees a rung until a group administrator turns it on. **Live regardless of the switch:**
+`POST /api/seasons/{id}/start` now finalises the displaced season when it has completed matches
+(owner decision, plan §10.2). Contract:
+[RANKING-TIERS-API-CONTRACT](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/RANKING-TIERS-API-CONTRACT.md).
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.5.0`** — `build.gradle` and the `Procfile` jar name agree; `scripts/check-version-consistency.sh` and the Version Check job both said so | **`3.5.0`** — `package.json` and both root `version` entries in `package-lock.json`, via `npm version 3.5.0 --no-git-tag-version` |
+| `main` head | **`96a1100`** — `next` fast-forwarded onto `main` after the Release Gate and Version Check passed on [#280](https://github.com/ricsnsuka/FootMania-Back/pull/280); `git log next..origin/main` prints nothing | **`0d180ca`** — likewise, after the Release Gate on [#146](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/146); `git log next..origin/main` prints nothing |
+| Running in production | **`96a1100`.** `/api/version` reports `3.5.0` (build `2026-09-04T20:54:26.146Z`) and `/api/health` is `UP` on `3.5.0` at 20:55Z — read from the running process. ⚠️ **Heroku's own release number was not read back**: the CLI wanted an interactive login again. Fill it in from `heroku releases -a footmania`. Flyway runs on boot, so `UP` means **V50 applied** | **`0d180ca`, confirmed by asking Netlify**: deploy `6a9b311b05b6720008e46fe3`, `ready`, context `production`, `commit_ref` `0d180ca9fd6ec8d38ad512a00630bd4599f24c18` — equal to `main` — published `2026-09-04T20:59:55.090Z`, 46s build. The site answers `200` |
+| Latest migration | **`V50__rank_ladder.sql`** — five columns on `players`, nine on `skill_rating_history`, nothing backfilled. Additive and nullable-or-defaulted, so the previous jar starts against it: **not a rollback boundary** | — |
+| Tags | **`v3.5.0`** at `96a1100`, annotated with the `/api/version` + `/api/health` evidence and the missing Heroku number named as missing | **`v3.5.0`** at `0d180ca`, annotated with the Netlify deploy-id evidence |
+| Tests | `./gradlew build` green on `next` after every merge; all CI jobs green on #275, #277, #278, #279 | `type-check`, `lint`, 1213 unit tests, `npm run build` green; all four CI shards green on #143, #144, #145. ⚠️ **Visual baselines not re-verified** — the rung chip changes the rankings layout when a group switches the ladder on. ⚠️ Browser check before shipping was the owner's, on a local build with the ladder on: it produced two chip-shape fixes ([#145](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/145)), both in this release |
+
+**What the release does not do, and what has to happen next, in order:**
+
+1. **Backfill**, once per group: `POST /api/matches/recalculate` with `{}` as a group admin. The
+   ladder columns are maintained from this deploy on, but every match before it has no snapshot
+   until replayed. Run it on a staging copy first.
+2. **Read the calibration report** — `scripts/database/rank-ladder-calibration.sql` on that copy.
+   Every constant except the 75-FP division is a placeholder; the first reading is in plan §8.
+3. **Switch on**, per group: `RANKING_LADDER_ENABLED` on the settings page, group tab, competition
+   rules. Day one then shows a full ladder rather than a roster in placements.
+
+**Both branch pairs needed a repair before the gate would pass.** In both repos `main` held the
+previous release's promotion merge commit (`5e483d2` backend, `37fa6db` frontend) that `next` had
+never received — step 7 of the procedure was skipped after 3.4.2. `origin/main` was merged into
+`next` first (`96a1100` and `0d180ca` are those merges), then `main` was fast-forwarded to it, so
+this time the two are byte-identical rather than one merge commit apart.
+
+The nine pull requests: backend [#275](https://github.com/ricsnsuka/FootMania-Back/pull/275)
+engine, [#276](https://github.com/ricsnsuka/FootMania-Back/pull/276) calibration script,
+[#277](https://github.com/ricsnsuka/FootMania-Back/pull/277) calibration round 1,
+[#278](https://github.com/ricsnsuka/FootMania-Back/pull/278) read surface and start-finalises,
+[#279](https://github.com/ricsnsuka/FootMania-Back/pull/279) cut; frontend
+[#143](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/143) the UI,
+[#144](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/144) cut,
+[#145](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/145) chip shapes; and the
+promotions #280 and #146.
 
 ## 3.1.1 — shipped and confirmed 2026-08-31, after lunch (frontend only)
 
