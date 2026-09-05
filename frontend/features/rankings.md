@@ -44,9 +44,19 @@ Clicking a row opens the player modal on **the row's own figures**, passed throu
 the table the reader had just clicked — the same name with different goals beside it, one row
 apart. The players page passes no scope and gets all-time, which is all that page has ever had.
 
-Only four fields are scope-dependent: rating, appearances, goals, assists. Positions, keeper
-willingness and the link state are properties of the person, and the streaks are all-time, so none
-of them are in the scope.
+Five fields are scope-dependent: rating, appearances, goals, assists — and, with the ladder on,
+the rung. Positions, keeper willingness and the link state are properties of the person, and the
+streaks are all-time, so none of them are in the scope.
+
+**The rung travels with the row too** (fixed 2026-09-05). A finished season freezes the rung each
+player ended it on into its standings, so a past season's table carries that rung and the all-time
+table carries where the player stands now. The modal used to fetch its rung for itself, off the
+all-time table (`useLadderRank`), whatever had opened it — so a reader who clicked "Gold II" on
+last season's table was shown this season's "Silver I" beside last season's goals: the exact
+contradiction the scope exists to prevent, one column over. `PlayerStatsScope.ladderRank` now
+carries the row's rung, the modal reads it from there whenever it has a scope, and the all-time
+fetch is switched off in that case rather than fetched and discarded. Without a scope — the
+players page — the modal still asks `useLadderRank`, so nothing there changed.
 
 ## The order comes from the server and is never re-sorted
 
