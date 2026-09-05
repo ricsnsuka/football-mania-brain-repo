@@ -312,7 +312,11 @@ card layout to fix.
 Finalising a season used to produce a rating adjustment and nothing anybody would want to read. It
 now also writes six awards — **player of the season** (best mean per-match performance rating),
 **golden boot**, **playmaker**, **iron man**, **most improved** (biggest rating gain) and **crowd
-favourite** (most crowd MOTM wins, from the vote rather than an administrator's pick).
+favourite** (most crowd MOTM wins, from the vote rather than an administrator's pick) — and, for a
+group with the rank ladder switched on, two more: **highest tier** (the highest rung stood on once
+placed) and **biggest climb** (ladder position at the season's end minus its start). Those two are
+step 5 of the rank ladder, built 2026-09-05 and unreleased; a season closed with the ladder off
+never has them, because the honours are computed once.
 
 They render on the **rankings page**, above the table, for whichever season the selector has
 chosen. That is where they belong: the awards are the season's story and the table is its detail,
@@ -347,6 +351,14 @@ is worse than an untranslated one.
 as whole numbers, and only the client knows the locale to say them in. `MOST_IMPROVED` keeps its
 sign — a season everybody had a bad one still has a winner, and `-0.20` is the honest way to say
 what they won it with.
+
+**The two ladder awards are not numbers to a reader, so `formatAwardValue` translates them.**
+`HIGHEST_TIER` arrives as a **rung index** — Iron III at `0`, three per tier, Master at `18` —
+because the column is numeric and a label is not; `rungFromIndex` in `types/ranking.ts` is the
+inverse of the backend's `RankLadderService.rungIndex`, and the board shows "Gold II" in the tier
+names every locale shares. `BIGGEST_CLIMB` is Form Points along the whole ladder (75 per division)
+and reads signed with the chip's unit, "+302 FP". Both sit after the numbers' six in
+`SEASON_AWARD_TYPES` and before the Ballon d'Or; the career cabinet formats them the same way.
 
 ## The Ballon d'Or
 
