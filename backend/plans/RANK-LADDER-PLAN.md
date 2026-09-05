@@ -6,7 +6,8 @@ switch is off for every group. Backend `96a1100` (`/api/version` 3.5.0, `/api/he
 `v3.5.0`), frontend `0d180ca` (Netlify deploy `6a9b311b`, tag `v3.5.0`); the record is in
 [STATUS.md](../../STATUS.md#350--shipped-and-confirmed-2026-09-04-evening). **What step 4 still
 needs, per group and in order: the backfill (bulk recalculation with `{}`), the calibration read
-(§8), then `RANKING_LADDER_ENABLED` on.** Step 5 (badges, season awards) unbuilt. Backend PRs
+(§8), then `RANKING_LADDER_ENABLED` on.** Step 5 (badges, season awards) **built 2026-09-05 on
+`feat/rank-ladder-step-5` in both repos, unreleased** — §7. Backend PRs
 [#275](https://github.com/ricsnsuka/FootMania-Back/pull/275),
 [#277](https://github.com/ricsnsuka/FootMania-Back/pull/277),
 [#278](https://github.com/ricsnsuka/FootMania-Back/pull/278); frontend
@@ -234,7 +235,7 @@ through placements then the 1.5× debutant fade.
 - The final tier, division and FP are frozen into the season's standings. Past-season rankings
   already read the last history row per player; this adds the ladder fields to that row.
 - "Highest tier reached" and "Biggest climb" are natural additions to the stored season awards
-  (V37). Follow-up, not scope.
+  (V37). Follow-up, not scope — built as step 5 on 2026-09-05, see §7.
 - The season-end rating formula is untouched. The reset above replaces the earlier idea of
   re-seeding from that rating; the rating only feeds the anchor.
 
@@ -356,7 +357,30 @@ Contract file `docs/api/RANKING-TIERS-API-CONTRACT.md` and an entry in
    backfill, so day one shows a full ladder rather than 30 players in placements. Backend deploys
    before the frontend, and merged is not deployed.
 5. **Later.** Tier badges on the existing badge system, season awards for highest tier and biggest
-   climb.
+   climb. **Built 2026-09-05, unreleased** — `feat/rank-ladder-step-5` off `next` in both repos;
+   the honours follow the switch, so a group with the ladder off sees nothing. What was decided
+   while building it, none of it in the proposal:
+   - **Five rung badges, `REACHED_SILVER` … `REACHED_MASTER`**, flat constants in the existing
+     catalogue — the threshold is the tier's ordinal and the statistic is the live `rank_tier`, so
+     the "an enum constant plus a threshold" rule holds and reaching Diamond hands over Silver,
+     Gold and Platinum on the same night. Iron and Bronze earn none. Awarded on the completion
+     sweep once the player's placements are complete, because a badge naming a hidden rung reveals
+     it; permanent like every badge, the reset drops the rung and not the record; never backfilled.
+   - **`HIGHEST_TIER` stores a rung index** (Iron III 0, three per tier, Master 18) because
+     `season_awards.value` is numeric and a label is not; the frontend decodes it. Only rungs held
+     from the row that completed placements count — a peak reached and lost inside placements was
+     never shown. **`BIGGEST_CLIMB` stores Form Points along the whole ladder**, the last row's
+     "after" minus the first row's "before" (the reset's landing, or the seed for a newcomer; the
+     reset row itself carries no match and is not in the season's list). Both hold the appearance
+     threshold, since three placement matches at 2× can move a player two divisions; a negative
+     best climb is **not** awarded, unlike `MOST_IMPROVED` — nobody climbed, so nobody won the climb.
+   - **Both follow `RANKING_LADDER_ENABLED`** at the moment of the sweep or the finalise. The
+     columns are maintained for every group, so the numbers exist either way, but an honours board
+     naming a rung nobody has seen leaks a table under calibration — and since the honours are
+     computed once, a season closed with the switch off never gains them.
+   - **Migration V51** widens `season_awards_award_check` the way V38 did, nothing else; not a
+     rollback boundary. Best of the Crop has no badge: the title is a table position, not a player
+     fact, and a badge for it needs the sweep to read the table — a later step if wanted.
 
 ## 8. Calibration, before anyone sees a tier
 
