@@ -1,11 +1,14 @@
 # Project Status
 
-**Snapshot: 2026-09-05, after 3.5.0 — the rank ladder shipped dark, group 1 backfilled and its calibration read in place on production (2026-09-04); the switch is still off.**
-**Both repos are on `3.5.0`**, read back from both platforms; the full record is the
-[3.5.0 section](#350--shipped-and-confirmed-2026-09-04-evening) below, and **the table under this
-header still describes 3.3.0** — it was not rewritten this time, deliberately, because its rows
-carry mojibake from an earlier edit and a partial rewrite would leave two truths side by side.
-The 3.5.0 section carries every row the procedure asks for.
+**Snapshot: 2026-09-05, small hours, after 3.6.0 — the rank ladder's honours (rung badges, two
+season awards), shipped dark like the ladder itself; group 1 backfilled and read, the switch still
+off for every group.** **Both repos are on `3.6.0`**, read back from both platforms; the full
+record is the [3.6.0 section](#360--shipped-and-confirmed-2026-09-05-small-hours) below, then
+[3.5.0](#350--shipped-and-confirmed-2026-09-04-evening). **The table under this header still
+describes 3.3.0** — not rewritten, deliberately, because its rows carry mojibake from an earlier
+edit and a partial rewrite would leave two truths side by side. The release sections carry every
+row the procedure asks for. **The Heroku release number was read back this time** (v82), the first
+release since 3.1.0 to have it — the CLI now holds a login, done from an ordinary terminal.
 
 ⚠️ **This file skipped 3.4.0, 3.4.1 and 3.4.2 as well** — three backend-and-frontend releases
 between 3.3.0 and this one (the rating chart's replay fix among them), never recorded here. Fourth
@@ -52,6 +55,37 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.6.0 — shipped and confirmed 2026-09-05, small hours
+
+**Rank ladder step 5, dark.** Five rung badges (`REACHED_SILVER` … `REACHED_MASTER`) in the
+badge catalogue and two season awards (`HIGHEST_TIER`, `BIGGEST_CLIMB`), every one of them switched
+with `RANKING_LADDER_ENABLED` — which is still off for every group, so nothing a player sees
+changes. Also carried: the in-place calibration script. Plan §7 step 5 records the decisions
+([RANK-LADDER-PLAN](backend/plans/RANK-LADDER-PLAN.md)); contract sections in
+[RANKING-TIERS-API-CONTRACT](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/RANKING-TIERS-API-CONTRACT.md)
+("Badges and season awards"), `BADGES-API-CONTRACT.md`, `SEASONS-API-CONTRACT.md`.
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.6.0`** — `build.gradle` and the `Procfile` jar name agree; `scripts/check-version-consistency.sh` (needs `LC_ALL=C.UTF-8` on Windows Git Bash) and the Version Check job both said so | **`3.6.0`** — `package.json` and both root `version` entries in `package-lock.json`. ⚠️ `npm install --package-lock-only` this time rewrote 96 unrelated lockfile lines (peer flags, two `@emnapi` optional entries dropped); the cut was reduced by hand to the two version lines. Worth knowing before the next cut |
+| `main` head | **`a57f290`** — `next` fast-forwarded onto `main` after the Release Gate and Version Check passed on [#284](https://github.com/ricsnsuka/FootMania-Back/pull/284); `git log next..origin/main` prints nothing | **`e79bd27`** — likewise, after the Release Gate on [#149](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/149); `git log next..origin/main` prints nothing |
+| Running in production | **`a57f290`, Heroku release v82** (`heroku releases -a footmania`: "Deploy a57f290b", 2026-09-05 03:32:50 +0100; v81 was 3.5.0's `96a1100`). `/api/version` reports `3.6.0` (build `2026-09-05T02:32:31.248Z`) and `/api/health` is `UP` on `3.6.0` at 02:33Z. Flyway runs on boot, so `UP` means **V51 applied** | **`e79bd27`, confirmed by asking Netlify**: deploy `6a9b8011363c970008022125`, `ready`, context `production`, `commit_ref` `e79bd275f9100df018eeb8875e8c369462433b99` — equal to `main` — published `2026-09-05T02:36:48.608Z`, 45s build. The site answers `200` |
+| Latest migration | **`V51__ladder_season_awards.sql`** — drops and re-adds `season_awards_award_check` with the two new names, as V38 did. **Not a rollback boundary** | — |
+| Tags | **`v3.6.0`** at `a57f290`, annotated with the `/api/version` + `/api/health` evidence | **`v3.6.0`** at `e79bd27`, annotated with the Netlify deploy-id evidence |
+| Tests | `./gradlew build` green on the feature branch (SpotBugs, Testcontainers migration check, every test); all CI jobs green on #282 and #283 | `tsc`, eslint, 1246 unit tests, `npm run build` green; all four CI shards green on #147, #148. ⚠️ **Not seen in a browser**: the servers were brought up on `next` for the owner to check the badge strip, and shut down again before the cut without a report either way. The badges land only after the badge backfill or the next completed match, so there was nothing to see on a fresh database |
+
+**What has to happen next, in order — unchanged from 3.5.0:** flip `RANKING_LADDER_ENABLED` for
+group 1 (settings → group tab → competition rules); then, if the group wants its history's
+badges at once rather than on each player's next match, run the badge backfill from the same
+settings screen; re-read the calibration in place once 2026/2027 has about twenty matches.
+
+The five pull requests: backend [#282](https://github.com/ricsnsuka/FootMania-Back/pull/282)
+step 5, [#283](https://github.com/ricsnsuka/FootMania-Back/pull/283) cut; frontend
+[#147](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/147) step 5,
+[#148](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/148) cut; and the promotions
+#284 and #149. Docs-only [#281](https://github.com/ricsnsuka/FootMania-Back/pull/281) (the
+in-place calibration script) rode along.
 
 ## 3.5.0 — shipped and confirmed 2026-09-04, evening
 

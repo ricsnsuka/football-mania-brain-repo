@@ -1,13 +1,13 @@
 # Rank Ladder — Tiers and Form Points in place of the raw rating
 
 **Date:** 2026-09-04
-**Status:** ✅ **Steps 1–4 shipped in 3.5.0, deployed 2026-09-04 in both repos, dark** — the
-switch is off for every group. Backend `96a1100` (`/api/version` 3.5.0, `/api/health` UP, tag
-`v3.5.0`), frontend `0d180ca` (Netlify deploy `6a9b311b`, tag `v3.5.0`); the record is in
-[STATUS.md](../../STATUS.md#350--shipped-and-confirmed-2026-09-04-evening). **What step 4 still
-needs, per group and in order: the backfill (bulk recalculation with `{}`), the calibration read
-(§8), then `RANKING_LADDER_ENABLED` on.** Step 5 (badges, season awards) **built 2026-09-05 on
-`feat/rank-ladder-step-5` in both repos, unreleased** — §7. Backend PRs
+**Status:** ✅ **All five steps shipped, dark** — steps 1–4 in 3.5.0 (2026-09-04), step 5 in
+3.6.0 (2026-09-05: backend `a57f290`, Heroku v82, tag `v3.6.0`; frontend `e79bd27`, Netlify
+deploy `6a9b8011`, tag `v3.6.0`); records in
+[STATUS.md](../../STATUS.md#360--shipped-and-confirmed-2026-09-05-small-hours). The switch is off
+for every group. **Group 1 is backfilled and its calibration read in place (§8); what remains for
+it is `RANKING_LADDER_ENABLED` on**, then the badge backfill if wanted. Step 5's decisions are in
+§7. Backend PRs
 [#275](https://github.com/ricsnsuka/FootMania-Back/pull/275),
 [#277](https://github.com/ricsnsuka/FootMania-Back/pull/277),
 [#278](https://github.com/ricsnsuka/FootMania-Back/pull/278); frontend
