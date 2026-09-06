@@ -198,6 +198,14 @@ on** — there is no third state.
 Category labels fall back to the raw name (`t(key, category)`) so a new category that lands
 before its translation renders as `MATCH_REMINDER` rather than an empty row.
 
+**The list is the audience's, not the enum's (2026-09-06).** The server now sends only the
+categories an account could receive: a member gets the thirteen group categories exactly as
+before; a platform operator — in no group by design (V35) — gets one, `CREATION_CODE_REQUESTED`,
+instead of thirteen switches wired to nothing. `CREATION_CODE_ISSUED`, the reply to somebody's own
+ask for a code, is sent to nobody's list and cannot be switched off (the server answers `400`).
+Nothing in this component changed for it, which is the point of rendering from the server's list.
+Both categories have labels in all three locales.
+
 The toggles shipped with the enable control rather than after it, which the roadmap is explicit
 about: retrofitting preferences once people are already over-notified is harder and later.
 

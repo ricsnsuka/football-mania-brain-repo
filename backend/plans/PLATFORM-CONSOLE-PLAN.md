@@ -1,6 +1,12 @@
 # Platform Operator Console — Plan
 
-**Status: DRAFT — nothing here is authorised, and no code has been written.** Written 2026-08-03
+**Status: DRAFT, with rung 0 shipped.** Rung 0 (the groups table and counters on `/platform`)
+shipped in 1.1.0. On 2026-09-06 the console also gained something this plan did not list: an
+**alert for creation-code requests** — people asking for a code from the create-group screen, with
+*Issue a code* / *Decline* per row (V52, `CREATION-CODE-REQUESTS-API-CONTRACT.md`). It is the first
+thing on the console that asks the operator to act, and the first push addressed to the operator.
+The "creation-code funnel" question in rung 1 now has a second half: not only issued/redeemed, but
+asked/answered. Everything below the line remains unauthorised. Written 2026-08-03
 against backend `next` (`47cb80a`). Requested as "what could we come up with", so the ordering is a
 recommendation and the last section is the argument against parts of it.
 

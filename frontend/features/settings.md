@@ -1,6 +1,7 @@
 # Settings Feature
 
-`/settings` — three tabs, one per scope: you, the group you are acting in, and the platform.
+`/settings` — two tabs, one per scope: you, and the group you are acting in. (A third, **Platform**,
+existed from 2026-08-02 to 2026-09-06 and was removed — see below.)
 
 > **Before this, there was no settings page and no profile page.** Notification and privacy settings
 > rendered at the bottom of the dashboard, theme and language were widgets in the footer, rating
@@ -14,19 +15,32 @@
 | **My account** (default) | Profile | All | `ProfileSettings` |
 | | Appearance | All | `AppearanceSettings` |
 | | Notifications | All | `NotificationSettings` |
-| | API tokens | All | `ApiTokenSettings` — from `features/apiTokens/` |
+| | API tokens | All **except the operator** | `ApiTokenSettings` — from `features/apiTokens/` |
 | | Your data | All | `PrivacySettings` |
 | **{group name}** | Group name | `GROUP_ADMIN` | `GroupSettings` |
 | | Your player | All | `LinkedPlayerSettings` |
 | | Seasons | `GROUP_ADMIN` | `SeasonSettings` — from `features/seasons/` |
 | | System | `GROUP_ADMIN` | `SystemSettings` |
-| **Platform** | Creation codes | operator only — the tab does not render otherwise | `PlatformSettings` |
 
 The tabs are the scopes tenancy created. Account settings follow the person across groups
 (notifications are platform-level per the tenancy contract — a device belongs to a person, not a
 group). The group tab is **titled with the active group's name**, like the Navbar brand and the
-members page, so what "these settings" means changes legibly when you switch groups. Platform is
-gated on the operator grant alone, which group `GROUP_ADMIN` deliberately does not imply.
+members page, so what "these settings" means changes legibly when you switch groups.
+
+**The Platform tab was removed on 2026-09-06.** It rendered the same overview and the same code
+ledger as the console at `/platform` — the page an operator lands on and had just left to reach
+Settings — so it was a copy of their home, not a scope of their settings. The console is reached
+from the account menu instead (*Platform console*, above *Settings*, operator only), which also
+gave Settings a door back; for an operator it had none. `PlatformSettings.tsx` is gone;
+`PlatformOverview` and `PlatformCodes` keep their shareable shape under `features/settings/` and
+are composed only by `features/platform/PlatformConsole`.
+
+**What the operator sees on the account tab is the operator's**, as of the same day. The
+notification toggles are rendered from the server's list, and the server now lists only the
+categories an account could receive: one switch for an operator (*Creation code requests*) instead
+of thirteen for match reminders and fees that account can never get. API tokens are withheld — every
+token is bound to a group, and an operator is in none by design (V35) — so the form could only have
+refused them. Profile, appearance, tours and data rights stay: they are about the account.
 
 **API tokens joined the account tab on 2026-08-09**, and unlike seasons they went to the tab that
 does *not* match their scope. Every token belongs to exactly one group and cannot leave it, which

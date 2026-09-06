@@ -147,7 +147,7 @@ interface DraftSessionDTO {
 
 ## Draft Sessions Admin (GROUP_ADMIN only)
 
-A separate admin-only page at `/draft-sessions` that lists **all** draft sessions regardless of status, with controls to cancel or permanently delete them.
+A separate admin-only page at `/draft-sessions` that lists **all** draft sessions regardless of status, with controls to cancel or permanently delete them. The same component is also a **tab inside Team Generation** for an administrator, and since 2026-09-06 that tab is the only entry to it: the *Draft Sessions* item briefly added to the Navbar's Manage menu was removed as a second entry to one screen. The route stays for bookmarks and for the draft push notifications, whose deep link is `/draft-sessions`.
 
 ### Route
 

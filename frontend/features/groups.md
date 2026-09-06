@@ -21,7 +21,7 @@ An account and a group are separate things. Registering gets you the first and n
 | Route in | Who starts it | Screen |
 |---|---|---|
 | An invite link | a group `GROUP_ADMIN` | `/join/<token>` |
-| A creation code | the platform operator | `/groups`, "I have a creation code" |
+| A creation code | the platform operator | `/groups/new` — and since 2026-09-06 the code can be **asked for** from that screen |
 
 Both are deliberate acts by somebody who already has standing. There is no open self-serve path,
 and `group_creation_codes` ships empty — **the endpoints existing is not the flip; a code existing
@@ -142,11 +142,38 @@ control is a usability decision and never a security one. A redeemed code cannot
 group it produced still exists, and the row is the only record of who authorised it.
 
 **An operator-only account has its own door.** The recommended shape for the grant is an account
-in no group at all, and the group gate would strand such an account on the picker — so the picker
-shows operators a third card, **Platform settings**, leading to `/platform`: the same
-`PlatformSettings` component in the onboarding shell. Bootstrapping the first operator is a
-database act by design; the SQL is in
+in no group at all (V35 makes it the only shape), and the group gate would strand such an account
+on the picker — so `AuthGuard` sends an operator to `/platform` instead, the picker redirects one
+who lands on it, and the account menu carries a *Platform console* entry so the way back exists
+from Settings. `/platform` is `features/platform/PlatformConsole`, the one place the overview and
+the ledger render since the Settings tab went (2026-09-06; see [settings.md](settings.md)).
+Bootstrapping the first operator is a database act by design; the SQL is in
 [architecture/multi-tenancy.md](../../architecture/multi-tenancy.md#bootstrapping-the-first-platform-operator).
+
+### Asking for a creation code — `/groups/new`, 2026-09-06
+
+The hint above the create-group form has always said a code comes from the platform operator, and
+never said how to reach one. `RequestCreationCode`, below the form, is how: one optional line and a
+button (`POST /api/me/creation-code-request`). The operator is told by push
+(`CREATION_CODE_REQUESTED`) and by an alert at the top of their console; when they issue a code in
+answer it appears in the same box **and is filled into the code field above** (unless the person
+typed one themselves), with a push (`CREATION_CODE_ISSUED`, `/groups/new`) saying so.
+
+Four states, read once on mount from `GET /api/me/creation-code-request`:
+
+| Latest ask | Shows |
+|---|---|
+| none, or `DISMISSED` | the form (declined says so first — it is a state the person can act on) |
+| `PENDING` | "your request is with the operator" and **no form** — one open ask per account, and the server refuses a second with 409 |
+| `FULFILLED` with a code | the code, and the field above filled in |
+| `FULFILLED`, code withdrawn since | the form again: there is nothing to fill in |
+
+Plain state and effects rather than React Query, like the rest of the onboarding screens: there is
+no group to key a cache by yet, and one read on mount is all it needs. The operator's side —
+`PlatformCodeRequests` on the console, *Issue a code* / *Decline* per row, re-read every minute while
+the console is open, rendered **not at all** when nobody is waiting — is in
+`features/platform/`. Contract:
+[CREATION-CODE-REQUESTS-API-CONTRACT.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/CREATION-CODE-REQUESTS-API-CONTRACT.md).
 
 ---
 
