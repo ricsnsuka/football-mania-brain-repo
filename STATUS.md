@@ -10,6 +10,11 @@ edit and a partial rewrite would leave two truths side by side. The release sect
 row the procedure asks for. **The Heroku release number was read back this time** (v82), the first
 release since 3.1.0 to have it — the CLI now holds a login, done from an ordinary terminal.
 
+**Since that snapshot, 2026-09-08, no release:** CI is one job per repo on pull requests only, both
+permanent branches carry a ruleset, and `AGENTS.md` + `.claude/` landed in both repos — the
+[dated section](#2026-09-08--no-release-ci-cut-to-one-job-both-branches-protected-the-agent-files-land)
+below, and [CONTRIBUTING](CONTRIBUTING.md#ci-runs-once-on-the-pull-request--and-both-branches-are-protected--since-2026-09-08).
+
 ⚠️ **This file skipped 3.4.0, 3.4.1 and 3.4.2 as well** — three backend-and-frontend releases
 between 3.3.0 and this one (the rating chart's replay fix among them), never recorded here. Fourth
 gap now, same cause as the first three.
@@ -55,6 +60,39 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 2026-09-08 — no release: CI cut to one job, both branches protected, the agent files land
+
+Not a release; nothing running changed. Three things that change how the next one is made.
+
+**Why the Actions allowance ran out, this time.** The 2.3.0 hazard below recorded the meter running
+out and the owner raising the limit; this time the run history was read before anything was raised.
+Eight days: 66 backend pipelines at about 13.5 job-minutes, 59 frontend at about 6.4, and every
+merged PR paid twice (the `pull_request` run, then the push to `next`). About 4,700 job-minutes a
+month against 2,000 or 3,000. The nine Dependabot jobs that hung for 24 hours on 2026-09-02 are a
+curiosity, not the cause — Dependabot on standard runners is not metered.
+
+**CI is one job per repo, on pull requests into `next` only** ([#286](https://github.com/ricsnsuka/FootMania-Back/pull/286),
+[#154](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/154)). Backend: `./gradlew build`,
+the OSV scan, `integrationTest`. Frontend: audit, type-check, lint, locales, `vitest run`,
+`next build`. A push to `next` runs the backend's Version Check and nothing on the frontend; the
+`main` side is as it was since 2.3.0. A merged PR costs about 7 and about 3 job-minutes instead of
+about 27 and 13. The change is documented in
+[CONTRIBUTING → CI runs once](CONTRIBUTING.md#ci-runs-once-on-the-pull-request--and-both-branches-are-protected--since-2026-09-08),
+and in each repo's workflow header. ⚠️ **Neither workflow has run yet** — the allowance was spent
+when they merged; the first PR after it resets is their first outing.
+
+**Both branches are protected, for the first time.** A ruleset on `next` requires the CI job green
+and the branch up to date before merging (which is what closes the gap the push run used to cover);
+one on `main` requires the Release Gate green and up to date. Repository admins can bypass, visibly.
+A hotfix pushed straight to `main` is now refused.
+
+**`AGENTS.md` and `.claude/` in both repos** ([#285](https://github.com/ricsnsuka/FootMania-Back/pull/285),
+[#153](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/153)): how an agent behaves there,
+with rules, hooks and the `/release` and `/verify` skills. Canonical over any agent's memory.
+
+Merged into `next` on the owner's say-so with CI unable to run — docs and workflow files only, no
+code the API serves or the screen shows.
 
 ## 3.6.0 — shipped and confirmed 2026-09-05, small hours
 
