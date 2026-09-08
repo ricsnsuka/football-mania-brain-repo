@@ -128,6 +128,58 @@ bisect later.
 time is a fix that is not shipping, and a security one is a fix that is not shipping *while an
 advisory is public*.
 
+### CI runs once, on the pull request — and both branches are protected — since 2026-09-08
+
+The Actions allowance ran out in the first week of September, and the run history said why:
+nothing exotic, just volume. Over eight days the backend ran 66 pipelines at about 13.5
+job-minutes each and the frontend 59 at about 6.4, and every merged pull request paid twice — once
+on the `pull_request` event, then again on the push to `next` for the same tree. That is roughly
+4,700 job-minutes a month against an allowance of 2,000 or 3,000. (The nine Dependabot jobs that
+sat for 24 hours on 2026-09-02 before GitHub cancelled them look alarming in the list, but
+Dependabot runs on standard runners do not count.)
+
+Both pipelines were rebuilt to the same shape (`FootMania-Back#286`, `FootMania-Simple-Front#154`):
+
+| | Backend | Frontend |
+|---|---|---|
+| PR into `next` | one job: `./gradlew build`, the OSV scan, `integrationTest` | one job: audit, type-check, lint, locales, `vitest run`, `next build` |
+| Push to `next` | Version Check only | nothing |
+| PR `next` → `main` | Version Check + Release Gate | Release Gate |
+| Push to `main` | Version Check + dependency submission | nothing — Netlify builds it |
+| Cost per merged PR | about 27 job-minutes → about 7 | about 13 → about 3 |
+
+The eight backend test slices, its CVE-scan and summary jobs, and the frontend's four shards and
+coverage re-run are gone; each had paid its own checkout and toolchain start-up. The backend job
+now runs the exact `./gradlew build` a developer runs locally, so "green in CI" and "green on my
+machine" are the same verdict. The slice tasks stay in `build.gradle` for iterating locally.
+
+**The trade, and the ruleset that closes it.** A `pull_request` run tests the merge ref — the PR
+head merged into `next` as it stood — so the merged tree is what gets tested. The one case the
+push run used to cover is a PR merged after `next` has moved since its last run. So both repos now
+carry a **ruleset** on each permanent branch, the first branch protection either has had:
+
+| Branch | Requires | Up to date before merging |
+|---|---|---|
+| `next` | the single CI job green (`🏗️ Build, Tests & Static Analysis` · `Check`) | yes |
+| `main` | the Release Gate green (`🔀 Release Gate` · `Release Gate`) | yes |
+
+"Up to date" means GitHub refuses the merge until the branch contains the target's tip, and offers
+**Update branch**, which triggers a fresh PR run. On `main` that is the Release Gate's own premise
+stated from the other side. **Repository admins can bypass** both rules — GitHub shows it as an
+explicit "merge without waiting for requirements" choice, so it stays a decision each time; it is
+there so a spent allowance does not lock the owner out. Two consequences: a hotfix pushed straight
+to `main` is now refused rather than silently breaking the next Release Gate, and the rules match
+the job *names* exactly, so renaming a job in a workflow blocks every merge until the ruleset is
+edited to match.
+
+**The same week, both repos gained the file an agent reads first.** `AGENTS.md` at the root of
+each (imported by a one-line `CLAUDE.md`) says how to behave in that repo — branch flow, what
+verifies a change, what ships in the same commit, where writing goes — and `.claude/` beside it
+carries path-scoped rules, a guard that refuses a piped or `test`-only build command, a Stop hook
+that lists missing same-commit paperwork once, and `/release <version>` and `/verify` skills
+(`FootMania-Back#285`, `FootMania-Simple-Front#153`). Those files are canonical over any agent's
+private memory; a rule that disagrees with them is the one to delete.
+
 ### Cutting a release
 
 `next` accumulates finished work for as long as it needs to. Releasing is a decision someone makes,
@@ -163,12 +215,14 @@ have decided, not when `next` is green.
    what broke this on 2026-08-05 (see below).
 
    Since 2026-08-31 the release PR into `main` does **not** re-run the test pipeline — full CI
-   runs on the `next` side, where green still gates something. The PR runs only a **Release
+   runs on every pull request into `next` (and, since 2026-09-08, only there — see above). The
+   release PR runs only a **Release
    Gate** (plus the backend's Version Check): a job asserting `main` is an ancestor of the PR
    head, which is what makes skipping the re-run safe rather than assumed. A red gate means
    `main` holds a commit that never went through `next` — the merge result would be a tree
    nobody tested. Bring that commit into `next` first, or run the workflow manually via
-   `workflow_dispatch`. Step 7 done properly is exactly what keeps this gate green.
+   `workflow_dispatch`. Step 7 done properly is exactly what keeps this gate green, and since
+   2026-09-08 the `main` ruleset refuses the merge until it is.
 4. **The backend deploys itself** from `main` — automatic deployment was turned on 2026-08-05, so
    step 3 already shipped it. **Confirm it anyway**: `heroku releases -a footmania` for the commit
    that actually landed, and `/api/version` for what the running process says it is. A deploy that
@@ -201,6 +255,7 @@ belongs.
 
 Both code repos now carry a short copy of this pointing back here — frontend
 [`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/AGENTS.md), backend
+[`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/AGENTS.md) (since 2026-09-08) and
 [`.github/copilot-instructions.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/.github/copilot-instructions.md).
 That is a deliberate exception to "link, don't copy": the rule governs the moment somebody is inside
 one of those repos about to open a pull request, and a rule they have to leave the repo to read is

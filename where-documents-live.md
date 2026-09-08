@@ -33,7 +33,8 @@ mechanism that produced the drift above.
 | [`docs/frontend/`](https://github.com/ricsnsuka/FootMania-Back/tree/main/docs/frontend) | The append-only endpoint changelog and the draft SSE guide. A backend change is what creates the entry |
 | [`docs/deployment/`](https://github.com/ricsnsuka/FootMania-Back/tree/main/docs/deployment) | Heroku guide — tied to `Procfile`, `system.properties`, `Dockerfile` |
 | [`CHANGELOG.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/CHANGELOG.md) | Release history for that artefact |
-| [`.github/copilot-instructions.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/.github/copilot-instructions.md) · [`.github/agents/`](https://github.com/ricsnsuka/FootMania-Back/tree/main/.github/agents) | Conventions and the 14 agent definitions — executable configuration, useless away from the code it drives |
+| [`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/AGENTS.md) · `CLAUDE.md` · [`.claude/`](https://github.com/ricsnsuka/FootMania-Back/tree/main/.claude) | How an agent behaves in that repo (since 2026-09-08), and the path-scoped rules, the two hooks and the `/release` and `/verify` skills that enforce it — executable configuration, useless away from the code it drives |
+| [`.github/copilot-instructions.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/.github/copilot-instructions.md) · [`.github/agents/`](https://github.com/ricsnsuka/FootMania-Back/tree/main/.github/agents) | Stack conventions and the 14 Copilot agent definitions |
 | [`README.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/README.md) | The repo's landing page |
 | `postman/` | A machine-readable artefact, versioned with the API it exercises |
 
@@ -48,7 +49,7 @@ mechanism that produced the drift above.
 | Path | Why |
 |---|---|
 | [`docs/guides/`](https://github.com/ricsnsuka/FootMania-Simple-Front/tree/main/docs/guides) | Getting started, component conventions, shared primitives, styling, i18n, testing, Netlify deployment — how to write and ship code *in that repo* |
-| [`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/AGENTS.md) · `CLAUDE.md` | "This is NOT the Next.js you know" — conventions, read before writing code |
+| [`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/AGENTS.md) · `CLAUDE.md` · [`.claude/`](https://github.com/ricsnsuka/FootMania-Simple-Front/tree/main/.claude) | "This is NOT the Next.js you know", the branch rule, and since 2026-09-08 how an agent behaves there — with the rules, hooks and skills that enforce it |
 | [`README.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/README.md) | The repo's landing page |
 
 **Moved here:** all feature documentation (`frontend/features/`) and the architecture overview
