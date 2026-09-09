@@ -21,6 +21,13 @@ still said a reset leaves sessions alive (false since 3.3.0) corrected; the
 [dated section](#2026-09-09--no-release-password-recovery-read-back-two-stale-documents-caught-up)
 below.
 
+**Then 2026-09-09, small hours, 3.7.0 shipped — both repos are on `3.7.0`, read back from both
+platforms** (Heroku v83, Netlify deploy `6aa0bb90`): search boxes on the players page, the members
+page and the match-plan roster, `GET /api/users?q=` behind the second, and the frontend's dependency
+CVE fixes. The [3.7.0 section](#370--shipped-and-confirmed-2026-09-09-small-hours) below carries
+every row, including the one thing that went sideways (the backend promotion was rebase-merged, so
+`main` and `next` agree in tree but not in SHA; a back-merge squared it).
+
 ⚠️ **This file skipped 3.4.0, 3.4.1 and 3.4.2 as well** — three backend-and-frontend releases
 between 3.3.0 and this one (the rating chart's replay fix among them), never recorded here. Fourth
 gap now, same cause as the first three.
@@ -66,6 +73,40 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.7.0 — shipped and confirmed 2026-09-09, small hours
+
+**Search boxes, and the API parameter they needed.** The players page, the members page and the
+match-plan roster (managers and group admins only) each got a search box. The first and the last
+filter what they already hold, by name (and email on the players page), ignoring case and accents.
+The members page is server-paginated, so `GET /api/users` gained an optional `q` — case-insensitive
+substring of username, first name, last name or email, `LIKE` wildcards literal, blank meaning
+everyone. The frontend also carried its dependency CVE fixes (Next 16.3.4 for two unauthenticated
+RCE advisories, sharp 0.35.4, js-yaml 4.3.2, vitest 4.1.11), which the CVE-scan step had started
+failing on. No migration. Contract:
+[API_REFERENCE](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md)
+(Users).
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.7.0`** — `build.gradle` and the `Procfile` jar name agree; `scripts/check-version-consistency.sh` (with `LC_ALL=C.UTF-8`, it still fails under the default Git Bash locale) and the Version Check job both said so | **`3.7.0`** — `npm version 3.7.0 --no-git-tag-version` bumped `package.json` and both root `version` entries in `package-lock.json` and touched nothing else, a cleaner route than last time's `npm install --package-lock-only` |
+| `main` head | **`e7068e9`** — ⚠️ **not the same SHA as the release merge on `next`** (`7258186`): [#290](https://github.com/ricsnsuka/FootMania-Back/pull/290) was merged with GitHub's *rebase* option, which rewrites SHAs even when a fast-forward was possible, so `main` got eight rebased commits with the identical tree. `origin/main` was then merged back into `next` (`688bff1`), so `git log next..origin/main` prints nothing. Lesson: promote `next` to `main` with `git push origin origin/next:main`, as the frontend did this time | **`acc94b6`** — `next` fast-forwarded onto `main` by `git push origin origin/next:refs/heads/main` after the backend was confirmed live; GitHub marked [#158](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/158) merged on its own. `git log next..origin/main` prints nothing |
+| Running in production | **`e7068e9`, Heroku release v83** (`heroku releases -a footmania`: "Deploy e7068e95", 2026-09-09 02:50:09 +0100; v82 was 3.6.0's `a57f290`). `/api/version` reports `3.7.0` (build `2026-09-09T01:49:43.994Z`) and `/api/health` is `UP` on `3.7.0` at 01:50:43Z, read from the running process | **`acc94b6`, confirmed by asking Netlify**: deploy `6aa0bb90469e4c0008df7ce6`, `ready`, context `production`, `commit_ref` `acc94b625ff72a6f59396500ff995bf0aef6982b` — equal to `main` — published `2026-09-09T01:52:31.035Z`, 76s build. The owner confirmed both halves live from the browser |
+| Latest migration | none — still **V51**. Nothing in 3.7.0 is a rollback boundary | — |
+| Tags | **`v3.7.0`** at `e7068e9`, annotated with the Heroku v83 + `/api/version` + `/api/health` evidence | **`v3.7.0`** at `acc94b6`, annotated with the Netlify deploy-id evidence |
+| Tests | `./gradlew build` and `./gradlew integrationTest` green locally (the new `TenantIsolationIT` case runs the `q` JPQL against real PostgreSQL); CI green on #288, #289; Release Gate + Version Check green on #290 | `tsc`, eslint, locale check, 1274 unit tests, `npm run build` green; the one CI job green on #155, #156, #157. ⚠️ **The Playwright visual baselines on `next` were already stale before this work** — the untouched tree fails 28 of 38 (login lacks the "Forgot your password?" link, nav gained entries, the players and users baselines captured an error page). #155 fails the identical 28, so no regression, but the snapshots cannot vouch for the new boxes; **no baseline was updated**. The owner checked the UI live after the deploy |
+
+**Known limit:** the members search is not accent-folded server-side (`LOWER … LIKE`); the two
+client-side searches are. Folding it would need `unaccent` and a migration.
+
+**Still outstanding on the backend:** GitHub reports nine Dependabot alerts on the default branch
+(2 high, 7 moderate), untouched by this release.
+
+The seven pull requests: backend [#288](https://github.com/ricsnsuka/FootMania-Back/pull/288) `q`,
+[#289](https://github.com/ricsnsuka/FootMania-Back/pull/289) cut, #290 promotion; frontend
+[#155](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/155) search boxes,
+[#156](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/156) CVE fixes,
+[#157](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/157) cut, #158 promotion.
 
 ## 2026-09-09 — no release: password recovery read back, two stale documents caught up
 
