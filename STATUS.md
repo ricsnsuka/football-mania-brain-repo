@@ -15,6 +15,12 @@ permanent branches carry a ruleset, and `AGENTS.md` + `.claude/` landed in both 
 [dated section](#2026-09-08--no-release-ci-cut-to-one-job-both-branches-protected-the-agent-files-land)
 below, and [CONTRIBUTING](CONTRIBUTING.md#ci-runs-once-on-the-pull-request--and-both-branches-are-protected--since-2026-09-08).
 
+**And 2026-09-09, no release:** password recovery read back from production — deployed since
+2.2.0, **email half still dark**, no `MAIL_*` ever set on the dyno — and the two documents that
+still said a reset leaves sessions alive (false since 3.3.0) corrected; the
+[dated section](#2026-09-09--no-release-password-recovery-read-back-two-stale-documents-caught-up)
+below.
+
 ⚠️ **This file skipped 3.4.0, 3.4.1 and 3.4.2 as well** — three backend-and-frontend releases
 between 3.3.0 and this one (the rating chart's replay fix among them), never recorded here. Fourth
 gap now, same cause as the first three.
@@ -61,6 +67,38 @@ read back from both platforms, and the evidence is in the table.
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
 
+## 2026-09-09 — no release: password recovery read back, two stale documents caught up
+
+Not a release; nothing running changed. A question — "what is the status of password recovery?" —
+answered from the running system rather than from this file, and this file turned out to be the
+weaker source.
+
+**What production says.** `/api/version` on the Heroku host reads `3.6.0`, and
+`GET /api/auth/password-reset/availability` answers `{"emailEnabled":false}`. `heroku config` on
+`footmania` lists database, JWT, CORS and VAPID variables and **not one `MAIL_*`** — the email
+half has been dark since the day it shipped (2026-08-27), and item 0b below, "then decide about
+`MAIL_*`", was never decided. **The admin-issued link is the only recovery path in production.**
+Anyone with no group admin to reach still has no way back into their account, which is the
+sentence 2.2.0 was meant to retire.
+
+**What the documents said, and no longer do.** `V46` (3.3.0, 2026-09-02) made redeeming a reset
+end every live session for the account — `PasswordResetService.redeem` calls `revokeSessions`
+beside the API-token revocation it always did. The password-reset contract still carried the
+2.2.0 callout that JWTs survive a reset for 24h, and
+[frontend/features/password-recovery](frontend/features/password-recovery.md) repeated it, and
+still read "cut on `next`, not deployed" thirteen days after the deploy. Both corrected:
+[#287](https://github.com/ricsnsuka/FootMania-Back/pull/287) (merge `a376ddd` into `next`, docs
+and one changelog line, **not deployed** — `main` has not moved since 3.6.0) and brain `247dd9a`.
+The old behaviour stays in the contract as a dated note rather than being deleted.
+
+**#287 was also the first outing of the one-job backend workflow** from 2026-09-08, and it went
+green: Build, Tests & Static Analysis in 5m41s, Version Check in 6s, the ruleset on `next`
+satisfied. The frontend's has still not run.
+
+**Where the feature-status table stands.** Its row for password recovery was already right
+(deployed, email dark) — it was the feature page and the contract that had drifted. Same lesson as
+the 2.5.0 and 3.2.0 gaps above: **the page nobody re-reads is the page that lies.**
+
 ## 2026-09-08 — no release: CI cut to one job, both branches protected, the agent files land
 
 Not a release; nothing running changed. Three things that change how the next one is made.
@@ -80,7 +118,8 @@ the OSV scan, `integrationTest`. Frontend: audit, type-check, lint, locales, `vi
 about 27 and 13. The change is documented in
 [CONTRIBUTING → CI runs once](CONTRIBUTING.md#ci-runs-once-on-the-pull-request--and-both-branches-are-protected--since-2026-09-08),
 and in each repo's workflow header. ⚠️ **Neither workflow has run yet** — the allowance was spent
-when they merged; the first PR after it resets is their first outing.
+when they merged; the first PR after it resets is their first outing. *Update 2026-09-09: the
+backend's ran on #287 and passed; the frontend's has not run yet.*
 
 **Both branches are protected, for the first time.** A ruleset on `next` requires the CI job green
 and the branch up to date before merging (which is what closes the gap the push run used to cover);
@@ -495,6 +534,10 @@ leaves the server. **Emailed links start working when `MAIL_HOST`, `MAIL_USERNAM
 **The admin-issued link works either way**, and is the path that is usable on the day this deploys.
 `GET /api/auth/password-reset/availability` reports which of the two a deployment has, and the login
 page reads it. See [password-recovery](frontend/features/password-recovery.md).
+
+*Still dark on 2026-09-09* — the availability endpoint read `false` and no `MAIL_*` variable exists
+on the dyno; see the [2026-09-09 section](#2026-09-09--no-release-password-recovery-read-back-two-stale-documents-caught-up).
+Since 3.3.0 a reset also ends the account's live sessions (`V46`), which this section predates.
 
 ### The push bug was the reason to prioritise the deploy
 
@@ -1360,16 +1403,16 @@ reason this repo exists.
 
 ## Suggested next steps
 
-**0. Deploy 2.2.0.** It is cut, green and sitting on `next` in both repos with `main` unmoved. The
-step-by-step is at the [top of this file](#what-is-left-to-do-in-order); the reason it is item zero
-rather than item ten is the push bug — on every shared device, one account's notifications are
-currently being delivered to whoever else uses that browser, and the fix is merged and not in front
-of anybody. Backend first, confirmed, then the frontend.
+~~**0. Deploy 2.2.0.**~~ ✅ Done 2026-08-27, backend then frontend, recorded in the
+[2.2.0 section](#220--shipped-2026-08-27-tagged-and-recorded-2026-08-28). The push bug that made it
+item zero is fixed in production since Heroku v71.
 
-**0b. Then decide about `MAIL_*`.** Password recovery deploys with its email half dark. The
-admin-issued link works without it, so this is not a blocker for the release — but "there is no way
-back into your account" only stops being true for people who can reach an admin until the config
-vars are set.
+**0b. Decide about `MAIL_*`.** ⚠️ **Still open on 2026-09-09, thirteen days after 2.2.0 deployed.**
+Production's availability endpoint reads `emailEnabled: false` and `heroku config` holds no
+`MAIL_*` at all, so the only way back into an account is a group admin issuing a link by hand. The
+decision is operational, not code: pick a provider, set `MAIL_HOST`, `MAIL_USERNAME`,
+`MAIL_PASSWORD`, `MAIL_FROM` and `MAIL_RESET_URL_BASE` on the dyno, and read the availability
+endpoint back as `true`. No deploy needed.
 
 1. ~~Wire `integrationTest` into CI and run it.~~ ✅ Done 2026-08-01/02. The tier is green on every
    pull request; `GuestIsolationIT`, `TenancySchemaIT` and `TenantIsolationIT` have all now
