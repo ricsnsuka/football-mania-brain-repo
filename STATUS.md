@@ -21,6 +21,16 @@ still said a reset leaves sessions alive (false since 3.3.0) corrected; the
 [dated section](#2026-09-09--no-release-password-recovery-read-back-two-stale-documents-caught-up)
 below.
 
+**Then 2026-09-09, evening, 3.8.0 shipped — both repos are on `3.8.0`, read back from both
+platforms** (Heroku v84, Netlify deploy `6aa1cde2`): a founder can ask the operator for a creation
+code from inside the app (`V52`, the ask box on `/groups/new`, the operator's alert on
+`/platform`), and a payment arrangement may now sit on another — the organiser asks the top of the
+chain for every share below it. Also carried: the payer replacement that had failed on PostgreSQL
+since delegation shipped, a guest entered for the member actually bringing them, the overlays that
+hold the page still, the payments tour, and the paperwork no longer naming MB WAY. The
+[3.8.0 section](#380--shipped-and-confirmed-2026-09-09-evening) below carries every row.
+
+
 **Then 2026-09-09, small hours, 3.7.0 shipped — both repos are on `3.7.0`, read back from both
 platforms** (Heroku v83, Netlify deploy `6aa0bb90`): search boxes on the players page, the members
 page and the match-plan roster, `GET /api/users?q=` behind the second, and the frontend's dependency
@@ -73,6 +83,38 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.8.0 — shipped and confirmed 2026-09-09, evening
+
+**The bell on the locked door, and chains on the ledger.** The create-group screen had said a code
+comes from the platform operator and never said how to reach one; now `POST /api/me/creation-code-request`
+records the ask, every operator gets a push and sees the open asks as an amber alert above the
+console's counters, and fulfilling one mints a code through the ledger, links it to the request and
+tells the requester — who finds it filled into the create-group form. `GET /api/push/preferences`
+lists only the caller's audience, so an operator sees one toggle. Then, folded in just before
+promotion: a payment delegation may sit on another (Rui answers for Bruno, Ricardo for Rui, Ricardo
+is asked for three shares, or two on a week he has no charge); the balances list names the top of
+each chain (`ultimatePayer*`), the weekly reminder goes to that person alone, and the only shape
+refused is a ring (`409`, "would go round in a circle"). BR-D3 in the delegation plan was relaxed
+the same evening. Also carried: the payer replacement flush fix (`PaymentDelegationReplaceIT`),
+`invitedByPlayerId` on the guest request, the overlay scroll-lock and outside-press fixes, the
+payments tour, and MB WAY gone from the paperwork. Contracts:
+[CREATION-CODE-REQUESTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/CREATION-CODE-REQUESTS-API-CONTRACT.md),
+[PAYMENTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md).
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.8.0`** — `build.gradle` and the `Procfile` jar name agree; `scripts/check-version-consistency.sh` (with `LC_ALL=C.UTF-8`) and the Version Check job both said so. Cut as [#293](https://github.com/ricsnsuka/FootMania-Back/pull/293); the chains landed after the cut as [#294](https://github.com/ricsnsuka/FootMania-Back/pull/294), writing into the already-stamped `[3.8.0]` section | **`3.8.0`** — `npm version 3.8.0 --no-git-tag-version`. Cut as [#162](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/162); the chains as [#163](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/163), same treatment |
+| `main` head | **`f8e9e98`** — `next` fast-forwarded onto `main` by `git push origin origin/next:refs/heads/main` after the Release Gate went green on [#295](https://github.com/ricsnsuka/FootMania-Back/pull/295); GitHub marked the PR merged on its own. `git log next..origin/main` prints nothing, both ways, this time | **`d38b2be`** — same route, after the backend was confirmed live; [#164](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/164) marked merged. `git log next..origin/main` prints nothing |
+| Running in production | **`f8e9e98`, Heroku release v84** (`heroku releases -a footmania --json`: "Deploy f8e9e980", 2026-09-09T21:20:39Z, succeeded; v83 was 3.7.0's `e7068e9`). `/api/version` reports `3.8.0` (build `2026-09-09T21:20:20.028Z`) and `/api/health` is `UP` on `3.8.0` at 21:21:25Z, read from the running process | **`d38b2be`, confirmed by asking Netlify**: deploy `6aa1cde2ddb1ac0008677df9`, `ready`, context `production`, `commit_ref` `d38b2bef7d547f36f42ae35f3cc0896bc96cc503` — equal to `main` — published `2026-09-09T21:22:40.135Z`, 60s build. The served bundle was also read back for a 3.8.0-only string before the record was fetched |
+| Latest migration | **V52** `group_creation_code_requests` — one new table, additive, **not a rollback boundary**. Applied on Heroku by Flyway at v84 start-up | — |
+| Tags | **`v3.8.0`** at `f8e9e98` | **`v3.8.0`** at `d38b2be` |
+| Tests | `./gradlew build` and `./gradlew integrationTest` green locally on #291, #294 and the cut (the replace IT now also proves a chain is two active rows and a ring is `409`, on PostgreSQL); CI green on every PR; Release Gate + Version Check green on #295 | `tsc`, eslint, locale check, 1344 unit tests, `npm run build` green; the one CI job green on #160, #162, #163; Release Gate green on #164. Visual suite run before and after the `globals.css` change in #160: the untouched tree still fails 28 of 38 (the stale baselines), the six new failures were exactly the changed captures, inspected, and only those six baselines were regenerated. The owner checked the UI locally before the cut; the chains landed after that check |
+
+**Known limits:** the ask box is per account, one open ask at a time; a guest still cannot bring a
+guest, now for the cap's sake rather than the ledger's; the 28 stale visual baselines remain the
+owner's call.
+
 
 ## 3.7.0 — shipped and confirmed 2026-09-09, small hours
 
