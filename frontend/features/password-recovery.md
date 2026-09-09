@@ -3,7 +3,7 @@
 Routes: `/forgot-password`, `/reset-password/<token>` · Auth: **public** ·
 Admin surface: `EditUserModal` → *Send a password reset link*
 
-**Added in:** 2.2.0 · **Status:** ⚠️ **cut on `next`, not deployed** ·
+**Added in:** 2.2.0 · **Status:** ✅ **deployed 2026-08-27** · ⚠️ **email half dark** — no `MAIL_*` on the dyno as of 2026-09-09, admin link only ·
 **Backend contract:** [`docs/api/PASSWORD-RESET-API-CONTRACT.md`](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PASSWORD-RESET-API-CONTRACT.md)
 
 Before 2.2.0 there was no way back into an account whose password nobody remembered. The only
@@ -114,8 +114,10 @@ would otherwise touch.
 It is surprising, so the screen says so. Finding out later, in silence, is worse — particularly for
 the one population that has these tokens, which is people running a watch shortcut on a match day.
 
-⚠️ **Existing JWTs are *not* invalidated.** They are stateless and there is no revocation list. The
-contract states it rather than glossing over it, and so does this page.
+**Live sessions are ended too, since 3.3.0.** Redeeming bumps the account's `token_version`
+(`V46`) and the backend refuses every JWT minted before it, so whoever else was signed in is out on
+their next request. Between 2.2.0 and 3.3.0 that was not so — JWTs were stateless with no
+revocation list — and both the contract and this page said so rather than glossing over it.
 
 **Redeeming does not sign anybody in**, either. A forwarded link, or one sitting in a mail gateway's
 log, must be a spent credential and not a session — so the page sends people to `/login`.
