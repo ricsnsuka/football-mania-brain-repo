@@ -21,6 +21,13 @@ still said a reset leaves sessions alive (false since 3.3.0) corrected; the
 [dated section](#2026-09-09--no-release-password-recovery-read-back-two-stale-documents-caught-up)
 below.
 
+**Then 2026-09-10, just after midnight, 3.8.1 shipped — a patch of 3.8.0 on both sides, read back
+from both platforms** (Heroku v85, Netlify deploy `6aa1fcc8`): an account with several groups could
+not ask for a creation code, because the new `/api/me` path was refused without a group header and
+the ask box hid the failure. The [3.8.1 section](#381--shipped-and-confirmed-2026-09-10-just-after-midnight)
+below carries every row.
+
+
 **Then 2026-09-09, evening, 3.8.0 shipped — both repos are on `3.8.0`, read back from both
 platforms** (Heroku v84, Netlify deploy `6aa1cde2`): a founder can ask the operator for a creation
 code from inside the app (`V52`, the ask box on `/groups/new`, the operator's alert on
@@ -83,6 +90,37 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.8.1 — shipped and confirmed 2026-09-10, just after midnight
+
+**The bell did not ring for the people most likely to press it.** `/api/me/creation-code-request`
+shipped in 3.8.0 outside `TenantResolver`'s group-agnostic set. An account with one group or none
+was resolved silently; an account holding several memberships with none chosen — the state the
+group picker leaves you in, and the picker is where "Create a group" lives — was answered `400`
+"This account belongs to several groups. Send the X-Group-Id header" on both the read and the ask.
+The frontend's ask box drew nothing until it knew the state of the ask, so that account saw only
+the code field and had nothing to report. The owner reported it the same evening; the Heroku log
+showed the 400s from their own attempts at 00:08 UTC. Backend: the path joins the set beside
+`/api/me/memberships` ([#296](https://github.com/ricsnsuka/FootMania-Back/pull/296)). Frontend:
+a failed read renders the box with the failure and a Try again button
+([#165](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/165)), so it can never vanish
+silently again. Contract:
+[CREATION-CODE-REQUESTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/CREATION-CODE-REQUESTS-API-CONTRACT.md).
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.8.1`** — cut as [#297](https://github.com/ricsnsuka/FootMania-Back/pull/297); `build.gradle`, `Procfile` and the Version Check agree | **`3.8.1`** — cut as [#166](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/166) |
+| `main` head | **`88e5364`** — `next` fast-forwarded onto `main` after the Release Gate on [#298](https://github.com/ricsnsuka/FootMania-Back/pull/298); `next..main` empty both ways | **`f3c22ee`** — same route after the backend was confirmed live, [#167](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/167); `next..main` empty both ways |
+| Running in production | **`88e5364`, Heroku release v85** ("Deploy 88e53643", 2026-09-10T00:40:52Z, succeeded). `/api/version` reports `3.8.1`, `/api/health` `UP` on `3.8.1` at 00:41:20Z | **`f3c22ee`, confirmed by asking Netlify**: deploy `6aa1fcc87443fc0008918a31`, `ready`, `production`, `commit_ref` `f3c22ee4116e9348d52dfeecf5795f79b9c5ad24` — equal to `main` — published `2026-09-10T00:42:44.362Z`, 58s build; the served bundle carried the 3.8.1-only string before the record was fetched |
+| Latest migration | none — still **V52**. Nothing here is a rollback boundary | — |
+| Tags | **`v3.8.1`** at `88e5364` | **`v3.8.1`** at `f3c22ee` |
+| Tests | `./gradlew build` green on #296 and the cut; `TenantResolverTest` proves the path is agnostic and a two-membership account resolves unbound on GET and POST; CI green; Release Gate green on #298 | `tsc`, eslint, locale check, 1345 unit tests, `npm run build` green; `CreateGroup.test.tsx` +1 for the failure state; CI green; Release Gate green on #167. No `globals.css` change |
+
+**Lesson:** a new `/api/me/*` path needs a `TenantResolver` decision in the same commit, and a
+screen that renders nothing while a query is unresolved must distinguish "loading" from "failed".
+The 3.8.0 controller tests could not have caught it — the resolver runs in the security filter,
+outside `@WebMvcTest`.
+
 
 ## 3.8.0 — shipped and confirmed 2026-09-09, evening
 
