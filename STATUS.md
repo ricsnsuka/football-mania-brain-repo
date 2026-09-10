@@ -21,6 +21,14 @@ still said a reset leaves sessions alive (false since 3.3.0) corrected; the
 [dated section](#2026-09-09--no-release-password-recovery-read-back-two-stale-documents-caught-up)
 below.
 
+**Then 2026-09-10, early afternoon, 3.8.2 shipped — a small patch on both sides: the draft's
+automatic captains now go to accounts seen in the last week** (`V53`, a nullable `last_login_at`
+stamped at login). Frontend read back from Netlify (deploy `6aa2a272`, `445475b` = `main`);
+**the backend was not read back** — the session that cut it could not reach Heroku, so the Heroku
+release number and `/api/version` are the two rows to fill in, and `v3.8.2` on the backend is
+placed once they are. The [3.8.2 section](#382--shipped-2026-09-10-early-afternoon-backend-readback-pending)
+below carries every row.
+
 **Then 2026-09-10, just after midnight, 3.8.1 shipped — a patch of 3.8.0 on both sides, read back
 from both platforms** (Heroku v85, Netlify deploy `6aa1fcc8`): an account with several groups could
 not ask for a creation code, because the new `/api/me` path was refused without a group header and
@@ -90,6 +98,39 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.8.2 — shipped 2026-09-10, early afternoon; backend readback pending
+
+**The armband goes to somebody who will be there.** Nothing recorded a login: `users` carried
+`created_at` and `updated_at` only, and `user_presence` (V41) is per group and written only while
+the chat stream is open, so a member who confirms matches but never opens chat has no row. `V53`
+adds a nullable `users.last_login_at`, stamped by a successful `POST /api/auth/login` through a
+bulk update that leaves `updated_at` and `@PreUpdate` alone; a failure to stamp is logged, never a
+500 for somebody holding a valid password. `DraftSessionService`'s automatic captain pick now
+considers only confirmed players whose linked account signed in within the last seven days —
+session JWTs live 24h with no refresh, so a week of silence is a real absence. Guests, unlinked
+players and quiet accounts keep their place in the pool the captains draft from; they just do not
+get the armband. When nobody qualifies (a group where nobody has signed in since the deploy) the
+old highest-rated rule applies, so a draft is never refused. Explicit captain ids are accepted
+regardless. The pool itself is never filtered — the owner's call, captains only. Backend
+[#299](https://github.com/ricsnsuka/FootMania-Back/pull/299); frontend
+[#168](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/168) is the create-draft copy in
+three languages, nothing else. Contract: the Draft Sessions rows of
+[API_REFERENCE](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md).
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.8.2`** — cut as [#300](https://github.com/ricsnsuka/FootMania-Back/pull/300); `build.gradle`, `Procfile` and the Version Check agree | **`3.8.2`** — cut as [#169](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/169) |
+| `main` head | **`adf7b12`** — `next` fast-forwarded onto `main` by `git push origin origin/next:refs/heads/main` after the Release Gate and Version Check went green on [#301](https://github.com/ricsnsuka/FootMania-Back/pull/301), at 12:27:40Z; GitHub marked the PR merged on its own. `git log next..origin/main` prints nothing, both ways | **`445475b`** — same route on [#170](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/170) at 12:28:34Z; `next..main` empty both ways |
+| Running in production | ⚠️ **Not read back.** The session that cut this release ran in a container whose egress proxy refuses every `herokuapp.com` host, and holds no Heroku login. Heroku builds `main` on push, so the expected running commit is `adf7b12`. Fill in from `heroku releases -a footmania` (the "Deploy adf7b121" row, its number and timestamp) and from `/api/version` (`3.8.2`) plus `/api/health` (`UP`, which doubles as the V53-applied evidence since Flyway runs on boot) | **`445475b`, confirmed by asking Netlify**: deploy `6aa2a272bd19220008c7ba3b`, `ready`, `production`, branch `main`, `commit_ref` `445475ba18f023a19ae914a3e9ced2df69ed0637` — equal to `main` — published `2026-09-10T12:29:32.339Z`, 55s build. Merged before the backend was confirmed, deliberately: the change is three locale strings and assumes nothing of the backend, which is the tolerance [CONTRIBUTING](CONTRIBUTING.md#deployment-order) asks for when the order cannot hold |
+| Latest migration | **V53** — `users.last_login_at`, nullable, no backfill. Additive; nothing here is a rollback boundary. Until an account signs in again it counts as not recently seen, so the first drafts after the deploy fall back to the old rule | — |
+| Tags | ⚠️ **`v3.8.2` not yet placed** — a tag is a claim about production, and production was not read. Place it at `adf7b12` once the Heroku row above is filled: `git tag -a v3.8.2 adf7b12 && git push origin v3.8.2`, annotated with that evidence | **`v3.8.2`** at `445475b`, annotated with the Netlify deploy id |
+| Tests | `./gradlew build` green on #299 and on the cut, SpotBugs included; 9 new unit tests (stale account skipped, unlinked or never-seen skipped, the window's edge, both fallbacks, explicit captain unaffected; login stamp on success, on refusal, contained on write failure); CI green; Release Gate green on #301. ⚠️ `./gradlew integrationTest` **not run** — no Docker in the session container — so V53 against PostgreSQL rests on the `/api/health` readback above | `tsc`, eslint, locale check, 1345 unit tests, `npm run build` green on the cut; CI green; Release Gate green on #170. No `globals.css` change |
+
+**Lesson:** a session without a route to production can cut, promote and confirm one side and
+not the other. Say which rows are missing rather than inferring them from a push that succeeded;
+the tag waits for the evidence, and the page names what still has to be read.
+
 
 ## 3.8.1 — shipped and confirmed 2026-09-10, just after midnight
 
