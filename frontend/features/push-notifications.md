@@ -19,6 +19,9 @@ src/services/pushService.ts                   API calls
 src/hooks/push/usePushNotifications.ts        React Query wrapper + state
 src/hooks/push/usePushDeviceClaim.ts          Whose channel is this? — asks the server
 src/components/pwa/PushDeviceClaim.tsx        Mounted app-wide from the root layout
+src/components/pwa/PushMessages.tsx           Mounted app-wide too — a push posted to the focused window becomes a toast (3.9.0)
+src/hooks/push/usePushMessages.ts             The listener, and useSuppressPushCategories for screens showing a category live
+src/lib/pushInApp.ts                          Envelope parser + payload → event toast
 src/features/settings/NotificationSettings.tsx  The UI
 src/types/push.ts                             DTOs
 public/sw.js                                  push + notificationclick handlers
@@ -205,8 +208,9 @@ about: retrofitting preferences once people are already over-notified is harder 
 
 ## Service worker
 
-`push` and `notificationclick` in `public/sw.js`. **`VERSION` is `v4`** (bumped from `v3` in
-2.2.0) — without a bump, existing installs keep the old worker and never gain what changed.
+`push` and `notificationclick` in `public/sw.js`. **`VERSION` is `v5`** (bumped from `v4` in
+3.9.0, from `v3` in 2.2.0) — without a bump, existing installs keep the old worker and never gain
+what changed.
 
 The handler runs with **no application code loaded** — no React, no router, no store — so the
 payload carries everything needed: `{ category, title, body, url, when }`.
@@ -233,6 +237,40 @@ Two decisions in that rendering are worth keeping:
   second tab. `includeUncontrolled: true` matters: without it a window not yet controlled by
   this worker is invisible and you get a duplicate tab beside the app already open.
 
+### Focused window: in-app, not the device (3.9.0)
+
+**The rule: a focused window of the app gets the push as an in-app toast and no device
+notification; anything else gets the device notification exactly as before.** Focused, not merely
+visible — a tab behind another window does not have the person's attention. There is no user
+setting; the per-category toggles keep deciding whether the notification exists at all.
+
+The decision lives in the worker, because the worker is the only place that both sees every push
+and can ask the browser about open windows (`clients.matchAll`, then the one client with
+`focused === true`). After the `!title` guard it posts the **raw payload** —
+`{ type: 'PUSH', payload: { category, title, body, url, when } }` — to that one window and returns;
+`when` travels unformatted because the page has a locale and the worker does not. One window only,
+never every tab. Browsers exempt a push from the must-show-a-notification rule precisely when the
+site has a focused window, which is the only case the branch covers.
+
+On the page, `usePushMessages` (mounted once from the root layout via `PushMessages`, beside the
+claim) listens on `navigator.serviceWorker`, ignores anything that is not the envelope, and
+dispatches an `event` toast: title, body with the moment appended in the app's locale, and an
+**Open** action that goes where a tap on the device notification would. Events fade after eight
+seconds; `DRAFT_YOUR_TURN` and `CONFIRMATION_DEADLINE` stay until dismissed, like an error.
+`role="status"`, polite, never `alert`.
+
+**Two screens drop the toast for what they already show live.** The chat page registers
+`CHAT_MESSAGE` while its stream is connected; the captain-pick board registers `DRAFT_YOUR_TURN`
+and `DRAFT_COMPLETED` while its stream is up. `useSuppressPushCategories(owner, categories)` writes
+one owner's entry and clears it on unmount, and the listener reads the union at delivery time. The
+worker cannot know what a page is showing, which is why this is not in `sw.js`.
+
+**Verify the browser matrix on a production build before relying on it** — the worker does not
+register in development, and Chrome desktop, Android and the installed iOS app differ on silent
+pushes. Focused tab → toast and no banner; tab behind another window → banner; app closed →
+banner; the iOS app in the foreground. If a platform shows the banner regardless, `tag: category`
+still collapses it; record that rather than fight it.
+
 ---
 
 ## Testing it end to end
@@ -247,7 +285,9 @@ locally:
 4. DevTools → Application → Service Workers → **Push** sends a synthetic payload without any
    backend at all. Paste `{"category":"MATCH_REMINDER","title":"Test","body":"Hello","url":"/match-plans"}`.
 
-Step 4 is the quickest way to iterate on the handler itself.
+Step 4 is the quickest way to iterate on the handler itself. Since 3.9.0 it exercises both
+branches: with the app's tab focused the payload arrives as an in-app toast; switch to another
+window first and it arrives as the device notification.
 
 ---
 
@@ -259,7 +299,8 @@ Step 4 is the quickest way to iterate on the handler itself.
 | `src/tests/components/NotificationSettings.test.tsx` | Renders nothing before the environment is known, each unavailable reason, toggles rendered from the server list, absence-from-muted-means-on, subscribe/unsubscribe wiring, refused permission, and per-category busy state |
 | `src/tests/hooks/usePushDeviceClaim.test.tsx` | The claim is per-account, the cache key is not shared between accounts, and the toggle's third state while the server has not answered |
 | `src/tests/lib/pushSignOut.test.ts` | Release before the token is cleared, the 2.5s cap, failures swallowed, and that the browser subscription is left in place |
-| `src/tests/lib/serviceWorkerPush.test.ts` | `sw.js`'s first tests, **run against the real shipped file** rather than a copy — `when` rendering, the fixed date format, and that a payload without `when` still produces a notification |
+| `src/tests/lib/serviceWorkerPush.test.ts` | `sw.js`'s tests, **run against the real shipped file** rather than a copy — `when` rendering, the fixed date format, that a payload without `when` still produces a notification, and since 3.9.0 the focused-window branch: the raw payload goes to the one focused window and nothing is shown, an unfocused window still gets the device notification, and the title guard runs first. The harness awaits the promise the worker hands to `waitUntil`, because the handler is asynchronous now |
+| `src/tests/hooks/usePushMessages.test.tsx` | The envelope parser (strict about a title, lenient about the rest), the payload → toast mapping with the locale-formatted moment and `persist` for deadline categories, delivery into the store, foreign worker messages ignored, a registered category dropped, the listener removed on unmount, and owner isolation of `useSuppressPushCategories` |
 
 `public/sw.js` had no unit tests until 2.2.0, for the reason given in [pwa.md](pwa.md). It now has
 `serviceWorkerPush.test.ts`, which loads the shipped file rather than a fixture — the DevTools and
