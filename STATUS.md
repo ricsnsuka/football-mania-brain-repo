@@ -21,6 +21,15 @@ still said a reset leaves sessions alive (false since 3.3.0) corrected; the
 [dated section](#2026-09-09--no-release-password-recovery-read-back-two-stale-documents-caught-up)
 below.
 
+**Then 2026-09-12, small hours, 3.9.0 shipped — both repos are on `3.9.0`, read back from both
+platforms** (Heroku v87, Netlify deploy `6aa4a52f`): the whole Footmania board in one release —
+refusals carry a stable `code` the app translates, the leaderboard cards follow the season
+selector, a player must keep at least one preferred position and the dashboard asks until they
+do, the dashboard says when messages wait, player and team of the week per match format behind a
+button, and a push that reaches the open app becomes an in-app toast and refreshes what it is
+about. The [3.9.0 section](#390--shipped-and-confirmed-2026-09-12-small-hours) below carries every
+row. ⚠️ **3.8.2 (2026-09-10, `V53` default captains) skipped this page** — fifth gap, same cause.
+
 **Then 2026-09-10, just after midnight, 3.8.1 shipped — a patch of 3.8.0 on both sides, read back
 from both platforms** (Heroku v85, Netlify deploy `6aa1fcc8`): an account with several groups could
 not ask for a creation code, because the new `/api/me` path was refused without a group header and
@@ -90,6 +99,55 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.9.0 — shipped and confirmed 2026-09-12, small hours
+
+**The board, emptied.** Every issue filed on the Footmania project board on 2026-09-11 (four epics
+in this repo, [#71](https://github.com/ricsnsuka/football-mania-brain-repo/issues/71)
+[#72](https://github.com/ricsnsuka/football-mania-brain-repo/issues/72)
+[#73](https://github.com/ricsnsuka/football-mania-brain-repo/issues/73)
+[#74](https://github.com/ricsnsuka/football-mania-brain-repo/issues/74), twelve sub-issues across
+the two code repos, milestone `3.9.0` in all three) went out together. Backend: `ApiError` gains
+`code` from an `ErrorCode` enum ([#309](https://github.com/ricsnsuka/FootMania-Back/pull/309));
+`GET /api/leaderboards?seasonId=` while streaks stay all-time
+([#310](https://github.com/ricsnsuka/FootMania-Back/pull/310)); `GET /api/honours/week?weekOf=&matchType=`,
+player and team of the week per format, ISO week UTC, keeper slot only for listed keepers,
+eligible at half the week's matches, player of the week weighted 50/25/25 rating/results/impact,
+cached on read ([#311](https://github.com/ricsnsuka/FootMania-Back/pull/311)); `@Size(min = 1)`
+on both player update DTOs, create unchanged
+([#312](https://github.com/ricsnsuka/FootMania-Back/pull/312)). Frontend: refusals shown through
+one `userFacingMessage` rule with `apiErrors.*` translations
+([#182](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/182),
+[#183](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/183)); leaderboard cards follow
+the selector ([#184](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/184)); the Team of
+the week button and panel ([#185](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/185));
+the positions line on the dashboard and the at-least-one rule in the edit form
+([#186](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/186)); unread messages on the
+dashboard and a dot on the chat link
+([#187](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/187)); the service worker (`v5`)
+hands a push to the focused window as an `event` toast instead of a device notification
+([#188](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/188)) and that push invalidates
+the queries its category names ([#189](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/189)).
+Contracts: [WEEK-HONOURS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/WEEK-HONOURS-API-CONTRACT.md)
+and the updated leaderboards, players and error-handling files under `docs/api/`.
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.9.0`** — cut as [#313](https://github.com/ricsnsuka/FootMania-Back/pull/313); `build.gradle`, `Procfile` and the Version Check agree | **`3.9.0`** — cut as [#190](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/190) |
+| `main` head | **`bd393d4`** — `next` fast-forward pushed onto `main` (no promotion PR; the ruleset's admin bypass), `next..main` empty both ways | **`ccc1d8d`** — same route after the backend was confirmed live; `next..main` empty both ways |
+| Running in production | **`bd393d4`, Heroku release v87** ("Deploy bd393d4f", 2026-09-12T01:03:58Z, succeeded). `/api/version` reports `3.9.0` (buildTime 01:03:38Z), `/api/health` `UP` on `3.9.0` at 01:08:00Z | **`ccc1d8d`, confirmed by asking Netlify**: deploy `6aa4a52f61df280007507ea5`, `ready`, `production`, `commit_ref` `ccc1d8d019f93320269421c321093a9cb5e51965` — equal to `main` — published `2026-09-12T01:05:51.400Z`, 62s build |
+| Latest migration | none — still **`V53`** (3.8.2). Nothing here is a rollback boundary | — |
+| Tags | **`v3.9.0`** at `bd393d4` | **`v3.9.0`** at `ccc1d8d` |
+| Tests | `./gradlew build` green on every PR and on the cut (8m05s CI job); `integrationTest` green on #310; `verifyTestSplit` now covers `exception.` in the controllers slice; `check-version-consistency.sh` green | `tsc`, eslint (4 warnings, 0 errors), locale check, 137 files / 1423 unit tests, `npm run build` green; CI green on #190. Playwright visual baselines deliberately **not** refreshed: the e2e fixtures leave the dashboard and rankings pages on an error page, so the snapshots were stale before this release and remain so |
+
+**Not yet verified:** the in-app notification rule (#188) on a phone. The service worker is only
+registered in production builds, and browsers differ on silent pushes, so the owner tests Chrome
+desktop, Android and the installed iOS app against this deploy. If a device shows nothing while
+the app is open, the fallback is the worker's `showNotification` branch, unchanged from 3.8.x.
+
+**Lesson:** the release page gap keeps recurring at patch releases (3.8.2 now). The release skill
+in each repo ends at the PR; the write-back to this page is step 8 of the procedure and still
+lives in nobody's checklist but this sentence.
 
 ## 3.8.1 — shipped and confirmed 2026-09-10, just after midnight
 
