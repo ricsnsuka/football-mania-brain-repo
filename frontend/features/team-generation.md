@@ -2,7 +2,9 @@
 
 The Team Generation feature allows privileged users to generate teams for a confirmed match plan. It supports two modes:
 
-- **Auto Generate** — algorithmic generation (Balanced, Random, Snake Draft)
+- **Auto Generate** — algorithmic generation (Balanced, Random, Snake Draft, Form Based, Optimal), and
+  **Manual**, where the organiser places each starter on a side by hand and the server only checks
+  the two lists
 - **Captain Pick Draft** — an interactive turn-based draft where two captains pick players alternately in real time
 
 Access is restricted to **MANAGER** roles for full management. A member with no roles can also reach this page, but only in read-only spectator mode and only when there is an active (`OPEN` or `COMPLETED`) draft pick session in progress. If no active session exists, Basic Users see a "no active sessions" message.
@@ -36,9 +38,12 @@ identically on every match ever played.
 
 1. **Select a match plan** — Choose a confirmed plan that has not expired or been used.
 2. **See confirmed players** — Shows all players who confirmed attendance with skill ratings.
-3. **Choose generation type** — `BALANCED`, `RANDOM`, `SNAKE_DRAFT`, `FORM_BASED` or `OPTIMAL`.
+3. **Choose generation type** — `BALANCED`, `RANDOM`, `SNAKE_DRAFT`, `FORM_BASED`, `OPTIMAL` or
+   `MANUAL`.
 4. **Generate preview** — API returns a `MatchPreviewDTO` showing proposed team compositions.
-5. **Confirm or regenerate** — Review the preview, then confirm to create the match.
+   `MANUAL` first needs every starter placed (see below).
+5. **Confirm or regenerate** — Review the preview, then confirm to create the match. `MANUAL`
+   asks twice before it does.
 
 ### API Endpoints
 
@@ -59,6 +64,7 @@ pins that.
 |---|---|---|
 | `FORM_BASED` | Form window, a number input | `params[formWindow]` |
 | `OPTIMAL` | "Even out team shape", a slider over `[0, 2]` in `0.25` steps | `params[shapeWeight]` |
+| `MANUAL` | The picker below the confirmed players | `params[teamA]`, `params[teamB]` — comma-joined ids |
 
 **λ is a slider, not a number box.** The useful thing about it is "more of this, less of that", not
 the figure — a slider says that without asking anybody what 0.75 means. The exact value is printed
@@ -74,6 +80,38 @@ before they help.
 > returned null, so `FORM_BASED` always used its default window of 5. Nothing on either side
 > asserted the wire format, so nothing failed — it simply looked like it worked. Both halves are
 > pinned by tests now.
+
+### Manual — the organiser defines the teams (2026-09-15)
+
+Choosing `MANUAL` opens a picker under the confirmed players: one row per **starter** with an
+A / B pair, a running `Team A: 3/7 · Team B: 2/7 · 9 still to place` line, and a Clear button.
+Tapping a side places the player; tapping it again takes them off; a full side's button is
+disabled for anyone not already on it, so it refuses an eighth rather than bumping somebody.
+Preview stays disabled until both sides hold exactly half.
+
+**The pool is the starters, not everybody confirmed.** The server splits the first *N* confirmed
+in confirmation order and checks the two lists against exactly that pool, so the picker lists the
+rows with `isStarter: true` (sliced to *N* for a payload that predates the flag) and never a
+reserve. Showing a reserve would let the organiser build a split the server must refuse.
+
+**The preview is the ordinary one.** The server names each side after its highest-rated player,
+returns the averages and the delta, and the balance gauge draws them — the same rules as every
+computed method, deliberately: a hand-picked match is not exempt from being looked at.
+
+**It asks twice.** Creating the match from a manual preview replaces the button with a first
+question (what the push does: the plan is closed, the players are told the teams are drawn, any
+fee is charged), then a second ("are you sure", on a red button), each with a Cancel back to the
+preview. The computed methods still push on the first click. Two questions rather than one
+because there is no algorithm between the organiser's hand and the result — a slip here is the
+match, and the plan cannot be generated from again.
+
+**A `422` on the push is "pick again".** It is the server saying a listed player is no longer in
+the starting pool: somebody withdrew after the preview and the first reserve came up. The hook
+invalidates the confirmations, the page clears the pick and the preview and says so in a toast.
+Any other failure is the ordinary "failed to create match".
+
+Changing the plan, the method, or any placement drops the preview and any open question — they
+described a split that no longer exists.
 
 ### Validation Rules
 
@@ -219,6 +257,8 @@ All user-facing strings live under the `teamGeneration` and `captainPick` namesp
 
 Key groups:
 - `teamGeneration.*` — page title, setup form, player count, preview, confirm
+- `teamGeneration.manual.*` — the picker (title, hint, side names, counts, clear) and
+  `teamGeneration.manual.confirm.*`, the two questions, their buttons and the "pick again" toast
 - `captainPick.setup.*` — setup form labels and actions
 - `captainPick.board.*` — draft board labels, turn indicators, actions
 - `captainPick.status.*` — status badge text

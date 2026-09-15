@@ -25,7 +25,9 @@ There are **two ways** to generate teams:
    spectators. Results in a persisted `Match` when confirmed.
 
 The generation type is stored on the `Match` entity as `generationType` and a human-readable
-summary is stored in `generationNotes` for every non-MANUAL match.
+summary is stored in `generationNotes` for every match drawn through the plan flow — `MANUAL`
+included since 2026-09-15. Only a match created directly through `POST /api/matches/manual`, with
+no plan behind it, carries `null`.
 
 ---
 
@@ -33,7 +35,7 @@ summary is stored in `generationNotes` for every non-MANUAL match.
 
 | Type | Status | Auth | Data Required | When to Use | Extra Params |
 |------|:------:|------|---------------|-------------|--------------|
-| `MANUAL` | ✅ Active | GROUP_ADMIN / MASTER | None — caller provides IDs | Full control over team composition | None |
+| `MANUAL` | ✅ Active | GROUP_ADMIN / MASTER | None — the organiser provides the two lists | Full control over team composition | `teamA`, `teamB` (comma-separated player ids, both required) |
 | `BALANCED` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` only | Default go-to for casual matches | None |
 | `RANDOM` | ✅ Active | GROUP_ADMIN / MASTER | None | Fun/casual games where fairness is not the goal | None |
 | `SNAKE_DRAFT` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` only | Transparent, explainable distribution players enjoy | None |
@@ -42,8 +44,10 @@ summary is stored in `generationNotes` for every non-MANUAL match.
 | `CAPTAIN_PICK` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` | Social engagement, when captains are meaningful | `captainAId`, `captainBId` (Long, optional) |
 | `OPTIMAL` | ✅ Active | GROUP_ADMIN / MASTER | `skillRating` (+ history for `metric=form`, + `goalkeeperWillingness`) | When the averages matching is not enough — balances team *shape* and goalkeeper cover too | `metric`, `shapeWeight`, `keeperWeight`, `formWindow` |
 
-> **MANUAL** is used via `POST /api/matches` directly (the caller provides `playerIds` per team).
-> All other types use the `POST /api/match-plans/{id}/generate` flow.
+> Every type, `MANUAL` included, goes through the `POST /api/match-plans/{id}/generate` flow.
+> `MANUAL` also has an older, plan-less route — `POST /api/matches/manual` with explicit team
+> lists — kept for a match that was never planned in the app. See the deep-dive for why the plan
+> route exists.
 
 ---
 
@@ -132,8 +136,10 @@ POST /api/match-plans/{id}/generate
 | Parameter | Location | Type | Default | Description |
 |-----------|----------|------|---------|-------------|
 | `id` | Path | Long | — | ID of the match plan |
-| `generationType` | Query | String | `"BALANCED"` | One of: `BALANCED`, `RANDOM`, `SNAKE_DRAFT`, `FORM_BASED`, `STREAK_AWARE`, `CAPTAIN_PICK` |
+| `generationType` | Query | String | `"BALANCED"` | One of: `BALANCED`, `RANDOM`, `SNAKE_DRAFT`, `FORM_BASED`, `STREAK_AWARE`, `CAPTAIN_PICK`, `OPTIMAL`, `MANUAL` |
 | `params[formWindow]` | Query | int | `5` | **FORM_BASED only** — number of recent matches to consider |
+| `params[teamA]` | Query | `1,3,5` | — | **MANUAL only, required** — the player ids on Team A |
+| `params[teamB]` | Query | `2,4,6` | — | **MANUAL only, required** — the player ids on Team B |
 | `params[captainAId]` | Query | Long | auto | **CAPTAIN_PICK only** — player ID for Team A captain |
 | `params[captainBId]` | Query | Long | auto | **CAPTAIN_PICK only** — player ID for Team B captain |
 
@@ -215,17 +221,49 @@ POST /api/match-plans/{id}/generate/confirm
 
 ### 🟢 MANUAL
 
-**Status:** ✅ Active  
-**Flow:** Direct match creation via `POST /api/matches` — no match plan required.
+**Status:** ✅ Active — through the plan flow since 2026-09-15; direct creation since v4.0.0  
+**Extra Params:** `teamA`, `teamB` — comma-separated player ids, both required on the plan route
 
-The caller explicitly provides `playerIds` for each team in `MatchCreateDTO`. The server
-validates player count matches the `matchType` but does not reorder or rebalance.
+The organiser defines both sides; nothing is computed and nothing is rebalanced.
 
-**When to use:** When an admin knows exactly who goes on which team and wants full control.
+**Two routes, one enum value.**
 
-**generationNotes:** `null` (no algorithm was applied)
+1. **Through the match plan** — `POST /api/match-plans/{id}/generate?generationType=MANUAL&params[teamA]=1,3,5,7,9&params[teamB]=2,4,6,8,10`,
+   then `/generate/confirm` with the identical query. `ManualGenerationStrategy` is an ordinary
+   strategy behind the factory: it reads the two lists, checks that together they are *exactly*
+   the starting pool (the first *N* confirmed in confirmation order — the same pool every other
+   strategy is handed, never a reserve), every starter once, nobody else, equal sides, and returns
+   them in the order listed. The rest is the flow every other strategy has: the preview names each
+   side after its highest-rated player, confirm creates the match, marks the plan `GENERATED` and
+   generates its charges.
+2. **Direct** — `POST /api/matches/manual` with explicit team lists and no plan. Unchanged, and
+   still the only route for a match nobody planned in the app.
 
-**Example:**
+**Why the plan route exists.** Until 2026-09-15 the plan flow *parsed* `MANUAL` and then refused
+it with a `400` pointing at the direct route. That left a hole: an organiser who wanted to pick the
+teams by hand for a plan the players had confirmed on had to create the match directly, and the
+plan stayed `CONFIRMED` — still offered for generation, its fees never charged, its players never
+told the teams were drawn. Everything that makes a plan "done" hangs off the `GENERATED`
+transition, and the direct route never touches a plan. Adding a strategy was the smallest change
+that gave a manual pick all of that: no new endpoint, no new DTO, the frontend sends two more
+`params[...]` and the two calls stay identical.
+
+**Refused, not repaired.** A missing or non-numeric list, sides that are not each half the pool,
+or a player on both sides is a `400`. A listed player who is *not in the starting pool* is a
+`422` naming the ids: the request was well-formed when it was made and the pool moved under it —
+somebody withdrew between preview and confirm and the first reserve came up. The organiser
+chose these teams on purpose; silently moving a player to make the numbers work would hand them
+a match they did not approve, so the strategy never does.
+
+**Not validated by the strategy:** the pool size and the plan's state. Both are checked by
+`MatchPlanService` before any strategy runs, as for every other type.
+
+**When to use:** When the organiser knows exactly who goes on which team and wants full control.
+
+**generationNotes:** `MANUAL (organiser-defined): avgA=7.20 avgB=7.05 Δ=0.15` on the plan route;
+`null` on the direct route (no strategy ran).
+
+**Example (direct route):**
 
 ```bash
 curl -X POST http://localhost:8080/api/matches \
@@ -698,7 +736,8 @@ Every generated `MatchDTO` (and `MatchPreviewDTO`) includes a `generationNotes` 
 
 | GenerationType | Format | Example |
 |---|---|---|
-| `MANUAL` | `null` | *(no value)* |
+| `MANUAL` (plan route) | `MANUAL (organiser-defined): avgA=X avgB=Y Δ=Z` | `MANUAL (organiser-defined): avgA=7.20 avgB=7.05 Δ=0.15` |
+| `MANUAL` (direct route) | `null` | *(no value)* |
 | `BALANCED` | `BALANCED (greedy): avgA=X avgB=Y Δ=Z` | `BALANCED (greedy): avgA=7.53 avgB=7.50 Δ=0.03` |
 | `RANDOM` | `RANDOM: avgA=X avgB=Y (no balance guarantee)` | `RANDOM: avgA=6.80 avgB=7.23 (no balance guarantee)` |
 | `SNAKE_DRAFT` | `SNAKE_DRAFT: avgA=X avgB=Y Δ=Z` | `SNAKE_DRAFT: avgA=7.06 avgB=7.11 Δ=0.05` |
@@ -732,6 +771,8 @@ Every generated `MatchDTO` (and `MatchPreviewDTO`) includes a `generationNotes` 
 | `STREAK_AWARE` called | 422 | `STREAK_AWARE generation is not yet available. It will be enabled once CalculationService is live.` |
 | `captainAId` not in confirmed pool | 400 | Descriptive message indicating invalid player ID |
 | `captainBId` not in confirmed pool | 400 | Descriptive message indicating invalid player ID |
+| `MANUAL` without `teamA` / `teamB`, a non-numeric id, unequal sides, or a player on both | 400 | Names the parameter, the token, the expected size or the duplicated ids |
+| `MANUAL` with a player no longer in the starting pool | 422 | `Player(s) [99] are not in the starting selection of this match plan any more. Pick the teams again…` |
 | FORM_BASED player has zero match history | — | Silently falls back to `skillRating` for that player |
 | `formWindow` ≤ 0 | 400 | Validation error on the `params` map |
 | All players same `skillRating` | — | Any distribution is valid; BALANCED alternates starting with Team A |
@@ -784,7 +825,7 @@ Is player history / CalculationService data reliable?
 
 | Algorithm | Balance Quality | Requires History | Deterministic | Social Engagement | Complexity |
 |-----------|:--------------:|:----------------:|:-------------:|:-----------------:|:----------:|
-| `MANUAL` | User-defined | ❌ | ✅ | ⭐ | None |
+| `MANUAL` | User-defined | ❌ | ✅ | ⭐ | O(n) validation |
 | `BALANCED` | ⭐⭐⭐⭐⭐ | ❌ | ✅ | ⭐⭐ | O(n log n) |
 | `RANDOM` | ⭐ | ❌ | ❌ | ⭐⭐⭐⭐⭐ | O(n) |
 | `SNAKE_DRAFT` | ⭐⭐⭐⭐⭐ | ❌ | ✅ | ⭐⭐⭐ | O(n log n) |
@@ -829,6 +870,8 @@ service/teamgeneration/
 ├── SnakeDraftGenerationStrategy.java   ← SNAKE_DRAFT
 ├── FormBasedGenerationStrategy.java    ← FORM_BASED
 ├── CaptainPickGenerationStrategy.java  ← CAPTAIN_PICK (server-side)
+├── OptimalPartitionStrategy.java       ← OPTIMAL
+├── ManualGenerationStrategy.java       ← MANUAL (organiser-defined, validated, never rebalanced)
 ├── StreakAwareGenerationStrategy.java  ← STREAK_AWARE (placeholder — throws 422)
 └── TeamGenerationStrategyFactory.java  ← resolves strategy by GenerationType
 ```
