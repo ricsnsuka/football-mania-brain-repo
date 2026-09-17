@@ -66,7 +66,8 @@ the same commit as the code, next to its changelog entry, with strings in the th
 The frontend's `docs/guides/release-highlights.md` is the how-to; `AGENTS.md` lists it with the
 rest of the same-commit paperwork. The release skill renames the file to `v<version>.ts` when it
 stamps `[Unreleased]`, and `scripts/check-releases.mjs` (CI) holds every stamped file to a
-matching changelog section and resolvable keys. A release with no highlights is legitimate.
+matching changelog section and resolvable keys, and refuses one for a patch (decision 6). A minor
+release with no highlights is legitimate.
 
 ## Decisions taken 2026-09-17, not to be re-opened
 
@@ -78,6 +79,11 @@ matching changelog section and resolvable keys. A release with no highlights is 
    person opens it and the walk-through continues when the target appears. The ghost cursor in
    the design mock is not built.
 5. Existing tour keys are not bumped for a new card; `v1` → `v2` stays for a redesigned page.
+6. **Only minor and major releases carry a What's new.** A patch ships fixes and opens no dialog;
+   `unreleased.ts` must be empty when a patch is cut, or the release is a minor one. The frontend's
+   release skill stops on it and `scripts/check-releases.mjs` fails a stamped patch file. 3.11.1 is
+   the one exception, being the release that introduced the feature. Since patches have no file,
+   they do not count toward the three-release cap either.
 
 ## Out of scope
 
