@@ -186,8 +186,16 @@ constant is the only cache-busting lever.
 
 The worker does **not** call `skipWaiting()` on install. Activating immediately would swap the
 worker out from under pages that are already open. A new worker takes over once every tab has
-closed — or when the page posts `{ type: 'SKIP_WAITING' }`, which is the hook for an "update
-available" prompt if one is added later (`NotificationWidget` is the natural place).
+closed — or when the page posts `{ type: 'SKIP_WAITING' }`.
+
+**The "update available" prompt (3.11.1, FootMania-Simple-Front #207).** `ServiceWorkerRegistrar`
+watches the registration (`src/lib/swUpdate.ts`): a worker already `waiting` at registration, or
+one found and `installed` during the visit, while a controller exists — a first install is not an
+update — raises one persistent `event` toast, *A new version is ready*, with a **Reload** action.
+Nothing reloads on its own: dismissing it leaves the worker waiting and the next visit gets it as
+before. Reload posts `SKIP_WAITING` and reloads once on `controllerchange`, so the release's
+in-app What's new (see [whats-new.md](whats-new.md)) opens on the same visit as the deploy. The
+toast's `action` field is the first non-navigating button a notification carries.
 
 ### Not registered in development
 
