@@ -54,9 +54,10 @@ CVE fixes. The [3.7.0 section](#370--shipped-and-confirmed-2026-09-09-small-hour
 every row, including the one thing that went sideways (the backend promotion was rebase-merged, so
 `main` and `next` agree in tree but not in SHA; a back-merge squared it).
 
-⚠️ **This file skipped 3.4.0, 3.4.1 and 3.4.2 as well** — three backend-and-frontend releases
-between 3.3.0 and this one (the rating chart's replay fix among them), never recorded here. Fourth
-gap now, same cause as the first three.
+⚠️ **This file skipped 3.4.2 as well**, and until 2026-09-17 also 3.4.0 and 3.4.1 — three
+backend-and-frontend releases between 3.3.0 and this one (the rating chart's replay fix among
+them). The 3.4.0 and 3.4.1 sections below were written by the session that cut them and merged
+late (brain repo #60); 3.4.2 remains unrecorded. Fourth gap, same cause as the first three.
 
 *The previous snapshot, kept for its two honest gaps:* **Snapshot: 2026-09-03, after 3.3.0 — one
 batched backlog release, both halves together.** Six bugs and two features cut and deployed in a
@@ -410,6 +411,55 @@ engine, [#276](https://github.com/ricsnsuka/FootMania-Back/pull/276) calibration
 [#144](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/144) cut,
 [#145](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/145) chip shapes; and the
 promotions #280 and #146.
+
+## 3.4.1 — shipped 2026-09-03, backend only, not read back
+
+**What opening the chart for the first time found.** Every point in a career was dated the same
+day, and segments were drawn climbing where the tooltip said the rating fell. One cause:
+`skill_rating_history.created_at` is when a row was *written*, and a recalculation deletes a
+match's rows and inserts fresh ones — so a career replayed in one pass carries a single instant,
+and the season transitions, the one kind of row nothing rewrites, sort in front of every
+recalculated match and break the chain the line is drawn through.
+
+Now dated and ordered by `COALESCE(match.matchDate, history.createdAt)`, tie-broken by `id`, in one
+place (`SkillRatingHistory.occurredAt()`) and for every read of that table that means career order.
+**One of those is not cosmetic:** `CalculationService` reads the season's first entry as where a
+player stood when it began, and a season holding one recalculated match had that match sorted last.
+Back#269, cut in #270, promoted in #271. No migration, no client change — the frontend stays on
+3.4.0.
+
+⚠️ **Not read back**, same network policy as 3.4.0, and `v3.4.1` could not be pushed either.
+
+The part worth keeping is in the FEAT-5 section of
+[product/backlog-2026-09.md](product/backlog-2026-09.md): the `id` tie-break was added for exactly
+the right reason and fixed the wrong half, and no test caught it because every test that touched
+the ordering handed the list over already ordered.
+
+## 3.4.0 — shipped 2026-09-03, frontend confirmed, backend not read back
+
+**A match has a chat, and a rating has a history you can see.** FEAT-5 and FEAT-6 from the 2026-09
+backlog, cut the morning after 3.3.0 rather than held for a bigger batch — Back#267/Front#138 into
+`next`, Back#268/Front#139 promoting `next` → `main`, backend first. One migration, `V49`. Both
+Release Gates green; no open pull requests in either repo at the cut, nothing from Dependabot
+waiting on `main`. `next` fast-forwarded to `main` in both repos within the same minute as each
+promotion, so step 7 was not left for later this time.
+
+**What is weaker than usual, and why.** The frontend is confirmed the normal way — Netlify deploy
+`6a98f683`, `ready`, `commit_ref` equal to the promotion merge, published `04:25:25Z`. The backend
+is not: the session that ran the release had no route to Heroku at all, so step 4 of the
+procedure — confirm the dyno booted the right jar before the frontend goes — was put to the owner,
+who directed the frontend release to proceed. Both 3.4.0 features call endpoints 3.3.0 does not
+have; if the backend deploy had not landed, the chart would show its error state and the chat
+button would toast a failure rather than anything worse, which is the reason this was an
+acceptable risk and not the reason it was taken. **`/api/version` and the Heroku release number
+are the two lines to fill in above**, and `v3.4.0` waits on them in both repos — tags could not be
+pushed from that session either.
+
+**What building it taught, recorded in [the backlog](product/backlog-2026-09.md):** the match
+chat's race has a second half the group-wide channel's never had (the roster commits with the
+conversation, or the *winner* loses), FEAT-5's "evict wherever `MATCHES` is" missed the season
+transition, and the frontend's `npm ci` had been refusing `next`'s lockfile for a release without
+CI noticing, because CI runs `npm install`.
 
 ## 3.1.1 — shipped and confirmed 2026-08-31, after lunch (frontend only)
 
