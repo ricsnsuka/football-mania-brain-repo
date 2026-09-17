@@ -210,6 +210,10 @@ have decided, not when `next` is green.
    accumulates.
 2. **Close the CHANGELOG section.** `[Unreleased]` becomes `[X.Y.Z] — date`, and the note says what
    shipped, including whether it went out dark.
+   Frontend, in the same step: `src/releases/unreleased.ts` becomes `v X.Y.Z.ts` (listed in
+   `src/releases/index.ts`, an empty `unreleased.ts` left behind) — that file is the in-app "What's
+   new" for the release, written by the pull requests like the changelog; see
+   [frontend/features/whats-new.md](frontend/features/whats-new.md). Empty is fine for a patch.
 3. **Merge `next` into `main`** in both repos. Fast-forward if it can. **The release branch merges
    into `next` first** — it is a pull request like any other, and merging it straight into `main` is
    what broke this on 2026-08-05 (see below).
