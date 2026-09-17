@@ -38,7 +38,7 @@ the organiser talks to, not where a cent is recorded.
 | Standing debtor → payer designation | Per-charge or per-match delegation |
 | Who-covers-whom in the organiser's balances view | Any change to how charges are generated or split |
 | Recording who physically handed over a payment | Transferring debt between ledgers |
-| Lump-sum entry allocated across covered debtors | Delegation chains (A pays for B who pays for C) |
+| Lump-sum entry allocated across covered debtors | ~~Delegation chains (A pays for B who pays for C)~~ — in scope since 3.8.0, see BR-D3 |
 | Ending / replacing a delegation | Debtor consent flows — the organiser records reality |
 
 ---
@@ -118,7 +118,7 @@ Notes:
 |---|------|-------|
 | BR-D1 | A debtor has **at most one active payer** | `uq_active_delegation_per_debtor`. Replacing = end the old row, insert a new one |
 | BR-D2 | No self-delegation | `chk_no_self_delegation` |
-| BR-D3 | **No chains, resolved or stored.** A player who is an active *debtor* cannot be assigned as a *payer*, and a player who is an active *payer* cannot be given a delegate | Enforced in-service (a CHECK cannot see other rows). One level keeps "who do I chase" a lookup, not a graph walk. Relaxing this later is additive |
+| BR-D3 | **Chains yes, rings no** *(relaxed 2026-09-09, 3.8.0)*. An arrangement may sit on another: A answers for B, B answers for C, and the organiser asks A for all three shares — or for two, on a week A has no charge. What is refused is a ring: making a player answer for somebody who already, directly or through others, answers for them | Enforced in-service (a CHECK cannot see other rows): `DelegationGraph.answersFor` walks up from the proposed payer and the write is `409` if it reaches the debtor. "Who do I chase" is `ultimatePayerOf`, a walk with a visited set, built once per request from `findAllActive`. Until 3.8.0 the rule was **no chains at all**, both halves `409`, chosen because one level kept the lookup a lookup; the owner asked for the second level on 2026-09-09 and the relaxation was, as promised, additive — the schema is unchanged |
 | BR-D4 | Delegation never moves a ledger row | Charges stay on the debtor; payments stay on the debtor. Only `paid_by_player_id` records the hand that held the cash |
 | BR-D5 | A delegation is ended, never deleted | Same as ledger voids: a record about money responsibility is an argument waiting to happen |
 | BR-D6 | Ending a delegation changes nothing retroactively | Outstanding balances already sit on each debtor; the organiser simply goes back to chasing them directly |

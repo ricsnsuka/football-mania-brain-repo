@@ -81,6 +81,24 @@ three different offsets.
 Amounts are `tabular-nums` and right-aligned in a fixed column shared by the tables and the group
 cards, so figures line up on the decimal point across the whole page.
 
+## Guided tour
+
+Added on branch `feat/payments-tour` (2026-09-09, unreleased at the time of writing), the last page
+to get one. `usePaymentsTour` in `src/features/payments/` runs over the same `usePageTour` hook as
+the rest, key `tour:payments:v1`. Six steps at most, in reading order: an anchorless welcome, the
+balance card, the history, then behind the `ORGANIZER` gate the roster section, the delegation
+groups and the row actions. Anchored steps drop out at start time when their element is absent or
+hidden, which is what makes one step list serve every role: an unlinked member (the 409 state)
+sees the welcome alone; an organiser with no delegations never hears about groups.
+
+The actions step names two anchors, `payments-actions` on the table cell and
+`payments-actions-mobile` on the card, because each is `display: none` while the other exists —
+the dashboard's nav step is the precedent. Every row carries the attribute and the document-order
+first is the top row, the most in debt.
+
+The page's ready flag is `!isLoading && !(isOrganiser && balancesLoading)`: for an organiser the
+tour waits for the balances query too, or it would start before the table it points at mounted.
+
 ## File map
 
 | Layer | File |

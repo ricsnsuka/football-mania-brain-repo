@@ -1,35 +1,68 @@
 # Project Status
 
-**Snapshot: 2026-09-03, after 3.4.1 — two features and, hours later, the fix for what opening one
-of them found.** The rating history chart (FEAT-5) and the match chat (FEAT-6) shipped in 3.4.0;
-3.4.1 is the backend-only follow-up that dates the chart by when its matches were played.
-**The backend is on `3.4.1`, the frontend on `3.4.0`** — the fix needed no client change — and
-`next` is identical to `main` in both.
+**Snapshot: 2026-09-05, small hours, after 3.6.0 — the rank ladder's honours (rung badges, two
+season awards), shipped dark like the ladder itself; group 1 backfilled and read, the switch still
+off for every group.** **Both repos are on `3.6.0`**, read back from both platforms; the full
+record is the [3.6.0 section](#360--shipped-and-confirmed-2026-09-05-small-hours) below, then
+[3.5.0](#350--shipped-and-confirmed-2026-09-04-evening). **The table under this header still
+describes 3.3.0** — not rewritten, deliberately, because its rows carry mojibake from an earlier
+edit and a partial rewrite would leave two truths side by side. The release sections carry every
+row the procedure asks for. **The Heroku release number was read back this time** (v82), the first
+release since 3.1.0 to have it — the CLI now holds a login, done from an ordinary terminal.
 
-⚠️ **The backend's running version was not read back for this release, and the frontend went out
-on the owner's say-so rather than on that evidence.** The session that cut 3.4.0 could reach
-GitHub and Netlify but not Heroku — `*.herokuapp.com`, `api.heroku.com` and GitHub's deployments
-API were all refused by its network policy — so neither `/api/version` nor the Heroku release
-number is in the table below. The owner directed the frontend release to proceed. **Fill in the
-backend line from `heroku releases -a footmania` and `/api/version`, and expect `3.4.0`**; if the
-running commit is not `40eedf8`, that is the first thing to fix. The frontend line is confirmed by
-asking Netlify, as every release since 3.0.0 has been.
+**Since that snapshot, 2026-09-08, no release:** CI is one job per repo on pull requests only, both
+permanent branches carry a ruleset, and `AGENTS.md` + `.claude/` landed in both repos — the
+[dated section](#2026-09-08--no-release-ci-cut-to-one-job-both-branches-protected-the-agent-files-land)
+below, and [CONTRIBUTING](CONTRIBUTING.md#ci-runs-once-on-the-pull-request--and-both-branches-are-protected--since-2026-09-08).
 
-⚠️ **`v3.4.0` is not tagged in either repo.** Same session, same policy: pushes to `refs/heads/*`
-went through, pushes to `refs/tags/*` were answered `403`. Place both tags at the deployed commits
-once the backend line is confirmed — `40eedf8` backend, `a68b889` frontend — and annotate them
-with the evidence, per step 6 of the release procedure.
+**And 2026-09-09, no release:** password recovery read back from production — deployed since
+2.2.0, **email half still dark**, no `MAIL_*` ever set on the dyno — and the two documents that
+still said a reset leaves sessions alive (false since 3.3.0) corrected; the
+[dated section](#2026-09-09--no-release-password-recovery-read-back-two-stale-documents-caught-up)
+below.
 
-**Both features went out dark, which is the normal case here** — one user, who reads the app on a
-phone and is content to find things in production. Recorded as a decision in
-[the backlog](product/backlog-2026-09.md#decisions-taken-so-they-are-not-silently-re-litigated) so
-that release notes stop flagging it.
+**Then 2026-09-12, small hours, 3.9.0 shipped — both repos are on `3.9.0`, read back from both
+platforms** (Heroku v87, Netlify deploy `6aa4a52f`): the whole Footmania board in one release —
+refusals carry a stable `code` the app translates, the leaderboard cards follow the season
+selector, a player must keep at least one preferred position and the dashboard asks until they
+do, the dashboard says when messages wait, player and team of the week per match format behind a
+button, and a push that reaches the open app becomes an in-app toast and refreshes what it is
+about. The [3.9.0 section](#390--shipped-and-confirmed-2026-09-12-small-hours) below carries every
+row. ⚠️ **3.8.2 (2026-09-10, `V53` default captains) skipped this page** — fifth gap, same cause.
 
-**The first look found one bug, fixed in 3.4.1.** The FEAT-5 chart dated every point in a career
-the same day and drew segments climbing where the rating fell — one cause,
-`skill_rating_history.created_at` being a write timestamp a recalculation resets. Back#269. The
-detail, and the part worth keeping about how a correct-sounding tie-break fixed the wrong half, is
-in the FEAT-5 section of [product/backlog-2026-09.md](product/backlog-2026-09.md).
+**Then 2026-09-10, just after midnight, 3.8.1 shipped — a patch of 3.8.0 on both sides, read back
+from both platforms** (Heroku v85, Netlify deploy `6aa1fcc8`): an account with several groups could
+not ask for a creation code, because the new `/api/me` path was refused without a group header and
+the ask box hid the failure. The [3.8.1 section](#381--shipped-and-confirmed-2026-09-10-just-after-midnight)
+below carries every row.
+
+
+**Then 2026-09-09, evening, 3.8.0 shipped — both repos are on `3.8.0`, read back from both
+platforms** (Heroku v84, Netlify deploy `6aa1cde2`): a founder can ask the operator for a creation
+code from inside the app (`V52`, the ask box on `/groups/new`, the operator's alert on
+`/platform`), and a payment arrangement may now sit on another — the organiser asks the top of the
+chain for every share below it. Also carried: the payer replacement that had failed on PostgreSQL
+since delegation shipped, a guest entered for the member actually bringing them, the overlays that
+hold the page still, the payments tour, and the paperwork no longer naming MB WAY. The
+[3.8.0 section](#380--shipped-and-confirmed-2026-09-09-evening) below carries every row.
+
+
+**Then 2026-09-09, small hours, 3.7.0 shipped — both repos are on `3.7.0`, read back from both
+platforms** (Heroku v83, Netlify deploy `6aa0bb90`): search boxes on the players page, the members
+page and the match-plan roster, `GET /api/users?q=` behind the second, and the frontend's dependency
+CVE fixes. The [3.7.0 section](#370--shipped-and-confirmed-2026-09-09-small-hours) below carries
+every row, including the one thing that went sideways (the backend promotion was rebase-merged, so
+`main` and `next` agree in tree but not in SHA; a back-merge squared it).
+
+⚠️ **This file skipped 3.4.2 as well**, and until 2026-09-17 also 3.4.0 and 3.4.1 — three
+backend-and-frontend releases between 3.3.0 and this one (the rating chart's replay fix among
+them). The 3.4.0 and 3.4.1 sections below were written by the session that cut them and merged
+late (brain repo #60); 3.4.2 remains unrecorded. Fourth gap, same cause as the first three.
+
+*The previous snapshot, kept for its two honest gaps:* **Snapshot: 2026-09-03, after 3.3.0 — one
+batched backlog release, both halves together.** Six bugs and two features cut and deployed in a
+single pass. Both repos were on `3.3.0`; the backend skipped 3.2.0 to get there, which is how the
+two got back in step.
 
 ⚠️ **This file skipped 3.2.0 too** — a frontend release between 3.1.1 and this one, never recorded
 here. That is the *second* such gap, after 2.5.0, and the pattern is now clear enough to name:
@@ -58,15 +91,326 @@ read back from both platforms, and the evidence is in the table.
 | | Backend | Frontend |
 |---|---|---|
 | Branch | `main` (production), `next` (integration) | `main` (production), `next` (integration) |
-| `next` head | `b187910` — identical to `main`, fast-forwarded to the promotion merge the same minute; `git log next..main` prints nothing | `a68b889` — identical to `main`, same check |
-| Release | **`3.4.1`** — `build.gradle` and the `Procfile` jar name agree, and the Version Check job said so on #270 and again on the promotion | **`3.4.0`** — unchanged by 3.4.1, which needed no client change. `package.json` and both root `version` entries in `package-lock.json` agree, via `npm install --package-lock-only` |
-| Running in production | ⚠️ **Not read back, twice now.** `main` is `b187910` (the merge of #271, 2026-09-03 ~05:15 UTC) and Heroku builds every push to `main`, so the deploy started; the same network policy blocked confirming it. **Fill in from `heroku releases -a footmania` and `/api/version` (expect `3.4.1`).** `V49` shipped with 3.4.0 and 3.4.1 adds none, so `/api/health` `UP` remains the migration evidence | **`a68b889`, confirmed by asking Netlify**: deploy `6a98f68341e5490008f98a01`, `ready`, context `production`, `commit_ref` `a68b8891575211e60067210d2d1af104f7f53d8f` — equal to the promotion merge — published `2026-09-03T04:25:25.329Z`, 47s build |
-| `main` head | `b187910` — **3.4.1**: the rating history dated and ordered by when each movement happened. On top of **3.4.0** (`40eedf8`): `GET /api/players/{id}/rating-history` (FEAT-5), `POST /api/matches/{id}/chat` and `DELETE /api/chat/conversations/{id}/me` (FEAT-6), `V49` | `a68b889` — **3.4.0**: the rating history chart on the profile card (FEAT-5); the match chat button, match-dated chat titles and leaving a group chat (FEAT-6) |
+| `next` head | `3eeddb0` â identical to `main`, checked against the remote: `git log next..origin/main` prints nothing | `0999bd3` â identical to `main`, same check against `origin/main`, not a stale local ref |
+| Release | **`3.3.0`** â `build.gradle` and the `Procfile` jar name agree, and the Version Check job says so | **`3.3.0`** â `package.json` and both root `version` entries in `package-lock.json`, via `npm install --package-lock-only` |
+| Running in production | **`3eeddb0`.** `/api/version` reports `3.3.0` (build `2026-09-02T23:55:20.239Z`) and `/api/health` is `UP` on `3.3.0` â read from the running process, so the jar that booted is the right one. â ï¸ **Heroku's own release number was not read back**: the CLI wanted an interactive login. Fill it in from `heroku releases -a footmania`. The health check doubles as the migration evidence â Flyway runs on boot, so `UP` means V46âV48 applied | **`0999bd3`, confirmed by asking Netlify**: deploy `6a98b86013e2130008d24c82`, `ready`, context `production`, `commit_ref` `0999bd35a5a3c4670225bd9b61d12e7b004e79a8` â equal to this merge commit â published `2026-09-03T00:00:17.301Z`, 47s build |
+| `main` head | `3eeddb0` â **3.3.0**: drafted matches retire their plan and bill (BUG-1), FULL_TIME completes the match (BUG-3), session revocation + `POST /api/auth/logout` (BUG-5), the poll stays open to team generation and reserves are told (FEAT-3), weekly fee reminders off by default (FEAT-4), and `tomcat-embed-core` past three CRITICAL advisories | `0999bd3` â **3.3.0**: cost controls survive kickoff (BUG-2), the dashboard card says whether you are playing and offers a lone withdraw past the deadline (FEAT-3), logout ends the session server-side (BUG-5), names for `FEE_REMINDER` and `RESERVE_PROMOTED`, `browserslist` past its advisory |
 | Working tree | clean | clean |
-| Tests | **`./gradlew build` green** locally on every branch, and every CI job green on `#265`–`#271` including Testcontainers — the only place `MatchChatIT` and `RatingHistoryOrderIT` have ever run, Docker being unavailable where both were written. `RatingHistoryOrderIT` is the reproduction of the 3.4.1 bug and passed on the fix branch, which is what makes the fix proved rather than argued | **1140 tests across 116 files, all passing**, `npm run build`, `type-check` and `lint` green on `#136`–`#139`. Untouched by 3.4.1 |
-| Latest migration | **`V49__match_chat.sql`**. One this release: a nullable `match_id` on `chat_conversations` with a partial unique index and `ON DELETE SET NULL`. Additive, so the 3.3.0 jar starts against this schema unchanged and **rollback stays a redeploy**. Numbered V49 because the spec's V46 had become session revocation in 3.3.0 | — |
-| Deployed through | ⚠️ **`V49` expected, not confirmed** — applied on boot if the 3.4.0 jar booted; `/api/health` `UP` on `3.4.0` is the evidence to collect. Confirmed through `V48` as of 3.3.0. The standing boundaries are unchanged: `V42` and `V40` — see the 2.2.0 section | — |
-| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ **`v3.4.0` and `v3.4.1` not yet placed** — at `40eedf8` and `b187910` once the running commit is confirmed; the cutting session could not push tags (403 on `refs/tags`, both times). ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ **`v3.4.0` not yet placed** — belongs at `a68b889`, Netlify deploy `6a98f683`; same 403 on tags. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+| Tests | **`./gradlew build` green** on `next` after every merge, and all CI jobs green on `#257`â`#264`. Exit codes read directly rather than through a pipe â a piped `\| tail` reports the pager's status and a failed build reads as green, which cost one false "passed" report this release | **1118 tests across 115 files, all passing**, `npm run build` green and `npm audit --audit-level=high` at 0 vulnerabilities on `next` after all five merges. â ï¸ Visual: baselines **not** re-verified â see hazard 7. â ï¸ **No browser check before shipping**: three user-facing surfaces changed and none was opened |
+| Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
+| Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
+| Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.9.0 — shipped and confirmed 2026-09-12, small hours
+
+**The board, emptied.** Every issue filed on the Footmania project board on 2026-09-11 (four epics
+in this repo, [#71](https://github.com/ricsnsuka/football-mania-brain-repo/issues/71)
+[#72](https://github.com/ricsnsuka/football-mania-brain-repo/issues/72)
+[#73](https://github.com/ricsnsuka/football-mania-brain-repo/issues/73)
+[#74](https://github.com/ricsnsuka/football-mania-brain-repo/issues/74), twelve sub-issues across
+the two code repos, milestone `3.9.0` in all three) went out together. Backend: `ApiError` gains
+`code` from an `ErrorCode` enum ([#309](https://github.com/ricsnsuka/FootMania-Back/pull/309));
+`GET /api/leaderboards?seasonId=` while streaks stay all-time
+([#310](https://github.com/ricsnsuka/FootMania-Back/pull/310)); `GET /api/honours/week?weekOf=&matchType=`,
+player and team of the week per format, ISO week UTC, keeper slot only for listed keepers,
+eligible at half the week's matches, player of the week weighted 50/25/25 rating/results/impact,
+cached on read ([#311](https://github.com/ricsnsuka/FootMania-Back/pull/311)); `@Size(min = 1)`
+on both player update DTOs, create unchanged
+([#312](https://github.com/ricsnsuka/FootMania-Back/pull/312)). Frontend: refusals shown through
+one `userFacingMessage` rule with `apiErrors.*` translations
+([#182](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/182),
+[#183](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/183)); leaderboard cards follow
+the selector ([#184](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/184)); the Team of
+the week button and panel ([#185](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/185));
+the positions line on the dashboard and the at-least-one rule in the edit form
+([#186](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/186)); unread messages on the
+dashboard and a dot on the chat link
+([#187](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/187)); the service worker (`v5`)
+hands a push to the focused window as an `event` toast instead of a device notification
+([#188](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/188)) and that push invalidates
+the queries its category names ([#189](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/189)).
+Contracts: [WEEK-HONOURS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/WEEK-HONOURS-API-CONTRACT.md)
+and the updated leaderboards, players and error-handling files under `docs/api/`.
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.9.0`** — cut as [#313](https://github.com/ricsnsuka/FootMania-Back/pull/313); `build.gradle`, `Procfile` and the Version Check agree | **`3.9.0`** — cut as [#190](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/190) |
+| `main` head | **`bd393d4`** — `next` fast-forward pushed onto `main` (no promotion PR; the ruleset's admin bypass), `next..main` empty both ways | **`ccc1d8d`** — same route after the backend was confirmed live; `next..main` empty both ways |
+| Running in production | **`bd393d4`, Heroku release v87** ("Deploy bd393d4f", 2026-09-12T01:03:58Z, succeeded). `/api/version` reports `3.9.0` (buildTime 01:03:38Z), `/api/health` `UP` on `3.9.0` at 01:08:00Z | **`ccc1d8d`, confirmed by asking Netlify**: deploy `6aa4a52f61df280007507ea5`, `ready`, `production`, `commit_ref` `ccc1d8d019f93320269421c321093a9cb5e51965` — equal to `main` — published `2026-09-12T01:05:51.400Z`, 62s build |
+| Latest migration | none — still **`V53`** (3.8.2). Nothing here is a rollback boundary | — |
+| Tags | **`v3.9.0`** at `bd393d4` | **`v3.9.0`** at `ccc1d8d` |
+| Tests | `./gradlew build` green on every PR and on the cut (8m05s CI job); `integrationTest` green on #310; `verifyTestSplit` now covers `exception.` in the controllers slice; `check-version-consistency.sh` green | `tsc`, eslint (4 warnings, 0 errors), locale check, 137 files / 1423 unit tests, `npm run build` green; CI green on #190. Playwright visual baselines deliberately **not** refreshed: the e2e fixtures leave the dashboard and rankings pages on an error page, so the snapshots were stale before this release and remain so |
+
+**Not yet verified:** the in-app notification rule (#188) on a phone. The service worker is only
+registered in production builds, and browsers differ on silent pushes, so the owner tests Chrome
+desktop, Android and the installed iOS app against this deploy. If a device shows nothing while
+the app is open, the fallback is the worker's `showNotification` branch, unchanged from 3.8.x.
+
+**Lesson:** the release page gap keeps recurring at patch releases (3.8.2 now). The release skill
+in each repo ends at the PR; the write-back to this page is step 8 of the procedure and still
+lives in nobody's checklist but this sentence.
+
+## 3.8.1 — shipped and confirmed 2026-09-10, just after midnight
+
+**The bell did not ring for the people most likely to press it.** `/api/me/creation-code-request`
+shipped in 3.8.0 outside `TenantResolver`'s group-agnostic set. An account with one group or none
+was resolved silently; an account holding several memberships with none chosen — the state the
+group picker leaves you in, and the picker is where "Create a group" lives — was answered `400`
+"This account belongs to several groups. Send the X-Group-Id header" on both the read and the ask.
+The frontend's ask box drew nothing until it knew the state of the ask, so that account saw only
+the code field and had nothing to report. The owner reported it the same evening; the Heroku log
+showed the 400s from their own attempts at 00:08 UTC. Backend: the path joins the set beside
+`/api/me/memberships` ([#296](https://github.com/ricsnsuka/FootMania-Back/pull/296)). Frontend:
+a failed read renders the box with the failure and a Try again button
+([#165](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/165)), so it can never vanish
+silently again. Contract:
+[CREATION-CODE-REQUESTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/CREATION-CODE-REQUESTS-API-CONTRACT.md).
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.8.1`** — cut as [#297](https://github.com/ricsnsuka/FootMania-Back/pull/297); `build.gradle`, `Procfile` and the Version Check agree | **`3.8.1`** — cut as [#166](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/166) |
+| `main` head | **`88e5364`** — `next` fast-forwarded onto `main` after the Release Gate on [#298](https://github.com/ricsnsuka/FootMania-Back/pull/298); `next..main` empty both ways | **`f3c22ee`** — same route after the backend was confirmed live, [#167](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/167); `next..main` empty both ways |
+| Running in production | **`88e5364`, Heroku release v85** ("Deploy 88e53643", 2026-09-10T00:40:52Z, succeeded). `/api/version` reports `3.8.1`, `/api/health` `UP` on `3.8.1` at 00:41:20Z | **`f3c22ee`, confirmed by asking Netlify**: deploy `6aa1fcc87443fc0008918a31`, `ready`, `production`, `commit_ref` `f3c22ee4116e9348d52dfeecf5795f79b9c5ad24` — equal to `main` — published `2026-09-10T00:42:44.362Z`, 58s build; the served bundle carried the 3.8.1-only string before the record was fetched |
+| Latest migration | none — still **V52**. Nothing here is a rollback boundary | — |
+| Tags | **`v3.8.1`** at `88e5364` | **`v3.8.1`** at `f3c22ee` |
+| Tests | `./gradlew build` green on #296 and the cut; `TenantResolverTest` proves the path is agnostic and a two-membership account resolves unbound on GET and POST; CI green; Release Gate green on #298 | `tsc`, eslint, locale check, 1345 unit tests, `npm run build` green; `CreateGroup.test.tsx` +1 for the failure state; CI green; Release Gate green on #167. No `globals.css` change |
+
+**Lesson:** a new `/api/me/*` path needs a `TenantResolver` decision in the same commit, and a
+screen that renders nothing while a query is unresolved must distinguish "loading" from "failed".
+The 3.8.0 controller tests could not have caught it — the resolver runs in the security filter,
+outside `@WebMvcTest`.
+
+
+## 3.8.0 — shipped and confirmed 2026-09-09, evening
+
+**The bell on the locked door, and chains on the ledger.** The create-group screen had said a code
+comes from the platform operator and never said how to reach one; now `POST /api/me/creation-code-request`
+records the ask, every operator gets a push and sees the open asks as an amber alert above the
+console's counters, and fulfilling one mints a code through the ledger, links it to the request and
+tells the requester — who finds it filled into the create-group form. `GET /api/push/preferences`
+lists only the caller's audience, so an operator sees one toggle. Then, folded in just before
+promotion: a payment delegation may sit on another (Rui answers for Bruno, Ricardo for Rui, Ricardo
+is asked for three shares, or two on a week he has no charge); the balances list names the top of
+each chain (`ultimatePayer*`), the weekly reminder goes to that person alone, and the only shape
+refused is a ring (`409`, "would go round in a circle"). BR-D3 in the delegation plan was relaxed
+the same evening. Also carried: the payer replacement flush fix (`PaymentDelegationReplaceIT`),
+`invitedByPlayerId` on the guest request, the overlay scroll-lock and outside-press fixes, the
+payments tour, and MB WAY gone from the paperwork. Contracts:
+[CREATION-CODE-REQUESTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/CREATION-CODE-REQUESTS-API-CONTRACT.md),
+[PAYMENTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md).
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.8.0`** — `build.gradle` and the `Procfile` jar name agree; `scripts/check-version-consistency.sh` (with `LC_ALL=C.UTF-8`) and the Version Check job both said so. Cut as [#293](https://github.com/ricsnsuka/FootMania-Back/pull/293); the chains landed after the cut as [#294](https://github.com/ricsnsuka/FootMania-Back/pull/294), writing into the already-stamped `[3.8.0]` section | **`3.8.0`** — `npm version 3.8.0 --no-git-tag-version`. Cut as [#162](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/162); the chains as [#163](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/163), same treatment |
+| `main` head | **`f8e9e98`** — `next` fast-forwarded onto `main` by `git push origin origin/next:refs/heads/main` after the Release Gate went green on [#295](https://github.com/ricsnsuka/FootMania-Back/pull/295); GitHub marked the PR merged on its own. `git log next..origin/main` prints nothing, both ways, this time | **`d38b2be`** — same route, after the backend was confirmed live; [#164](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/164) marked merged. `git log next..origin/main` prints nothing |
+| Running in production | **`f8e9e98`, Heroku release v84** (`heroku releases -a footmania --json`: "Deploy f8e9e980", 2026-09-09T21:20:39Z, succeeded; v83 was 3.7.0's `e7068e9`). `/api/version` reports `3.8.0` (build `2026-09-09T21:20:20.028Z`) and `/api/health` is `UP` on `3.8.0` at 21:21:25Z, read from the running process | **`d38b2be`, confirmed by asking Netlify**: deploy `6aa1cde2ddb1ac0008677df9`, `ready`, context `production`, `commit_ref` `d38b2bef7d547f36f42ae35f3cc0896bc96cc503` — equal to `main` — published `2026-09-09T21:22:40.135Z`, 60s build. The served bundle was also read back for a 3.8.0-only string before the record was fetched |
+| Latest migration | **V52** `group_creation_code_requests` — one new table, additive, **not a rollback boundary**. Applied on Heroku by Flyway at v84 start-up | — |
+| Tags | **`v3.8.0`** at `f8e9e98` | **`v3.8.0`** at `d38b2be` |
+| Tests | `./gradlew build` and `./gradlew integrationTest` green locally on #291, #294 and the cut (the replace IT now also proves a chain is two active rows and a ring is `409`, on PostgreSQL); CI green on every PR; Release Gate + Version Check green on #295 | `tsc`, eslint, locale check, 1344 unit tests, `npm run build` green; the one CI job green on #160, #162, #163; Release Gate green on #164. Visual suite run before and after the `globals.css` change in #160: the untouched tree still fails 28 of 38 (the stale baselines), the six new failures were exactly the changed captures, inspected, and only those six baselines were regenerated. The owner checked the UI locally before the cut; the chains landed after that check |
+
+**Known limits:** the ask box is per account, one open ask at a time; a guest still cannot bring a
+guest, now for the cap's sake rather than the ledger's; the 28 stale visual baselines remain the
+owner's call.
+
+
+## 3.7.0 — shipped and confirmed 2026-09-09, small hours
+
+**Search boxes, and the API parameter they needed.** The players page, the members page and the
+match-plan roster (managers and group admins only) each got a search box. The first and the last
+filter what they already hold, by name (and email on the players page), ignoring case and accents.
+The members page is server-paginated, so `GET /api/users` gained an optional `q` — case-insensitive
+substring of username, first name, last name or email, `LIKE` wildcards literal, blank meaning
+everyone. The frontend also carried its dependency CVE fixes (Next 16.3.4 for two unauthenticated
+RCE advisories, sharp 0.35.4, js-yaml 4.3.2, vitest 4.1.11), which the CVE-scan step had started
+failing on. No migration. Contract:
+[API_REFERENCE](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md)
+(Users).
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.7.0`** — `build.gradle` and the `Procfile` jar name agree; `scripts/check-version-consistency.sh` (with `LC_ALL=C.UTF-8`, it still fails under the default Git Bash locale) and the Version Check job both said so | **`3.7.0`** — `npm version 3.7.0 --no-git-tag-version` bumped `package.json` and both root `version` entries in `package-lock.json` and touched nothing else, a cleaner route than last time's `npm install --package-lock-only` |
+| `main` head | **`e7068e9`** — ⚠️ **not the same SHA as the release merge on `next`** (`7258186`): [#290](https://github.com/ricsnsuka/FootMania-Back/pull/290) was merged with GitHub's *rebase* option, which rewrites SHAs even when a fast-forward was possible, so `main` got eight rebased commits with the identical tree. `origin/main` was then merged back into `next` (`688bff1`), so `git log next..origin/main` prints nothing. Lesson: promote `next` to `main` with `git push origin origin/next:main`, as the frontend did this time | **`acc94b6`** — `next` fast-forwarded onto `main` by `git push origin origin/next:refs/heads/main` after the backend was confirmed live; GitHub marked [#158](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/158) merged on its own. `git log next..origin/main` prints nothing |
+| Running in production | **`e7068e9`, Heroku release v83** (`heroku releases -a footmania`: "Deploy e7068e95", 2026-09-09 02:50:09 +0100; v82 was 3.6.0's `a57f290`). `/api/version` reports `3.7.0` (build `2026-09-09T01:49:43.994Z`) and `/api/health` is `UP` on `3.7.0` at 01:50:43Z, read from the running process | **`acc94b6`, confirmed by asking Netlify**: deploy `6aa0bb90469e4c0008df7ce6`, `ready`, context `production`, `commit_ref` `acc94b625ff72a6f59396500ff995bf0aef6982b` — equal to `main` — published `2026-09-09T01:52:31.035Z`, 76s build. The owner confirmed both halves live from the browser |
+| Latest migration | none — still **V51**. Nothing in 3.7.0 is a rollback boundary | — |
+| Tags | **`v3.7.0`** at `e7068e9`, annotated with the Heroku v83 + `/api/version` + `/api/health` evidence | **`v3.7.0`** at `acc94b6`, annotated with the Netlify deploy-id evidence |
+| Tests | `./gradlew build` and `./gradlew integrationTest` green locally (the new `TenantIsolationIT` case runs the `q` JPQL against real PostgreSQL); CI green on #288, #289; Release Gate + Version Check green on #290 | `tsc`, eslint, locale check, 1274 unit tests, `npm run build` green; the one CI job green on #155, #156, #157. ⚠️ **The Playwright visual baselines on `next` were already stale before this work** — the untouched tree fails 28 of 38 (login lacks the "Forgot your password?" link, nav gained entries, the players and users baselines captured an error page). #155 fails the identical 28, so no regression, but the snapshots cannot vouch for the new boxes; **no baseline was updated**. The owner checked the UI live after the deploy |
+
+**Known limit:** the members search is not accent-folded server-side (`LOWER … LIKE`); the two
+client-side searches are. Folding it would need `unaccent` and a migration.
+
+**Still outstanding on the backend:** GitHub reports nine Dependabot alerts on the default branch
+(2 high, 7 moderate), untouched by this release.
+
+The seven pull requests: backend [#288](https://github.com/ricsnsuka/FootMania-Back/pull/288) `q`,
+[#289](https://github.com/ricsnsuka/FootMania-Back/pull/289) cut, #290 promotion; frontend
+[#155](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/155) search boxes,
+[#156](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/156) CVE fixes,
+[#157](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/157) cut, #158 promotion.
+
+## 2026-09-09 — no release: password recovery read back, two stale documents caught up
+
+Not a release; nothing running changed. A question — "what is the status of password recovery?" —
+answered from the running system rather than from this file, and this file turned out to be the
+weaker source.
+
+**What production says.** `/api/version` on the Heroku host reads `3.6.0`, and
+`GET /api/auth/password-reset/availability` answers `{"emailEnabled":false}`. `heroku config` on
+`footmania` lists database, JWT, CORS and VAPID variables and **not one `MAIL_*`** — the email
+half has been dark since the day it shipped (2026-08-27), and item 0b below, "then decide about
+`MAIL_*`", was never decided. **The admin-issued link is the only recovery path in production.**
+Anyone with no group admin to reach still has no way back into their account, which is the
+sentence 2.2.0 was meant to retire.
+
+**What the documents said, and no longer do.** `V46` (3.3.0, 2026-09-02) made redeeming a reset
+end every live session for the account — `PasswordResetService.redeem` calls `revokeSessions`
+beside the API-token revocation it always did. The password-reset contract still carried the
+2.2.0 callout that JWTs survive a reset for 24h, and
+[frontend/features/password-recovery](frontend/features/password-recovery.md) repeated it, and
+still read "cut on `next`, not deployed" thirteen days after the deploy. Both corrected:
+[#287](https://github.com/ricsnsuka/FootMania-Back/pull/287) (merge `a376ddd` into `next`, docs
+and one changelog line, **not deployed** — `main` has not moved since 3.6.0) and brain `247dd9a`.
+The old behaviour stays in the contract as a dated note rather than being deleted.
+
+**#287 was also the first outing of the one-job backend workflow** from 2026-09-08, and it went
+green: Build, Tests & Static Analysis in 5m41s, Version Check in 6s, the ruleset on `next`
+satisfied. The frontend's has still not run.
+
+**Where the feature-status table stands.** Its row for password recovery was already right
+(deployed, email dark) — it was the feature page and the contract that had drifted. Same lesson as
+the 2.5.0 and 3.2.0 gaps above: **the page nobody re-reads is the page that lies.**
+
+## 2026-09-08 — no release: CI cut to one job, both branches protected, the agent files land
+
+Not a release; nothing running changed. Three things that change how the next one is made.
+
+**Why the Actions allowance ran out, this time.** The 2.3.0 hazard below recorded the meter running
+out and the owner raising the limit; this time the run history was read before anything was raised.
+Eight days: 66 backend pipelines at about 13.5 job-minutes, 59 frontend at about 6.4, and every
+merged PR paid twice (the `pull_request` run, then the push to `next`). About 4,700 job-minutes a
+month against 2,000 or 3,000. The nine Dependabot jobs that hung for 24 hours on 2026-09-02 are a
+curiosity, not the cause — Dependabot on standard runners is not metered.
+
+**CI is one job per repo, on pull requests into `next` only** ([#286](https://github.com/ricsnsuka/FootMania-Back/pull/286),
+[#154](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/154)). Backend: `./gradlew build`,
+the OSV scan, `integrationTest`. Frontend: audit, type-check, lint, locales, `vitest run`,
+`next build`. A push to `next` runs the backend's Version Check and nothing on the frontend; the
+`main` side is as it was since 2.3.0. A merged PR costs about 7 and about 3 job-minutes instead of
+about 27 and 13. The change is documented in
+[CONTRIBUTING → CI runs once](CONTRIBUTING.md#ci-runs-once-on-the-pull-request--and-both-branches-are-protected--since-2026-09-08),
+and in each repo's workflow header. ⚠️ **Neither workflow has run yet** — the allowance was spent
+when they merged; the first PR after it resets is their first outing. *Update 2026-09-09: the
+backend's ran on #287 and passed; the frontend's has not run yet.*
+
+**Both branches are protected, for the first time.** A ruleset on `next` requires the CI job green
+and the branch up to date before merging (which is what closes the gap the push run used to cover);
+one on `main` requires the Release Gate green and up to date. Repository admins can bypass, visibly.
+A hotfix pushed straight to `main` is now refused.
+
+**`AGENTS.md` and `.claude/` in both repos** ([#285](https://github.com/ricsnsuka/FootMania-Back/pull/285),
+[#153](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/153)): how an agent behaves there,
+with rules, hooks and the `/release` and `/verify` skills. Canonical over any agent's memory.
+
+Merged into `next` on the owner's say-so with CI unable to run — docs and workflow files only, no
+code the API serves or the screen shows.
+
+## 3.6.0 — shipped and confirmed 2026-09-05, small hours
+
+**Rank ladder step 5, dark.** Five rung badges (`REACHED_SILVER` … `REACHED_MASTER`) in the
+badge catalogue and two season awards (`HIGHEST_TIER`, `BIGGEST_CLIMB`), every one of them switched
+with `RANKING_LADDER_ENABLED` — which is still off for every group, so nothing a player sees
+changes. Also carried: the in-place calibration script. Plan §7 step 5 records the decisions
+([RANK-LADDER-PLAN](backend/plans/RANK-LADDER-PLAN.md)); contract sections in
+[RANKING-TIERS-API-CONTRACT](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/RANKING-TIERS-API-CONTRACT.md)
+("Badges and season awards"), `BADGES-API-CONTRACT.md`, `SEASONS-API-CONTRACT.md`.
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.6.0`** — `build.gradle` and the `Procfile` jar name agree; `scripts/check-version-consistency.sh` (needs `LC_ALL=C.UTF-8` on Windows Git Bash) and the Version Check job both said so | **`3.6.0`** — `package.json` and both root `version` entries in `package-lock.json`. ⚠️ `npm install --package-lock-only` this time rewrote 96 unrelated lockfile lines (peer flags, two `@emnapi` optional entries dropped); the cut was reduced by hand to the two version lines. Worth knowing before the next cut |
+| `main` head | **`a57f290`** — `next` fast-forwarded onto `main` after the Release Gate and Version Check passed on [#284](https://github.com/ricsnsuka/FootMania-Back/pull/284); `git log next..origin/main` prints nothing | **`e79bd27`** — likewise, after the Release Gate on [#149](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/149); `git log next..origin/main` prints nothing |
+| Running in production | **`a57f290`, Heroku release v82** (`heroku releases -a footmania`: "Deploy a57f290b", 2026-09-05 03:32:50 +0100; v81 was 3.5.0's `96a1100`). `/api/version` reports `3.6.0` (build `2026-09-05T02:32:31.248Z`) and `/api/health` is `UP` on `3.6.0` at 02:33Z. Flyway runs on boot, so `UP` means **V51 applied** | **`e79bd27`, confirmed by asking Netlify**: deploy `6a9b8011363c970008022125`, `ready`, context `production`, `commit_ref` `e79bd275f9100df018eeb8875e8c369462433b99` — equal to `main` — published `2026-09-05T02:36:48.608Z`, 45s build. The site answers `200` |
+| Latest migration | **`V51__ladder_season_awards.sql`** — drops and re-adds `season_awards_award_check` with the two new names, as V38 did. **Not a rollback boundary** | — |
+| Tags | **`v3.6.0`** at `a57f290`, annotated with the `/api/version` + `/api/health` evidence | **`v3.6.0`** at `e79bd27`, annotated with the Netlify deploy-id evidence |
+| Tests | `./gradlew build` green on the feature branch (SpotBugs, Testcontainers migration check, every test); all CI jobs green on #282 and #283 | `tsc`, eslint, 1246 unit tests, `npm run build` green; all four CI shards green on #147, #148. ⚠️ **Not seen in a browser**: the servers were brought up on `next` for the owner to check the badge strip, and shut down again before the cut without a report either way. The badges land only after the badge backfill or the next completed match, so there was nothing to see on a fresh database |
+
+**What has to happen next, in order — unchanged from 3.5.0:** flip `RANKING_LADDER_ENABLED` for
+group 1 (settings → group tab → competition rules); then, if the group wants its history's
+badges at once rather than on each player's next match, run the badge backfill from the same
+settings screen; re-read the calibration in place once 2026/2027 has about twenty matches.
+
+The five pull requests: backend [#282](https://github.com/ricsnsuka/FootMania-Back/pull/282)
+step 5, [#283](https://github.com/ricsnsuka/FootMania-Back/pull/283) cut; frontend
+[#147](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/147) step 5,
+[#148](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/148) cut; and the promotions
+#284 and #149. Docs-only [#281](https://github.com/ricsnsuka/FootMania-Back/pull/281) (the
+in-place calibration script) rode along.
+
+## 3.5.0 — shipped and confirmed 2026-09-04, evening
+
+**The rank ladder, shipped dark — and one thing that is live from the moment it deployed.**
+Backend steps 1–3 of [RANK-LADDER-PLAN](backend/plans/RANK-LADDER-PLAN.md): V50, the engine with
+calibration round 1, the read surface behind `RANKING_LADDER_ENABLED`, `GET /api/rankings/ladder`,
+`RANK_CHANGED`; and the frontend's rung chip in three shapes, the ladder chart, the settings switch
+and the start-season warning in three locales. **The switch is off for every group**, so no player
+sees a rung until a group administrator turns it on. **Live regardless of the switch:**
+`POST /api/seasons/{id}/start` now finalises the displaced season when it has completed matches
+(owner decision, plan §10.2). Contract:
+[RANKING-TIERS-API-CONTRACT](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/RANKING-TIERS-API-CONTRACT.md).
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.5.0`** — `build.gradle` and the `Procfile` jar name agree; `scripts/check-version-consistency.sh` and the Version Check job both said so | **`3.5.0`** — `package.json` and both root `version` entries in `package-lock.json`, via `npm version 3.5.0 --no-git-tag-version` |
+| `main` head | **`96a1100`** — `next` fast-forwarded onto `main` after the Release Gate and Version Check passed on [#280](https://github.com/ricsnsuka/FootMania-Back/pull/280); `git log next..origin/main` prints nothing | **`0d180ca`** — likewise, after the Release Gate on [#146](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/146); `git log next..origin/main` prints nothing |
+| Running in production | **`96a1100`.** `/api/version` reports `3.5.0` (build `2026-09-04T20:54:26.146Z`) and `/api/health` is `UP` on `3.5.0` at 20:55Z — read from the running process. ⚠️ **Heroku's own release number was not read back**: the CLI wanted an interactive login again. Fill it in from `heroku releases -a footmania`. Flyway runs on boot, so `UP` means **V50 applied** | **`0d180ca`, confirmed by asking Netlify**: deploy `6a9b311b05b6720008e46fe3`, `ready`, context `production`, `commit_ref` `0d180ca9fd6ec8d38ad512a00630bd4599f24c18` — equal to `main` — published `2026-09-04T20:59:55.090Z`, 46s build. The site answers `200` |
+| Latest migration | **`V50__rank_ladder.sql`** — five columns on `players`, nine on `skill_rating_history`, nothing backfilled. Additive and nullable-or-defaulted, so the previous jar starts against it: **not a rollback boundary** | — |
+| Tags | **`v3.5.0`** at `96a1100`, annotated with the `/api/version` + `/api/health` evidence and the missing Heroku number named as missing | **`v3.5.0`** at `0d180ca`, annotated with the Netlify deploy-id evidence |
+| Tests | `./gradlew build` green on `next` after every merge; all CI jobs green on #275, #277, #278, #279 | `type-check`, `lint`, 1213 unit tests, `npm run build` green; all four CI shards green on #143, #144, #145. ⚠️ **Visual baselines not re-verified** — the rung chip changes the rankings layout when a group switches the ladder on. ⚠️ Browser check before shipping was the owner's, on a local build with the ladder on: it produced two chip-shape fixes ([#145](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/145)), both in this release |
+
+**What the release did not do, and where that stands** — updated 2026-09-05 after the group 1 reading:
+
+1. **Backfill**, once per group: `POST /api/matches/recalculate` with `{}` as a group admin. The
+   ladder columns are maintained from this deploy on, but every match before it has no snapshot
+   until replayed. ✅ **Group 1 done 2026-09-04 ~21:30Z by the owner, on production directly:
+   11 completed matches, every replay `SUCCESS`.**
+2. **Read the calibration report.** ✅ **Group 1 read 2026-09-04, in place.** The staging-copy
+   route is retired: the owner ruled that copying the database off the platform moves every
+   member's personal data for a report that needs none of it, so the report is now
+   `scripts/database/rank-ladder-calibration-inplace.sql` ([#281](https://github.com/ricsnsuka/FootMania-Back/pull/281),
+   in `next`, docs only) — one `READ ONLY` transaction through `heroku pg:psql -a footmania`,
+   player ids only, rolled back. The login the CLI needs must be done in an ordinary terminal.
+   What it said, recorded in full in plan §8 "Production reading":
+   - 23 players with three or more matches: Bronze 1, Silver 6, **Gold 12**, Platinum 2,
+     Diamond 2; Iron and Master empty. Half the group in one band, as on the local copy.
+   - **Nobody is placed.** The 11 matches all belong to 2025/26; the season that displaced it has
+     no completed match, so the reset zeroed every placement counter. **Switch-on day will show a
+     roster in placements, not a full ladder** — the opposite of what step 3 below promised, and
+     the design, not a fault: three matches each at 2× and the rungs appear.
+   - 2025/26: the eleven players with five or more matches moved **+0.78 divisions on average**,
+     21 promotions to 10 demotions, four net negative; top +4.0, bottom −2.3. Per match the same
+     rate the copy showed after calibration round 1. All eleven read "at level" for the known
+     first-season reason (every seed fell back to the 5.0 default).
+   - **No constant changed.** Re-read in place once 2026/2027 has about twenty matches, bands
+     included.
+3. **Switch on**, per group: `RANKING_LADDER_ENABLED` on the settings page, group tab, competition
+   rules. ⏳ **Not yet flipped for group 1** — the owner's next action.
+
+**Branch state after the reading:** backend `next` is `1c6d3d1`, one docs-only merge (#281) ahead
+of `main` at `96a1100`; nothing to deploy. Frontend `next` == `main` == `0d180ca`.
+
+**Both branch pairs needed a repair before the gate would pass.** In both repos `main` held the
+previous release's promotion merge commit (`5e483d2` backend, `37fa6db` frontend) that `next` had
+never received — step 7 of the procedure was skipped after 3.4.2. `origin/main` was merged into
+`next` first (`96a1100` and `0d180ca` are those merges), then `main` was fast-forwarded to it, so
+this time the two are byte-identical rather than one merge commit apart.
+
+The nine pull requests: backend [#275](https://github.com/ricsnsuka/FootMania-Back/pull/275)
+engine, [#276](https://github.com/ricsnsuka/FootMania-Back/pull/276) calibration script,
+[#277](https://github.com/ricsnsuka/FootMania-Back/pull/277) calibration round 1,
+[#278](https://github.com/ricsnsuka/FootMania-Back/pull/278) read surface and start-finalises,
+[#279](https://github.com/ricsnsuka/FootMania-Back/pull/279) cut; frontend
+[#143](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/143) the UI,
+[#144](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/144) cut,
+[#145](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/145) chip shapes; and the
+promotions #280 and #146.
 
 ## 3.4.1 — shipped 2026-09-03, backend only, not read back
 
@@ -419,6 +763,10 @@ leaves the server. **Emailed links start working when `MAIL_HOST`, `MAIL_USERNAM
 **The admin-issued link works either way**, and is the path that is usable on the day this deploys.
 `GET /api/auth/password-reset/availability` reports which of the two a deployment has, and the login
 page reads it. See [password-recovery](frontend/features/password-recovery.md).
+
+*Still dark on 2026-09-09* — the availability endpoint read `false` and no `MAIL_*` variable exists
+on the dyno; see the [2026-09-09 section](#2026-09-09--no-release-password-recovery-read-back-two-stale-documents-caught-up).
+Since 3.3.0 a reset also ends the account's live sessions (`V46`), which this section predates.
 
 ### The push bug was the reason to prioritise the deploy
 
@@ -1209,6 +1557,7 @@ that is **wrong or incomplete**, not merely old. Fix the document, then delete i
 | Where | Problem | Correction |
 |---|---|---|
 | [backend/architecture/ARCHITECTURE.md](backend/architecture/ARCHITECTURE.md) | Migration table stops at **V13** of 31, and the rest of it predates multi-tenancy | Superseded on migrations by [architecture/database-migrations.md](architecture/database-migrations.md); the layering and schema sections need a tenancy pass |
+| [architecture/database-migrations.md](architecture/database-migrations.md) | Register stopped at **V44**; V45–V49 (match clock, token version, fee reminder, notification preference, match chat) shipped without a row. Found 2026-09-04 when V50 was added | Write the five rows from each file's opening comment; a placeholder row names them until then |
 | [backend/api/API_REFERENCE.md](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/API_REFERENCE.md) | No Push section, no Payments/match-fee section. ~~`totalCostCents` on `MatchPlanDTO` missing~~ | ✅ `totalCostCents` **added 2026-08-24**, along with the three derived booleans the example also lacked and the absent-is-not-zero warning; pinned by `MatchPlanControllerTest`. The Push and Payments sections are still absent — contracts exist standalone ([PUSH](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PUSH-API-CONTRACT.md), [PAYMENTS](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/PAYMENTS-API-CONTRACT.md)) |
 | ~~[backend/features/MATCH_PLANS_FEATURE.md](backend/features/MATCH_PLANS_FEATURE.md)~~ | Last touched 2026-05-27 — predated kickoff time, lifecycle/expiry, waitlist, past-plan split and pitch cost | ✅ **Resolved 2026-08-05.** Rewritten against the entities, the migrations and `MatchPlanController`: instant kickoff, `GENERATED` and the derived `expired`/`generatable`/`cancellable` flags, the derived waitlist, guests on `players`, `timeframe` and the ordering, pitch cost, post-V33 grants, and the weekly runs `1.3.0` added. The frontend side is now [frontend/features/match-plans.md](frontend/features/match-plans.md) |
 | ~~[backend/plans/MATCH-FEE-LEDGER-PLAN.md](backend/plans/MATCH-FEE-LEDGER-PLAN.md)~~ | Header read "DRAFT — not implemented"; it shipped in `828db3b` | ✅ **Resolved.** Corrected here on import, and the stale backend copy went with the documentation split — there is one copy now, and it is this one |
@@ -1283,16 +1632,16 @@ reason this repo exists.
 
 ## Suggested next steps
 
-**0. Deploy 2.2.0.** It is cut, green and sitting on `next` in both repos with `main` unmoved. The
-step-by-step is at the [top of this file](#what-is-left-to-do-in-order); the reason it is item zero
-rather than item ten is the push bug — on every shared device, one account's notifications are
-currently being delivered to whoever else uses that browser, and the fix is merged and not in front
-of anybody. Backend first, confirmed, then the frontend.
+~~**0. Deploy 2.2.0.**~~ ✅ Done 2026-08-27, backend then frontend, recorded in the
+[2.2.0 section](#220--shipped-2026-08-27-tagged-and-recorded-2026-08-28). The push bug that made it
+item zero is fixed in production since Heroku v71.
 
-**0b. Then decide about `MAIL_*`.** Password recovery deploys with its email half dark. The
-admin-issued link works without it, so this is not a blocker for the release — but "there is no way
-back into your account" only stops being true for people who can reach an admin until the config
-vars are set.
+**0b. Decide about `MAIL_*`.** ⚠️ **Still open on 2026-09-09, thirteen days after 2.2.0 deployed.**
+Production's availability endpoint reads `emailEnabled: false` and `heroku config` holds no
+`MAIL_*` at all, so the only way back into an account is a group admin issuing a link by hand. The
+decision is operational, not code: pick a provider, set `MAIL_HOST`, `MAIL_USERNAME`,
+`MAIL_PASSWORD`, `MAIL_FROM` and `MAIL_RESET_URL_BASE` on the dyno, and read the availability
+endpoint back as `true`. No deploy needed.
 
 1. ~~Wire `integrationTest` into CI and run it.~~ ✅ Done 2026-08-01/02. The tier is green on every
    pull request; `GuestIsolationIT`, `TenancySchemaIT` and `TenantIsolationIT` have all now

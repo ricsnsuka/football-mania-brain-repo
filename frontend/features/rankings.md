@@ -100,6 +100,37 @@ units digit of `5` under the tens digit of `13`. Fixed 2026-08-05; see rule 8 in
 Below 640px the table is replaced by cards (`.rankings-cards`), which show the record as a compact
 `W-D-L` triple.
 
+## With the rank ladder on — 3.5.0
+
+Everything above is the table while the group's `RANKING_LADDER_ENABLED` is off, which is every
+group's default. The page branches on `rankings.ladderEnabled` — the field, never the presence of
+`ladderRank` in some entry — and with it on:
+
+| What | Off | On |
+|---|---|---|
+| Order | rating, from the server | rung, from the server — `ladderRank.position` — still never re-sorted here |
+| `qualified` | `played >= minimum` | **placed**: the rung exists and `placement.complete` |
+| Column 9 | Rating, two decimals | **the rung chip** — `RankChip.tsx`, shared with the profile card and the player modal |
+| The rating | a column | the chip's `title` and a visually hidden span. **Owner decision:** a regular player sees it on hover and nowhere else; it stays plain only on the team generation page and the admin player form |
+| A player in placements | "N more to qualify" | "Placement 2 of 3" on the chip, unranked, no hint — the server withholds the rung, so there is nothing else to say |
+
+The chip shows tier and division ("Gold II", "Master"), the division's progress as a bar filled to
+`formPoints / 75`, the points ("48/75 FP", or "212 FP" in Master, which has no ceiling), ★ for
+Best of the Crop, and on the desktop table the last night's movement ("▲ +23"). The tier is a BEM
+modifier (`rank-chip--gold`) whose seven values `modifierClassParity` checks against the
+stylesheet; the metals are hand-paired light/dark rather than tokens, because gold has to look
+gold in both themes. Tier names and "Best of the Crop" stay in English in every locale (owner
+decision) — `localeParity` exempts the title by key.
+
+The profile gains a **ladder chart** (`LadderHistoryChart.tsx`) beside the rating chart: the
+player's absolute position over time, tier bands as the axis, promotion / demotion / placed
+markers, the season reset drawn as the drop it is. The bands come from `GET /api/rankings/ladder`
+(`useLadder`), never a constant — they are placeholders under calibration. The rating chart stays
+beneath it, still collapsed, for the raw series.
+
+Contract: [RANKING-TIERS-API-CONTRACT](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/RANKING-TIERS-API-CONTRACT.md).
+Specification: [RANK-LADDER-PLAN](../../backend/plans/RANK-LADDER-PLAN.md).
+
 ## Paging
 
 Ten rows a page, from 10 / 25 / 50.
@@ -163,11 +194,16 @@ the player modal, so the richer page is not a dead end.
 | `src/app/(app)/rankings/page.tsx` | Route, wrapped in `AuthGuard` + `PageContainer` |
 | `src/features/rankings/RankingsPage.tsx` | Table, filter, mobile cards |
 | `src/features/rankings/LeaderboardCard.tsx` | One category card |
-| `src/hooks/ranking/useRankings.ts` | `useRankings`, `useLeaderboards` |
-| `src/services/rankingService.ts` | `fetchRankings`, `fetchLeaderboards` |
-| `src/types/ranking.ts` | Types + zod schemas |
+| `src/hooks/ranking/useRankings.ts` | `useRankings`, `useLeaderboards`, `useLadder`, `useLadderRank` (one player's rung, selected off the cached all-time table) |
+| `src/services/rankingService.ts` | `fetchRankings`, `fetchLeaderboards`, `fetchLadder` |
+| `src/types/ranking.ts` | Types + zod schemas, including `RankDTO`, `LadderDTO`, `RANK_TIERS`, `RANK_EVENTS` |
+| `src/features/rankings/RankChip.tsx` | The rung chip — also mounted by `PlayerProfileCard` and `PlayerModal` |
+| `src/features/profile/LadderHistoryChart.tsx` | The ladder chart, beside the rating chart on the profile card |
 
 ## i18n keys (`rankings` namespace)
 
 `title`, `tableTitle`, `filterActive`, `filterAll`, `summary`, `unranked`, `needsMore`,
-`columns.*`, `leaderboards.*` (including `units.*` and `empty`).
+`columns.*` (including `rung`), `leaderboards.*` (including `units.*` and `empty`), and
+`ladder.*` — `label`, `ratingHint`, `placement`, `points`, `pointsOpen`, `bestOfCrop` and
+`tiers.<TIER>` (English in every locale, by decision). The chart's keys are `profile.ladderChart.*`,
+with `events.<EVENT>`; both enum groups are registered in `enumLocaleParity`.

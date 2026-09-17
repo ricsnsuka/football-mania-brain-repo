@@ -75,17 +75,31 @@ out, nobody has kicked a ball. A create that also made the new season current wo
 every match recorded in that gap. So `POST /api/seasons` returns a season with `current: false`,
 and the modal says so in the subtitle rather than leaving it to be discovered.
 
-### Start ≠ finalise
+### Start finalises the season it displaces — since 3.5.0
 
-**This is the sentence the whole screen exists to say.** Starting season 2 clears season 1's
-`is_current` and stops there. Season 1 keeps a null `end_date`, its ratings are never taken, and
-the season-end transition it was owed simply never runs — no error, no warning, and nothing
-afterwards that can tell it happened apart from the rating history rows that are not there.
+**This section used to say the opposite, and the reversal is an owner decision**
+(2026-09-04, [RANK-LADDER-PLAN §10.2](../../backend/plans/RANK-LADDER-PLAN.md)). Until 3.5.0
+starting season 2 cleared season 1's `is_current` and stopped there: null `end_date`, ratings never
+taken, no error, no warning. The rank ladder's soft reset rides the season-end transition, so a
+season that was never finalised would never reset the ladder — and the owner's answer was that a
+season being displaced is a season ending.
 
-The server cannot refuse this, and should not: a group that has genuinely abandoned a season must
-be able to move on from it. So the only place anybody will ever be warned is the confirmation, and
-the confirmation names the displaced season rather than describing it. "The current season" is a
-phrase an administrator has to resolve; "Season 1" is one they recognise.
+Now, when season 1 has **at least one completed match**, starting season 2 finalises it exactly as
+`POST /api/seasons/1/finalise` would — ratings taken, awards computed, Ballon d'Or poll opened,
+ladder reset, `end_date` set — in one transaction, then makes season 2 current. A season nobody
+played in is displaced only, as before, because there is nothing to take. The standalone finalise
+stays, for a group that wants a break with no current season.
+
+The confirmation still names the displaced season rather than describing it — "the current season"
+is a phrase an administrator has to resolve; "Season 1" is one they recognise — and now says which
+of the two things will happen to it: `seasons.start.finalises` when it has completed matches,
+`seasons.start.displacedOnly` when it has none. An absent `completedMatchCount` reads as the
+stronger warning, because "the backend cannot say" is not "zero". `seasons.start.notFinalised` is
+retired in all three locales.
+
+Frontend: `StartSeasonModal.tsx` branches on `displacing.completedMatchCount`, and
+`useStartSeason` now invalidates everything `useFinaliseSeason` does, plus `ratingHistory` and
+`ladder` — a start may have been a finalise.
 
 ---
 
@@ -298,7 +312,11 @@ card layout to fix.
 Finalising a season used to produce a rating adjustment and nothing anybody would want to read. It
 now also writes six awards — **player of the season** (best mean per-match performance rating),
 **golden boot**, **playmaker**, **iron man**, **most improved** (biggest rating gain) and **crowd
-favourite** (most crowd MOTM wins, from the vote rather than an administrator's pick).
+favourite** (most crowd MOTM wins, from the vote rather than an administrator's pick) — and, for a
+group with the rank ladder switched on, two more: **highest tier** (the highest rung stood on once
+placed) and **biggest climb** (ladder position at the season's end minus its start). Those two are
+step 5 of the rank ladder, built 2026-09-05 and unreleased; a season closed with the ladder off
+never has them, because the honours are computed once.
 
 They render on the **rankings page**, above the table, for whichever season the selector has
 chosen. That is where they belong: the awards are the season's story and the table is its detail,
@@ -333,6 +351,14 @@ is worse than an untranslated one.
 as whole numbers, and only the client knows the locale to say them in. `MOST_IMPROVED` keeps its
 sign — a season everybody had a bad one still has a winner, and `-0.20` is the honest way to say
 what they won it with.
+
+**The two ladder awards are not numbers to a reader, so `formatAwardValue` translates them.**
+`HIGHEST_TIER` arrives as a **rung index** — Iron III at `0`, three per tier, Master at `18` —
+because the column is numeric and a label is not; `rungFromIndex` in `types/ranking.ts` is the
+inverse of the backend's `RankLadderService.rungIndex`, and the board shows "Gold II" in the tier
+names every locale shares. `BIGGEST_CLIMB` is Form Points along the whole ladder (75 per division)
+and reads signed with the chip's unit, "+302 FP". Both sit after the numbers' six in
+`SEASON_AWARD_TYPES` and before the Ballon d'Or; the career cabinet formats them the same way.
 
 ## The Ballon d'Or
 

@@ -31,7 +31,7 @@ opened to see a *player*, so a badge request failing must not take the rest of i
 
 ## The catalogue
 
-Nine badges, all derived from aggregates that already exist. Adding one is a backend enum entry
+Fifteen badges, all derived from data that already exists. Adding one is a backend enum entry
 plus a threshold; the frontend needs a locale key only if it should be translated.
 
 | Badge | Earned when |
@@ -41,8 +41,18 @@ plus a threshold; the frontend needs a locale key only if it should be translate
 | `FIRST_ASSIST` | 1 career assist |
 | `WIN_STREAK_5` | `longestStreak` reaches 5 |
 | `FIRST_MVP` | Voted **Man of the Match by the crowd** at least once — or named MVP by the organiser on a match that never ran a poll |
+| `BALLON_DOR_WINNER` | Won the group's Ballon d'Or vote at least once |
+| `REACHED_SILVER` … `REACHED_MASTER` | Held a rank-ladder tier of Silver / Gold / Platinum / Diamond / Master once the season's placements are complete — **only in a group with the ladder switched on** (rank ladder step 5, built 2026-09-05, unreleased) |
 
 Declaration order in the backend enum is the display order.
+
+**The five rung badges wear their tier.** `TIER_BADGES` in `types/badge.ts` maps each `REACHED_*`
+id to its tier and `PlayerBadges` adds `player-badges__item--gold` and so on — the rank chip's
+palette exactly, so "Reached Gold" and a Gold rung read as one thing; every other badge stays the
+plain pill. `modifierClassParity` pins the five modifiers to that map. Iron and Bronze have no
+badge: every player starts in or near them. The backend gates them twice — ladder on, placements
+complete — so the strip never reveals a rung the table hides, and the badge outlives the season
+reset that drops the rung. Rules: `RANKING-TIERS-API-CONTRACT.md`, "Badges and season awards".
 
 **`FIRST_MVP` is the one badge that is not earned at completion.** (Written 2026-08-08, **not yet
 released** — until the backend change ships it is still the organiser's pick alone, earned at
