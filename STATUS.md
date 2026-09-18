@@ -1,8 +1,16 @@
 # Project Status
 
-**Snapshot: 2026-09-05, small hours, after 3.6.0 — the rank ladder's honours (rung badges, two
+**Snapshot: 2026-09-18, small hours, after 3.12.0 — the app tells people what changed, a cancelled
+match gives its fee back (`V57`), the previewed teams are the ones saved, and the rating a manager
+gives a player counts when sides are drawn.** **Both repos are on `3.12.0`**, read back from both
+platforms (Heroku release **v91**, Netlify deploy `6aacb685`); the full record is the
+[3.12.0 section](#3120--shipped-and-confirmed-2026-09-18-small-hours) below. ⚠️ **Three releases
+skipped this page** — 3.9.1, 3.10.0 and 3.11.0 — and that section says what each of them carried.
+
+**The older snapshot is kept below because the table under this header still describes what it
+describes.** 2026-09-05, small hours, after 3.6.0 — the rank ladder's honours (rung badges, two
 season awards), shipped dark like the ladder itself; group 1 backfilled and read, the switch still
-off for every group.** **Both repos are on `3.6.0`**, read back from both platforms; the full
+off for every group. Both repos were on `3.6.0` then, read back from both platforms; the full
 record is the [3.6.0 section](#360--shipped-and-confirmed-2026-09-05-small-hours) below, then
 [3.5.0](#350--shipped-and-confirmed-2026-09-04-evening). **The table under this header still
 describes 3.3.0** — not rewritten, deliberately, because its rows carry mojibake from an earlier
@@ -100,6 +108,98 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.12.0 — shipped and confirmed 2026-09-18, small hours
+
+**Four things people will notice, and one nobody is meant to.** The app now tells people what
+changed after an update; a cancelled match gives its fee back; the teams shown in the preview are
+the teams that get saved; and the rating a manager gives a player finally counts when sides are
+drawn. The fifth is the dialog staying quiet: asked which of these it should announce, the owner
+said none, so `v3.12.0.ts` is stamped empty on purpose.
+
+**What's new, in the app** (epic [#81](https://github.com/ricsnsuka/football-mania-brain-repo/issues/81),
+frontend [#203](https://github.com/ricsnsuka/FootMania-Simple-Front/issues/203)–[#207](https://github.com/ricsnsuka/FootMania-Simple-Front/issues/207)).
+The first visit after a deploy opens *What's new in x.y.z*: one row per highlight, a **Show me**
+that navigates to the feature and lights it up with the page tours' driver.js setup, **Got it** to
+remember the version on this device, **Later** to snooze for the visit. Reopens from Settings →
+Tutorials and from the footer version. Only a device that has finished a page tour gets it on its
+own — a newcomer is greeted by the tours, not by both. A highlight that needs a backend newer than
+`/api/version` reports is held back. A step behind a tab or a modal asks the person to open it
+(**Try it**, then Skip) and continues by itself when the target appears; the app never clicks for
+them. A waiting service worker now raises *A new version is ready* with a **Reload**, so a deploy
+can reach an open app on the same visit ([#208](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/208),
+[#209](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/209),
+[#210](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/210)).
+Highlights live in `src/releases/`, one file per release, stamped by the release skill.
+**3.11.0 is the floor the dialog shows**, backfilled with that release's three payments features.
+
+**The teams you previewed are the teams you get** (epic
+[#84](https://github.com/ricsnsuka/football-mania-brain-repo/issues/84)). Reported by the owner:
+teams drawn with `RANDOM`, previewed, confirmed — and the match came out with different teams.
+`/generate/confirm` re-ran the algorithm on a freshly read pool, which for `RANDOM` is a fresh
+shuffle "by design" and for every other type drifts whenever a player withdraws or a rating moves.
+The confirm now accepts `params[teamA]`/`params[teamB]` for **every** generation type — the wire
+format `MANUAL` already used — validates them against the current pool and saves that split as
+shown; a player no longer a starter is a `422` naming the ids
+([#325](https://github.com/ricsnsuka/FootMania-Back/pull/325),
+[#213](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/213)).
+
+**Cancelling a match drops its fee** (`V57`, epic
+[#85](https://github.com/ricsnsuka/football-mania-brain-repo/issues/85)). Deleting a match that was
+never played is calling it off, but its fee went on sitting in every player's debt, naming a match
+that no longer existed. It could not have done otherwise: `matches` had **no link to its plan**, and
+charges hang off the plan. `V57` writes that link down (nullable, composite-tenant FK, a
+deliberately timid backfill that links only where exactly one generated plan answers on date, title
+and location in both directions). An uncompleted delete now voids the plan's unvoided charges with
+reason `Match cancelled` and answers `chargesVoided`; a completed match's fees stand, because the
+pitch was used ([#329](https://github.com/ricsnsuka/FootMania-Back/pull/329),
+[#216](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/216)).
+
+**The base rating counts when sides are drawn** (epic
+[#86](https://github.com/ricsnsuka/football-mania-brain-repo/issues/86)). `BALANCED`,
+`SNAKE_DRAFT`, `CAPTAIN_PICK` and `OPTIMAL` with `metric=skill` balance on
+`baseWeight × base + (1 − baseWeight) × computed`, **half and half**. The owner's worked example is
+the reason and the test: A (computed 7.7, base 9), B (5.7, 9), C (8.7, 6), D (5.6, 5) — on the
+computed rating alone that pairs C+D against A+B, two nines on one side; at a half it pairs A+D
+against B+C. A overtakes C only **above 0.25**, so a cautious default would have shipped the
+complaint. `params[baseWeight]` tunes it, `0` is the old behaviour, and `FORM_BASED` and
+`metric=form` are untouched. A manager **or administrator** can now correct a base rating from the
+player edit form (`PATCH /api/players/{id}`, grant widened); it changes only itself — no shift of
+the computed rating, no history row — and reaches the next draw
+([#330](https://github.com/ricsnsuka/FootMania-Back/pull/330),
+[#217](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/217)).
+
+| | Backend | Frontend |
+|---|---|---|
+| Release | **`3.12.0`** — cut as [#332](https://github.com/ricsnsuka/FootMania-Back/pull/332); `build.gradle`, `Procfile` and the Version Check agree | **`3.12.0`** — cut as [#220](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/220); `src/releases/v3.12.0.ts` stamped **empty on purpose** |
+| `main` head | **`d3ea76f`** — `next` fast-forward pushed onto `main`, `next..main` empty both ways | **`47a52d3`** — same route after the backend was confirmed live; `next..main` empty both ways |
+| Running in production | **`d3ea76f`, Heroku release v91** ("Deploy d3ea76fa", 2026-09-18T03:56:20Z). `/api/version` reports `3.12.0` (buildTime 03:55:59Z), `/api/health` `UP` on `3.12.0` at 04:00:43Z | **`47a52d3`, confirmed by asking Netlify**: deploy `6aacb685672f480008c6835a`, `ready`, `production`, `commit_ref` `47a52d37a0b8c3274dbe041d84dc4902bed203e2` — equal to `main` — published `2026-09-18T03:58:01.700Z`, 67s build |
+| Latest migration | **`V57`** — one nullable column on `matches` plus its FK, index and a conservative backfill. Additive, **not a rollback boundary**: the 3.11.0 jar neither reads nor writes it | — |
+| Tags | **`v3.12.0`** at `d3ea76f` | **`v3.12.0`** at `47a52d3` |
+| Tests | `./gradlew build` green on every PR and on the cut; **`integrationTest` green** on the `V57` PR, run because it carries a migration and a mapping change | `tsc`, eslint (3 warnings, 0 errors), locale check, the new release check, 153 files / 1602 unit tests, `npm run build` green |
+
+**Not yet verified:** the visual baselines. `e2e/visual.spec.ts-snapshots/` has not existed since the
+move to Playwright's Docker image at 3.11.0, so the suite has no set to compare against — including
+the Try-it popover spec this release added. The first `npm run test:visual:update` writes them, and
+the README's instruction to open every image before committing it still applies. Also unverified on
+a real browser: the service-worker update toast, which needs a production build served twice with a
+changed `sw.js`.
+
+**Two rules the owner set during this release**, both now in the frontend's
+`docs/guides/release-highlights.md`, `AGENTS.md` and release skill:
+[**what the dialog announces is asked, never assumed**](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/218)
+— nobody adds a highlight on their own judgement, and an empty list at cut time is the normal case —
+and only minor or major releases carry one at all.
+
+**Lesson, and the gap closed.** This page had been three releases behind: **3.9.1** (2026-09-13,
+week honour badges), **3.10.0** (2026-09-15, the draft balance guard) and **3.11.0** (2026-09-17,
+payment notifications, `V56`) all shipped without a section here — the sixth, seventh and eighth
+gaps, the same cause the 3.9.0 section named. The cut was also renamed mid-flight: it began as a
+frontend-only `3.11.1` and became a paired `3.12.0` once it grew a migration and two features, which
+meant renaming every version reference in both repos before the cut
+([#331](https://github.com/ricsnsuka/FootMania-Back/pull/331),
+[#219](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/219)). Deciding the version before
+writing the paperwork would have saved both.
 
 ## 3.9.0 — shipped and confirmed 2026-09-12, small hours
 
