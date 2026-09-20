@@ -32,8 +32,17 @@ tutorials*) and from the version number in the footer, which is now a button.
   reports an older one, and nothing is stamped in that case, so the dialog appears once the
   backend has caught up. This covers the minutes between the two deploys and a frontend that
   ships alone.
-- **Role.** `audience` filters against the roles held in the active group before the dialog
-  renders; a member never sees Show me for an organiser's panel.
+- **Role.** Every highlight names its `audience` — `'everyone'`, or any of `ORGANIZER`,
+  `MANAGER`, `GROUP_ADMIN`, `MEMBER` (no role in the group), `OPERATOR` (the platform account) —
+  and it is filtered against the roles held in the active group before the dialog renders, so a
+  member never sees Show me for an organiser's panel. Since 2026-09-20 the field is required and
+  `scripts/check-releases.mjs` refuses a highlight without it: the screens differ by role, and the
+  owner asked that the question be answered when the highlight is written.
+- **Per group, and per role.** The seen stamp is one per group and records the roles it was made
+  with. Somebody who is a member here and an organiser there is shown the organiser rows when
+  they open the app in the other group; somebody promoted after a release is shown, once, the rows
+  addressed to the new role by name and nothing already read. A release with nothing for the
+  roles held is stamped for them, roles included, so the promotion rule still works later.
 - **A signed-in account without a group** (the picker) never gets it.
 
 ## How it works
@@ -42,7 +51,10 @@ tutorials*) and from the version number in the footer, which is now a button.
   `version` into `NEXT_PUBLIC_APP_VERSION`. Netlify builds from `main`, so the bundle always
   carries the released number. The footer keeps showing the backend's version, which is the one
   people quote; the frontend's rides in the tooltip.
-- `whatsnew:lastSeen` (localStorage) is the version last stamped; it only ever moves forward.
+- `whatsnew:lastSeen:<groupId>` (localStorage) is the group's stamp, `{ version, roles }`; the
+  version only ever moves forward and the roles only ever accumulate. The pre-2026-09-20
+  device-wide `whatsnew:lastSeen` is read as a floor for a group with no stamp of its own and
+  never written again, so nobody was shown everything twice when the per-group stamp shipped.
   `whatsnew:snoozed` (sessionStorage) is Later. `whatsnew:<version>:<id>` marks a walked
   highlight. Every access is wrapped, as the tours' are: a private window simply never shows it.
 - The decision is made **once per page load**, in a module store rather than a component ref,
@@ -84,6 +96,14 @@ release with no highlights is legitimate.
    release skill stops on it and `scripts/check-releases.mjs` fails a stamped patch file. 3.11.1 is
    the one exception, being the release that introduced the feature. Since patches have no file,
    they do not count toward the three-release cap either.
+
+## Decision taken 2026-09-20
+
+7. **The dialog decides per group and per role.** The owner pointed out that roles see different
+   screens and one device-wide "seen" stamp could not cover that. Rather than a backend value
+   (decision 2 stands), the stamp became per group with the roles recorded, `audience` became
+   required with `MEMBER` and `OPERATOR` added, and a gained role re-opens the dialog once with
+   only the rows it unlocks. FootMania-Simple-Front PR #226.
 
 ## Out of scope
 
