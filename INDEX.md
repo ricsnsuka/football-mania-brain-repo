@@ -105,7 +105,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [seasons](frontend/features/seasons.md) | Define, start and finalise, on the settings group tab — and why starting is not finalising |
 | [api-tokens](frontend/features/api-tokens.md) | Minting, showing once and revoking the credential a shortcut carries — and why a per-group token is listed per account |
 | *guests · payment-delegation* ⚠️ | **Missing.** Both shipped in the UI in `722335c` |
-| [screens/](frontend/screens/README.md) | A full-page capture of every routed screen in both themes, stubbed data throughout — the pictures behind the Screens board in Notion |
+| [screens/](frontend/screens/README.md) | Every routed screen and every dialog, captured at both widths, stubbed data throughout — the pictures behind the Screens board in Notion and the Figma file |
 
 ---
 
