@@ -1,6 +1,6 @@
 # Screen captures
 
-One full-page screenshot of every routed screen in the frontend, light theme, 1280px wide.
+Two full-page screenshots of every routed screen in the frontend — light and dark — 1280px wide.
 
 They exist for the **Screens** board in Notion, where each screen has a page describing what it is
 for, who reaches it and what is on it — the picture is what makes that page worth opening. Notion
@@ -18,10 +18,14 @@ The session behind each capture is the one that makes the screen worth looking a
 payments and match plans, an administrator on members, the draft queue and moderation, an operator
 on the platform console, an account with no group on the three onboarding screens.
 
+Both themes come from the same run, twice over: the theme is seeded into `localStorage` before
+the first script executes, and the capture waits on the `dark` class actually being applied, which
+is also what proves the client has taken over from the server render. Dark is not a filter over
+the light capture — every screen is re-rendered under it, which is the point of having both.
+
 ## What they do not cover
 
 - `/` — the entry redirect renders nothing; it decides where to send you.
-- Dark theme. The same capture run produces it (`SHOT_THEME=dark`), it is simply not committed.
 - Modals. Everything here is a page at rest.
 - Chat's live indicator reads "Reconnecting…", because the event stream is stubbed like every
   other request. On a real deployment it reads "Live".
@@ -35,6 +39,7 @@ small enough to state:
 1. In the frontend repo, add a Playwright spec beside `e2e/visual.spec.ts` that imports `stubApi`
    and `seedSession` from `e2e/fixtures.ts`, walks the routes, and calls `page.screenshot()`
    instead of `toHaveScreenshot()` — nothing here is a baseline and nothing here should become one.
+   Run it once per theme (`SHOT_THEME=light`, then `dark`).
 2. Block the service worker (`test.use({ serviceWorkers: 'block' })`). A production build registers
    one, and the requests it makes are invisible to `page.route`, so the stubs are bypassed and the
    page renders as if the API were down.
