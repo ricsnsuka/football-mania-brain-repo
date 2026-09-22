@@ -12,6 +12,10 @@ it is for and who reaches it, and the **Football Mania — Screens (dark)** Figm
 capture is a named frame at its real pixel size. Both keep their own copy of every image, so these
 files are the source rather than the thing either one serves.
 
+`figma-frames.json` says which capture belongs in which Figma frame. The frames exist already,
+named and sized to the image each one takes, so filling them is an upload rather than a layout
+job — it needs network access to `mcp.figma.com`, which the session that made these did not have.
+
 ## What is in them
 
 Nothing real. Every request is answered from the frontend's visual-test fixtures
