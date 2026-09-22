@@ -1,10 +1,13 @@
 {
   "_comment": [
-    "Which capture belongs in which Figma frame. The frames already exist, named and sized to the",
-    "image they take, so filling them is an upload rather than a layout job: request one upload URL",
-    "per frame from the Figma MCP (upload_assets with nodeIds, scaleMode FILL) and POST the file at",
-    "`image` to it. Nothing here needs to be re-run unless a capture is regenerated.",
-    "Requires egress to mcp.figma.com, which the capture session did not have."
+    "Which capture belongs in which Figma frame. All 102 frames are filled; this mapping stays so a",
+    "regenerated capture can be put back without redoing the layout: request one upload URL per frame",
+    "(upload_assets with nodeIds, scaleMode FILL) and POST the file at `image` to it.",
+    "Two things to know. The upload host mcp.figma.com is not in the default allowlist for a cloud",
+    "session, so the environment needs Custom network access including *.figma.com. And the placement",
+    "step only resolves target nodes on the file's first page: uploads aimed at the Modals page",
+    "returned success with an imageHash but no `placedOnNodeId`, and the fills had to be set from",
+    "those hashes afterwards."
   ],
   "fileKey": "086mMY3KzSi252urjG1ohH",
   "fileUrl": "https://www.figma.com/design/086mMY3KzSi252urjG1ohH",

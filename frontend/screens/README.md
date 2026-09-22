@@ -12,9 +12,10 @@ it is for and who reaches it, and the **Football Mania — Screens (dark)** Figm
 capture is a named frame at its real pixel size. Both keep their own copy of every image, so these
 files are the source rather than the thing either one serves.
 
-`figma-frames.json` says which capture belongs in which Figma frame. The frames exist already,
-named and sized to the image each one takes, so filling them is an upload rather than a layout
-job — it needs network access to `mcp.figma.com`, which the session that made these did not have.
+`figma-frames.json` says which capture belongs in which Figma frame. All 102 are in place; the
+mapping stays because re-uploading a regenerated capture is then one call per frame rather than a
+layout job done again. It needs network access to `mcp.figma.com`, which is not in the default
+allowlist for a cloud session.
 
 ## What is in them
 
