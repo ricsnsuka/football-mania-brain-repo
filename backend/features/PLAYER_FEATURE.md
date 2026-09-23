@@ -33,6 +33,7 @@ Players carry skill ratings, win-streak counters, and an audit trail. The Player
 | `updated_by`        | VARCHAR(50)    | No       | **Added in V2** — username of last updater            |
 | `created_at`        | TIMESTAMP      | No       | Set on INSERT                                         |
 | `goalkeeper_willingness` | VARCHAR(20) | No  | **Added in V36** — `NEVER` \| `IF_NEEDED` \| `HAPPY_TO`, default `NEVER` |
+| `preferred_foot`    | VARCHAR(10)    | Yes      | **Added in V60** — `RIGHT` \| `LEFT` \| `BOTH`; `NULL` = never asked, no default |
 | `updated_at`        | TIMESTAMP      | No       | Updated on every PATCH                                |
 
 ### `player_positions` Table (V36)
@@ -52,6 +53,23 @@ player and the order carries no meaning. `player_id` leads the key, which is als
 `draft_session_team_*` tables: Hibernate owns this table through `@ElementCollection` and would
 never populate an extra column, so tenancy comes from the parent `players` row and the cascade ties
 the lifetime to it.
+
+### The preferred foot (V60)
+
+One nullable column, three answers. `NULL` is "never asked", the state every existing player was in
+when the column arrived, and it is deliberately not defaulted to `RIGHT`: that would be right about
+most people and would erase the fact that nobody asked. `BOTH` is a real answer (two-footed;
+"ambidextrous" in the design brief), not the absence of one.
+
+Every write path takes it — `POST /api/players`, `PATCH /api/players/{id}`, `PATCH /api/players/me` —
+under the same PATCH semantics as the positions: omitted means unchanged, and there is no way to
+clear it back to `NULL`. It rides on `PlayerDTO`, survives the PII redaction like the other two squad
+answers, is in the privacy export and is cleared by erasure.
+
+**Team generation does not read it.** The design note that asked for the field said "TBD if it's
+going to add any complexity to team generation", and this is where that stands: stored, shown,
+not drawn on. Whether a side full of left-footers is a thing the generator should avoid is a decision
+for the owner, and the column exists so that taking it later does not mean asking everybody again.
 
 ### Why two fields and not one
 

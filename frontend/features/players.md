@@ -102,10 +102,17 @@ Positions get neutral slate rather than a colour: they sit next to the status ch
 the guest chip (violet), and a third colour family in the same row stops any of them meaning
 anything.
 
-## Editing positions and keeper willingness
+**The preferred foot is one more chip in the same slate family** (2026-09-23, backend `V60`),
+"Right foot" / "Left foot" / "Either foot", after the positions and before the keeper chip, on the
+player modal and the profile card alike. No chip at all while `player.preferredFoot` is `null`,
+which is every player who has never said and every player on a backend that predates the field —
+the two read the same on the wire, since the serializer drops nulls.
 
-`PositionFields` renders both controls and is shared by the create and edit modals — one component,
-because the rule below is one thing to get wrong and two copies would be two places to forget it.
+## Editing positions, keeper willingness and the preferred foot
+
+`PositionFields` renders all three controls and is shared by the create and edit modals — one
+component, because the rule below is one thing to get wrong and two copies would be two places to
+forget it.
 
 **Positions are checkboxes.** A player may prefer several, and a single-choice control would make
 them pick a favourite and quietly lose the fact that they will also play at the back.
@@ -126,6 +133,14 @@ removing your last position impossible.
 
 Both are editable on the self path as well as the manager one — the same component, the same
 endpoint choice `EditPlayerModal` already makes for name and phone.
+
+**The foot is a select with a "Not set yet" option that exists only while nothing has been picked.**
+The backend keeps `null` for "never said" and offers no way back to it — a PATCH that omits the
+field leaves it alone, and there is no clearing value — so once a foot is chosen the control shows
+the three real answers and nothing else, which is exactly what a save could send. The edit modal
+sends the field only when it holds a value; the create modal the same. The hint says what the field
+is for and, as importantly, what it is not: teams are not drawn on it. The design note that asked
+for the field left that question open, and the app says so rather than implying otherwise.
 
 ## Role gates
 
@@ -155,7 +170,7 @@ boundary.
 | Player detail modal | `src/features/players/PlayerModal.tsx` |
 | Create modal | `src/features/players/CreatePlayerModal.tsx` |
 | Edit modal (self + manager) | `src/features/players/EditPlayerModal.tsx` |
-| Position / keeper fields | `src/features/players/PositionFields.tsx` |
+| Position / keeper / foot fields | `src/features/players/PositionFields.tsx` |
 | Data hook | `src/hooks/player/usePlayers.ts` |
 | Service | `src/services/playerService.ts` |
 | Types | `src/types/player.ts` |
@@ -171,8 +186,12 @@ All strings live under the `players` key in each `locales/<lang>/common.json`.
 `players.keeper.lockedHint`, `players.keeper.values.*` (three), `players.keeper.chip.*` (three —
 `NEVER` is present and empty, since that chip is never rendered).
 
-The `t()` fallbacks for both enums are **spelled-out English**, held in `PLAYER_POSITION_LABELS` and
-`GOALKEEPER_WILLINGNESS_LABELS` in `src/types/player.ts`, not the enum value. A runtime-built key
+**Foot keys**: `players.foot.label`, `players.foot.hint`, `players.foot.unset`,
+`players.foot.values.*` (three: `RIGHT`, `LEFT`, `BOTH`) and `players.foot.chip.*` (the same three,
+worded for a chip — "Left foot" rather than "Left"). Fallbacks in `PREFERRED_FOOT_LABELS`.
+
+The `t()` fallbacks for all three enums are **spelled-out English**, held in `PLAYER_POSITION_LABELS`,
+`GOALKEEPER_WILLINGNESS_LABELS` and `PREFERRED_FOOT_LABELS` in `src/types/player.ts`, not the enum value. A runtime-built key
 falling back to itself is exactly how `FEE_CHARGED` and `MVP_VOTE_OPEN` reached production as screen
 text. Writing the first test for `PositionFields` caught it immediately — it asserted `Goalkeeper`
 and got `GOALKEEPER` — which is the argument for the fallbacks existing at all.
