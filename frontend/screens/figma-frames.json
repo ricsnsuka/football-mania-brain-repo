@@ -1,0 +1,632 @@
+{
+  "_comment": [
+    "Which capture belongs in which Figma frame. All 102 frames are filled; this mapping stays so a",
+    "regenerated capture can be put back without redoing the layout: request one upload URL per frame",
+    "(upload_assets with nodeIds, scaleMode FILL) and POST the file at `image` to it.",
+    "Two things to know. The upload host mcp.figma.com is not in the default allowlist for a cloud",
+    "session, so the environment needs Custom network access including *.figma.com. And the placement",
+    "step only resolves target nodes on the file's first page: uploads aimed at the Modals page",
+    "returned success with an imageHash but no `placedOnNodeId`, and the fills had to be set from",
+    "those hashes afterwards."
+  ],
+  "fileKey": "086mMY3KzSi252urjG1ohH",
+  "fileUrl": "https://www.figma.com/design/086mMY3KzSi252urjG1ohH",
+  "pages": {
+    "Screens — dark": "0:1",
+    "Modals — dark": "4:2"
+  },
+  "frames": [
+    {
+      "page": "Screens — dark",
+      "frame": "Sign in — desktop 1280",
+      "nodeId": "1:4",
+      "image": "frontend/screens/login-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Sign in — mobile 390",
+      "nodeId": "1:5",
+      "image": "frontend/screens/login-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Forgot password — desktop 1280",
+      "nodeId": "1:8",
+      "image": "frontend/screens/forgot-password-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Forgot password — mobile 390",
+      "nodeId": "1:9",
+      "image": "frontend/screens/forgot-password-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Reset password — desktop 1280",
+      "nodeId": "1:12",
+      "image": "frontend/screens/reset-password-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Reset password — mobile 390",
+      "nodeId": "1:13",
+      "image": "frontend/screens/reset-password-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Privacy policy — desktop 1280",
+      "nodeId": "1:16",
+      "image": "frontend/screens/privacy-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Privacy policy — mobile 390",
+      "nodeId": "1:17",
+      "image": "frontend/screens/privacy-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Offline — desktop 1280",
+      "nodeId": "1:20",
+      "image": "frontend/screens/offline-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Offline — mobile 390",
+      "nodeId": "1:21",
+      "image": "frontend/screens/offline-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Invite link landing — desktop 1280",
+      "nodeId": "1:24",
+      "image": "frontend/screens/join-token-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Invite link landing — mobile 390",
+      "nodeId": "1:25",
+      "image": "frontend/screens/join-token-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Group picker — desktop 1280",
+      "nodeId": "1:28",
+      "image": "frontend/screens/groups-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Group picker — mobile 390",
+      "nodeId": "1:29",
+      "image": "frontend/screens/groups-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Create group — desktop 1280",
+      "nodeId": "1:32",
+      "image": "frontend/screens/groups-new-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Create group — mobile 390",
+      "nodeId": "1:33",
+      "image": "frontend/screens/groups-new-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Join by code — desktop 1280",
+      "nodeId": "1:36",
+      "image": "frontend/screens/groups-join-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Join by code — mobile 390",
+      "nodeId": "1:37",
+      "image": "frontend/screens/groups-join-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Dashboard — desktop 1280",
+      "nodeId": "1:40",
+      "image": "frontend/screens/dashboard-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Dashboard — mobile 390",
+      "nodeId": "1:41",
+      "image": "frontend/screens/dashboard-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Chat — desktop 1280",
+      "nodeId": "1:44",
+      "image": "frontend/screens/chat-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Chat — mobile 390",
+      "nodeId": "1:45",
+      "image": "frontend/screens/chat-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Matches — desktop 1280",
+      "nodeId": "1:48",
+      "image": "frontend/screens/matches-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Matches — mobile 390",
+      "nodeId": "1:49",
+      "image": "frontend/screens/matches-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Match plans — desktop 1280",
+      "nodeId": "1:52",
+      "image": "frontend/screens/match-plans-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Match plans — mobile 390",
+      "nodeId": "1:53",
+      "image": "frontend/screens/match-plans-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Rankings — desktop 1280",
+      "nodeId": "1:56",
+      "image": "frontend/screens/rankings-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Rankings — mobile 390",
+      "nodeId": "1:57",
+      "image": "frontend/screens/rankings-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Payments — desktop 1280",
+      "nodeId": "1:60",
+      "image": "frontend/screens/payments-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Payments — mobile 390",
+      "nodeId": "1:61",
+      "image": "frontend/screens/payments-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Player profile — desktop 1280",
+      "nodeId": "1:64",
+      "image": "frontend/screens/profile-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Player profile — mobile 390",
+      "nodeId": "1:65",
+      "image": "frontend/screens/profile-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Settings — desktop 1280",
+      "nodeId": "1:68",
+      "image": "frontend/screens/settings-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Settings — mobile 390",
+      "nodeId": "1:69",
+      "image": "frontend/screens/settings-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Players (roster) — desktop 1280",
+      "nodeId": "1:72",
+      "image": "frontend/screens/players-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Players (roster) — mobile 390",
+      "nodeId": "1:73",
+      "image": "frontend/screens/players-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Team generation — desktop 1280",
+      "nodeId": "1:76",
+      "image": "frontend/screens/team-generation-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Team generation — mobile 390",
+      "nodeId": "1:77",
+      "image": "frontend/screens/team-generation-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Members — desktop 1280",
+      "nodeId": "1:80",
+      "image": "frontend/screens/users-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Members — mobile 390",
+      "nodeId": "1:81",
+      "image": "frontend/screens/users-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Draft sessions — desktop 1280",
+      "nodeId": "1:84",
+      "image": "frontend/screens/draft-sessions-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Draft sessions — mobile 390",
+      "nodeId": "1:85",
+      "image": "frontend/screens/draft-sessions-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Moderation queue — desktop 1280",
+      "nodeId": "1:88",
+      "image": "frontend/screens/moderation-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Moderation queue — mobile 390",
+      "nodeId": "1:89",
+      "image": "frontend/screens/moderation-dark-mobile.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Platform console — desktop 1280",
+      "nodeId": "1:92",
+      "image": "frontend/screens/platform-dark.png"
+    },
+    {
+      "page": "Screens — dark",
+      "frame": "Platform console — mobile 390",
+      "nodeId": "1:93",
+      "image": "frontend/screens/platform-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Register — desktop",
+      "nodeId": "4:5",
+      "image": "frontend/screens/modals/register-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Register — mobile",
+      "nodeId": "4:6",
+      "image": "frontend/screens/modals/register-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Change password — desktop",
+      "nodeId": "4:9",
+      "image": "frontend/screens/modals/change-password-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Change password — mobile",
+      "nodeId": "4:10",
+      "image": "frontend/screens/modals/change-password-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Player card — desktop",
+      "nodeId": "4:13",
+      "image": "frontend/screens/modals/player-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Player card — mobile",
+      "nodeId": "4:14",
+      "image": "frontend/screens/modals/player-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Edit player — desktop",
+      "nodeId": "4:17",
+      "image": "frontend/screens/modals/player-edit-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Edit player — mobile",
+      "nodeId": "4:18",
+      "image": "frontend/screens/modals/player-edit-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Add player — desktop",
+      "nodeId": "4:21",
+      "image": "frontend/screens/modals/player-create-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Add player — mobile",
+      "nodeId": "4:22",
+      "image": "frontend/screens/modals/player-create-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Edit member — desktop",
+      "nodeId": "4:25",
+      "image": "frontend/screens/modals/user-edit-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Edit member — mobile",
+      "nodeId": "4:26",
+      "image": "frontend/screens/modals/user-edit-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Match detail — desktop",
+      "nodeId": "4:29",
+      "image": "frontend/screens/modals/match-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Match detail — mobile",
+      "nodeId": "4:30",
+      "image": "frontend/screens/modals/match-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Create match — desktop",
+      "nodeId": "4:33",
+      "image": "frontend/screens/modals/match-create-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Create match — mobile",
+      "nodeId": "4:34",
+      "image": "frontend/screens/modals/match-create-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Match plan detail — desktop",
+      "nodeId": "4:37",
+      "image": "frontend/screens/modals/match-plan-detail-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Match plan detail — mobile",
+      "nodeId": "4:38",
+      "image": "frontend/screens/modals/match-plan-detail-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Create match plan — desktop",
+      "nodeId": "4:41",
+      "image": "frontend/screens/modals/match-plan-create-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Create match plan — mobile",
+      "nodeId": "4:42",
+      "image": "frontend/screens/modals/match-plan-create-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Bring a guest — desktop",
+      "nodeId": "4:45",
+      "image": "frontend/screens/modals/add-guest-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Bring a guest — mobile",
+      "nodeId": "4:46",
+      "image": "frontend/screens/modals/add-guest-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "New conversation — desktop",
+      "nodeId": "4:49",
+      "image": "frontend/screens/modals/new-conversation-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "New conversation — mobile",
+      "nodeId": "4:50",
+      "image": "frontend/screens/modals/new-conversation-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Report message — desktop",
+      "nodeId": "4:53",
+      "image": "frontend/screens/modals/report-message-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Report message — mobile",
+      "nodeId": "4:54",
+      "image": "frontend/screens/modals/report-message-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Link player to user — desktop",
+      "nodeId": "4:57",
+      "image": "frontend/screens/modals/link-player-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Link player to user — mobile",
+      "nodeId": "4:58",
+      "image": "frontend/screens/modals/link-player-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Team of the week — desktop",
+      "nodeId": "4:61",
+      "image": "frontend/screens/modals/week-honours-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Team of the week — mobile",
+      "nodeId": "4:62",
+      "image": "frontend/screens/modals/week-honours-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "I've paid — desktop",
+      "nodeId": "4:65",
+      "image": "frontend/screens/modals/notify-payment-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "I've paid — mobile",
+      "nodeId": "4:66",
+      "image": "frontend/screens/modals/notify-payment-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Payments to confirm — desktop",
+      "nodeId": "4:69",
+      "image": "frontend/screens/modals/payment-review-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Payments to confirm — mobile",
+      "nodeId": "4:70",
+      "image": "frontend/screens/modals/payment-review-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Player ledger — desktop",
+      "nodeId": "4:73",
+      "image": "frontend/screens/modals/player-ledger-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Player ledger — mobile",
+      "nodeId": "4:74",
+      "image": "frontend/screens/modals/player-ledger-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Add charge — desktop",
+      "nodeId": "4:77",
+      "image": "frontend/screens/modals/adjust-balance-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Add charge — mobile",
+      "nodeId": "4:78",
+      "image": "frontend/screens/modals/adjust-balance-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Pass credit — desktop",
+      "nodeId": "4:81",
+      "image": "frontend/screens/modals/transfer-credit-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Pass credit — mobile",
+      "nodeId": "4:82",
+      "image": "frontend/screens/modals/transfer-credit-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Set payer — desktop",
+      "nodeId": "4:85",
+      "image": "frontend/screens/modals/set-delegate-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Set payer — mobile",
+      "nodeId": "4:86",
+      "image": "frontend/screens/modals/set-delegate-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Record payment — desktop",
+      "nodeId": "4:89",
+      "image": "frontend/screens/modals/record-payment-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Record payment — mobile",
+      "nodeId": "4:90",
+      "image": "frontend/screens/modals/record-payment-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Define a season — desktop",
+      "nodeId": "4:93",
+      "image": "frontend/screens/modals/season-create-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Define a season — mobile",
+      "nodeId": "4:94",
+      "image": "frontend/screens/modals/season-create-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Start season — desktop",
+      "nodeId": "4:97",
+      "image": "frontend/screens/modals/season-start-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Start season — mobile",
+      "nodeId": "4:98",
+      "image": "frontend/screens/modals/season-start-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Finalise season — desktop",
+      "nodeId": "4:101",
+      "image": "frontend/screens/modals/season-finalise-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Finalise season — mobile",
+      "nodeId": "4:102",
+      "image": "frontend/screens/modals/season-finalise-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "New API token — desktop",
+      "nodeId": "4:105",
+      "image": "frontend/screens/modals/api-token-create-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "New API token — mobile",
+      "nodeId": "4:106",
+      "image": "frontend/screens/modals/api-token-create-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Link to a player — desktop",
+      "nodeId": "4:109",
+      "image": "frontend/screens/modals/self-link-player-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "Link to a player — mobile",
+      "nodeId": "4:110",
+      "image": "frontend/screens/modals/self-link-player-dark-mobile.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "What's new — desktop",
+      "nodeId": "4:113",
+      "image": "frontend/screens/modals/whats-new-dark.png"
+    },
+    {
+      "page": "Modals — dark",
+      "frame": "What's new — mobile",
+      "nodeId": "4:114",
+      "image": "frontend/screens/modals/whats-new-dark-mobile.png"
+    }
+  ]
+}
