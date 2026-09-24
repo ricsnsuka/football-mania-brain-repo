@@ -8,7 +8,8 @@ Backend PR 1 (provisional teams, charges from the team sheet, the grace window) 
 as [FootMania-Back#358](https://github.com/ricsnsuka/FootMania-Back/pull/358), not yet released.
 Backend PR 2 (the announcement, V62) is merged into `next` as
 [FootMania-Back#359](https://github.com/ricsnsuka/FootMania-Back/pull/359). Backend PR 3 (the reserve
-cutoff, V63) is open as [FootMania-Back#360](https://github.com/ricsnsuka/FootMania-Back/pull/360).
+cutoff, V63) is merged into `next` as [FootMania-Back#360](https://github.com/ricsnsuka/FootMania-Back/pull/360).
+The backend half is complete on `next` and not yet released; the two frontend PRs remain.
 **Effort:** L — three backend PRs and two frontend PRs, with C (fewest-moves repair) following on its own
 **Depends on:** nothing. It touches `MatchPlanService`, `DraftSessionService`, `MatchFeeService`,
 chat and push.
@@ -227,7 +228,7 @@ Every PR bases on `next`. The backend release goes out before the frontend.
 |---|---|---|
 | 1 | Back | Provisional teams: V61, pairings service and endpoints, derived flag, create match from a pairing with point 3, `provisionalTeams`, the grace window, charges from the team sheet. Contract, `FRONTEND_ENDPOINT_CHANGES.md`, CHANGELOG, `integrationTest`. **Merged into `next`:** [FootMania-Back#358](https://github.com/ricsnsuka/FootMania-Back/pull/358) |
 | 2 | Back | Announcement: `TeamsAnnouncedEvent` from both paths, chat created at match creation, V62 system messages, `ChatPushNotifier` skip, `TEAMS_ANNOUNCED`. Chat and push contracts. **Merged into `next`:** [FootMania-Back#359](https://github.com/ricsnsuka/FootMania-Back/pull/359) |
-| 3 | Back | Reserve cutoff: V63 `withdrawn_late_at`, the setting, the hold in starter selection, release-the-place, `LATE_WITHDRAWAL`. Poll-window contract. **Open:** [FootMania-Back#360](https://github.com/ricsnsuka/FootMania-Back/pull/360). As built: nothing is held when nobody is in reserve, a guest's removal never holds, the draft respects a hold, and the player confirming again takes the place back |
+| 3 | Back | Reserve cutoff: V63 `withdrawn_late_at`, the setting, the hold in starter selection, release-the-place, `LATE_WITHDRAWAL`. Poll-window contract. **Merged into `next`:** [FootMania-Back#360](https://github.com/ricsnsuka/FootMania-Back/pull/360). As built: nothing is held when nobody is in reserve, a guest's removal never holds, the draft respects a hold, and the player confirming again takes the place back |
 | 4 | Front | Provisional teams screens, the pill, the What's new rows |
 | 5 | Front | System chat line, the two notification toggles, the cutoff setting, the held place and release |
 | — | Both, later | C: a pure swap evaluator beside `DraftBalanceEvaluator`, suggestions and apply, the Repair button |
