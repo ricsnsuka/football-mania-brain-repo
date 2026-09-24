@@ -9,11 +9,13 @@ as [FootMania-Back#358](https://github.com/ricsnsuka/FootMania-Back/pull/358), n
 Backend PR 2 (the announcement, V62) is merged into `next` as
 [FootMania-Back#359](https://github.com/ricsnsuka/FootMania-Back/pull/359). Backend PR 3 (the reserve
 cutoff, V63) is merged into `next` as [FootMania-Back#360](https://github.com/ricsnsuka/FootMania-Back/pull/360).
-The backend half is complete on `next` and not yet released. Frontend PR 4 (the provisional teams
-screens, the pill, two What's new rows) is merged into `next` as
-[FootMania-Simple-Front#239](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/239); frontend
-PR 5 remains. **Backend 3.14.0 must deploy before any frontend release that carries PR 4**, which no
-longer calls `/generate/confirm`.
+Frontend PR 4 (the provisional teams screens, the pill, two What's new rows) is merged into `next` as
+[FootMania-Simple-Front#239](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/239), and
+frontend PR 5 (the system chat line, the held place and its release, the cutoff setting) as
+[FootMania-Simple-Front#240](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/240). **All five
+PRs are on `next` in both repos and none is released.** Backend 3.14.0 must deploy before any frontend
+release that carries PR 4, which no longer calls `/generate/confirm`. Left: the releases, then C and
+retiring `/generate/confirm` (below).
 **Effort:** L — three backend PRs and two frontend PRs, with C (fewest-moves repair) following on its own
 **Depends on:** nothing. It touches `MatchPlanService`, `DraftSessionService`, `MatchFeeService`,
 chat and push.
@@ -234,7 +236,7 @@ Every PR bases on `next`. The backend release goes out before the frontend.
 | 2 | Back | Announcement: `TeamsAnnouncedEvent` from both paths, chat created at match creation, V62 system messages, `ChatPushNotifier` skip, `TEAMS_ANNOUNCED`. Chat and push contracts. **Merged into `next`:** [FootMania-Back#359](https://github.com/ricsnsuka/FootMania-Back/pull/359) |
 | 3 | Back | Reserve cutoff: V63 `withdrawn_late_at`, the setting, the hold in starter selection, release-the-place, `LATE_WITHDRAWAL`. Poll-window contract. **Merged into `next`:** [FootMania-Back#360](https://github.com/ricsnsuka/FootMania-Back/pull/360). As built: nothing is held when nobody is in reserve, a guest's removal never holds, the draft respects a hold, and the player confirming again takes the place back |
 | 4 | Front | Provisional teams screens, the pill, the What's new rows. **Merged into `next`:** [FootMania-Simple-Front#239](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/239). As built: saving no longer asks twice for a manual split, and Create match asks once; the pill is a label on the plan card (the card is itself a button) and the manager's disclosure button in the plan modal; `/generate/confirm` is no longer called. Its two What's new rows are `['MANAGER']` for saving, redrawing and creating, and `'everyone'` for the pill and being told your team; the late-withdrawal hold's row comes with PR 5. Both rows need backend 3.14.0 |
-| 5 | Front | System chat line, the two notification toggles, the cutoff setting, the held place and release |
+| 5 | Front | System chat line, the two notification toggles, the cutoff setting, the held place and release. **Merged into `next`:** [FootMania-Simple-Front#240](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/240). As built: a held row shows as held in every list, including the one shown after the deadline (where a hold usually happens), at its rank, and only a `MANAGER` gets Release; the player's own held place gets a note; team generation's preview and starting a draft show the server's `400`; the held place joined PR 4's unreleased `['MANAGER']` What's new row as a sentence, with no row of its own |
 | — | Both, later | C: a pure swap evaluator beside `DraftBalanceEvaluator`, suggestions and apply, the Repair button |
 | — | Back, later | Remove `/generate/confirm` once PR 4 is live |
 
