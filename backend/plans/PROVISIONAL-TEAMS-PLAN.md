@@ -4,8 +4,10 @@
 **Status:** 🟡 **IN PROGRESS.** The owner took every decision below on 2026-09-24, and confirmed the
 three numbers (five pairings, a 120-minute cutoff, a 6-hour grace window) the same day. Epic
 [#92](https://github.com/ricsnsuka/football-mania-brain-repo/issues/92) is filed with its sub-issues.
-Backend PR 1 (provisional teams, charges from the team sheet, the grace window) is open as
-[FootMania-Back#358](https://github.com/ricsnsuka/FootMania-Back/pull/358); nothing is merged yet.
+Backend PR 1 (provisional teams, charges from the team sheet, the grace window) is merged into `next`
+as [FootMania-Back#358](https://github.com/ricsnsuka/FootMania-Back/pull/358), not yet released.
+Backend PR 2 (the announcement, V62) is open as
+[FootMania-Back#359](https://github.com/ricsnsuka/FootMania-Back/pull/359).
 **Effort:** L — three backend PRs and two frontend PRs, with C (fewest-moves repair) following on its own
 **Depends on:** nothing. It touches `MatchPlanService`, `DraftSessionService`, `MatchFeeService`,
 chat and push.
@@ -222,8 +224,8 @@ Every PR bases on `next`. The backend release goes out before the frontend.
 
 | # | Repo | PR |
 |---|---|---|
-| 1 | Back | Provisional teams: V61, pairings service and endpoints, derived flag, create match from a pairing with point 3, `provisionalTeams`, the grace window, charges from the team sheet. Contract, `FRONTEND_ENDPOINT_CHANGES.md`, CHANGELOG, `integrationTest` |
-| 2 | Back | Announcement: `TeamsAnnouncedEvent` from both paths, chat created at match creation, V62 system messages, `ChatPushNotifier` skip, `TEAMS_ANNOUNCED`. Chat and push contracts |
+| 1 | Back | Provisional teams: V61, pairings service and endpoints, derived flag, create match from a pairing with point 3, `provisionalTeams`, the grace window, charges from the team sheet. Contract, `FRONTEND_ENDPOINT_CHANGES.md`, CHANGELOG, `integrationTest`. **Merged into `next`:** [FootMania-Back#358](https://github.com/ricsnsuka/FootMania-Back/pull/358) |
+| 2 | Back | Announcement: `TeamsAnnouncedEvent` from both paths, chat created at match creation, V62 system messages, `ChatPushNotifier` skip, `TEAMS_ANNOUNCED`. Chat and push contracts. **Open:** [FootMania-Back#359](https://github.com/ricsnsuka/FootMania-Back/pull/359) |
 | 3 | Back | Reserve cutoff: V63 `withdrawn_late_at`, the setting, the hold in starter selection, release-the-place, `LATE_WITHDRAWAL`. Poll-window contract |
 | 4 | Front | Provisional teams screens, the pill, the What's new rows |
 | 5 | Front | System chat line, the two notification toggles, the cutoff setting, the held place and release |
