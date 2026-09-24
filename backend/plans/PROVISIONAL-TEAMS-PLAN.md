@@ -1,8 +1,11 @@
 # Provisional Teams — Plan
 
 **Date:** 2026-09-24
-**Status:** 📋 **DECIDED, not built.** The owner took every decision below on 2026-09-24. Nothing is
-implemented and no epic is filed yet.
+**Status:** 🟡 **IN PROGRESS.** The owner took every decision below on 2026-09-24, and confirmed the
+three numbers (five pairings, a 120-minute cutoff, a 6-hour grace window) the same day. Epic
+[#92](https://github.com/ricsnsuka/football-mania-brain-repo/issues/92) is filed with its sub-issues.
+Backend PR 1 (provisional teams, charges from the team sheet, the grace window) is open as
+[FootMania-Back#358](https://github.com/ricsnsuka/FootMania-Back/pull/358); nothing is merged yet.
 **Effort:** L — three backend PRs and two frontend PRs, with C (fewest-moves repair) following on its own
 **Depends on:** nothing. It touches `MatchPlanService`, `DraftSessionService`, `MatchFeeService`,
 chat and push.
@@ -118,7 +121,7 @@ won over B: the guard, the docs and the frontend types don't change.
 
 `MatchPlan.isGeneratable()` today requires kickoff to still be ahead. It becomes `CONFIRMED` and kickoff
 plus a grace window still ahead, so preview, save, regenerate and create all keep working for a short
-time after kickoff. **Proposed: 6 hours**, as a constant, not yet confirmed by the owner. `expired`
+time after kickoff: **6 hours**, as a constant (`MatchPlan.GENERATION_GRACE`), confirmed by the owner. `expired`
 does not change, and neither does the poll: `acceptsAnswers()` still closes at kickoff, so the
 starters can't move during the grace window. Clients branch on `generatable` and never re-derive it,
 so the frontend follows without a change.
@@ -168,8 +171,8 @@ Close to kickoff, a reserve shouldn't be pulled in, because they can't get ready
 a withdrawal ten minutes before kickoff still promotes a reserve and pushes "You're in".
 
 - **Setting:** `AppSetting.PLAN_RESERVE_CUTOFF_MINUTES` (`plan.reserve.cutoff.minutes`), per group,
-  next to the guest cap. 0 turns it off and restores today's behaviour. **Proposed default: 120, range
-  0–1440**, not yet confirmed by the owner. It is edited on the group settings screen that already
+  next to the guest cap. 0 turns it off and restores today's behaviour. **Default 120, range 0–1440**, confirmed by the
+  owner. It is edited on the group settings screen that already
   edits the guest cap.
 - **Holding the place:** the starting list is recomputed from the queue on every read, so after the
   cutoff a withdrawal has to keep its place or the first reserve still slides in, on paper and into
