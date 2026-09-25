@@ -14,6 +14,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [STATUS](STATUS.md) | Where the project stands, live hazards, the drift register |
 | [where-documents-live](where-documents-live.md) | Which repo owns which document, and why |
 | [CONTRIBUTING](CONTRIBUTING.md) | How to keep this true, and the ship checklist |
+| [development-learnings](development-learnings.md) | Read before starting work: the steps of one change, the mistakes made in the September 2026 screen audit and the rule for each, and the code patterns to reuse |
 | [product/roadmap](product/roadmap.md) | The five-phase improvement and mobile roadmap |
 | [product/feature-status](product/feature-status.md) | Every feature × backend × frontend × docs |
 | [product/backlog-2026-09](product/backlog-2026-09.md) | The batched backlog that became **3.3.0** — what shipped, the four unbuilt specs and where they live, what the batch got wrong about itself, and what is still open |
