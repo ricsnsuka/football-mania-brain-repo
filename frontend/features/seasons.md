@@ -318,11 +318,15 @@ placed) and **biggest climb** (ladder position at the season's end minus its sta
 step 5 of the rank ladder, built 2026-09-05 and unreleased; a season closed with the ladder off
 never has them, because the honours are computed once.
 
-They render on the **rankings page**, above the table, for whichever season the selector has
-chosen. That is where they belong: the awards are the season's story and the table is its detail,
-so reading them anywhere else would mean only one of the two changed when you picked a different
-season — and the selector already establishes which season is being talked about, so the section
-costs no extra control.
+They render on the **rankings page's Honours tab**, headed with the season's name, for whichever
+season the selector has chosen. They follow the same selector as the table and the leaderboards,
+so the season's story and its detail change together when you pick a different season, and the
+section costs no extra control. The tab holds every honour, newest period first: the player and
+team of the week, the player of the month, these awards, and the Ballon d'Or roll. Until
+[FootMania-Simple-Front#267](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/267)
+(unreleased) the awards sat above the table and the tabs, and the honours were in three places
+(a Team of the week button, this strip, and the foot of the leaderboards), so the owner made them
+one tab.
 
 **Computed once when the season is finalised, then stored** —
 [contract](https://github.com/ricsnsuka/FootMania-Back/blob/main/docs/api/SEASONS-API-CONTRACT.md#get-apiseasonsidawards).
@@ -364,7 +368,8 @@ and reads signed with the chip's unit, "+302 FP". Both sit after the numbers' si
 
 The seventh award, and the only one no query decides. When a season is finalised the group is asked
 who was the best player in it; the poll closes on the **second completed match of the next season**,
-and the winner joins the honours board above.
+and the winner joins the season's awards above and the Ballon d'Or roll at the foot of the
+rankings' Honours tab.
 
 **The card lives on the dashboard**, and it has to. The window is two matches wide and exists for a
 handful of days a year — by the time somebody thought to go and look for it, it would have closed.
