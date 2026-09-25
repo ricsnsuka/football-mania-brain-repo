@@ -1,6 +1,15 @@
 # Project Status
 
-**Snapshot: 2026-09-18, small hours, after 3.12.0 — the app tells people what changed, a cancelled
+**Snapshot: 2026-09-25, late evening, after 3.14.0 — saved teams on the plan, a dropout close to
+kickoff holds the place, the teams told to everyone when the match is created, a flagged pairing
+repaired with the fewest swaps, and the frontend screen audit shipped whole.** **Both repos are on
+`3.14.0`**: the backend read back by the owner from `/api/version`, the frontend from Netlify deploy
+`6ab6fde2`. ⚠️ **Heroku's release number was not read back** and ⚠️ **the `v3.14.0` tags are not on
+the remote yet**; the [3.14.0 section](#3140--shipped-and-confirmed-2026-09-25-late-evening) below
+says why and carries every row. ⚠️ **3.13.0 (2026-09-20) skipped this page too**; that section
+records what can still be read back for it.
+
+**The snapshot before that: 2026-09-18, small hours, after 3.12.0 — the app tells people what changed, a cancelled
 match gives its fee back (`V57`), the previewed teams are the ones saved, and the rating a manager
 gives a player counts when sides are drawn.** **Both repos are on `3.12.0`**, read back from both
 platforms (Heroku release **v91**, Netlify deploy `6aacb685`); the full record is the
@@ -108,6 +117,69 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.14.0 — shipped and confirmed 2026-09-25, late evening
+
+**Both repos on `3.14.0`, paired, backend first.** Version bumps
+[FootMania-Back#364](https://github.com/ricsnsuka/FootMania-Back/pull/364) and
+[FootMania-Simple-Front#270](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/270);
+promotions [FootMania-Back#365](https://github.com/ricsnsuka/FootMania-Back/pull/365) and
+[FootMania-Simple-Front#271](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/271). The
+`[3.14.0]` sections of both `CHANGELOG.md` files are the full record; this is what to know about it.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `f9566fc` (merge of #365) | `969435a` (merge of #271) |
+| Read back | `/api/version` reports `3.14.0`, read by the owner | Netlify deploy `6ab6fde25aec0600087e8556`, `ready`, production, published 2026-09-25 23:05:04Z, read from the Netlify API |
+| Platform release number | ⚠️ not read: no Heroku CLI in the session that shipped it, and `herokuapp.com` is outside that session's network policy. Fill in from `heroku releases -a footmania` | the deploy id above |
+| Tag | ⚠️ `v3.14.0` **not on the remote yet** (see below) | ⚠️ same |
+| `next..main` | empty (`next` fast-forwarded to `main`) | empty (same) |
+
+**What shipped.** Backend: provisional teams saved on the plan (`V61`, epic
+[#92](https://github.com/ricsnsuka/football-mania-brain-repo/issues/92)); the teams announced on match
+creation, a `TEAMS_ANNOUNCED` push and a system line in the match chat (`V62`); a late withdrawal
+holding its place inside the group's reserve cutoff, 120 minutes by default (`V63`); a flagged
+pairing repaired with the fewest swaps (FootMania-Back#356); reserves no longer charged; a match can
+be created up to six hours after kickoff; the plan and match notifications open the plan or match;
+the preferred foot (`V60`); a Ballon d'Or season minimum and the abandoned polls it closes (`V59`);
+and the `needsRecalc` documentation corrected (FootMania-Back#351). Frontend: all of the above on
+screen, plus the whole [screen audit](frontend/plans/screen-audit-2026-09.md) — the plan dialog's
+tabs and single squad list, teams drawn inside the plan, a link for every plan, match and player,
+one menu for a match and for a player, the rankings' Honours tab, Find me, the players page's
+filters, the On/In wording — and the Flagged filter for group admins only
+(FootMania-Simple-Front#235).
+
+**Migrations `V59`–`V63`.** Only `V62` is a rollback boundary, and for at most 24 hours: the 3.13.0
+jar's mapping says every chat message has a sender, so reporting one of the app's own messages on
+it answers `500` until the 24-hour chat purge has removed them. The others are additive and the
+previous jar never reads them.
+
+**What's new shows fifteen rows**, each on the owner's yes: nine for everyone, four for managers,
+two for managers and group admins. Six wait for `/api/version` to report `3.14.0`, which it now does.
+It is the first release whose rows need no backend version, and that opened the dialog over every
+capture of the screenshot suite until `seedSession` stamped What's new as seen (a test-only commit
+in #270).
+
+**The tags.** Both annotated tags were written at the commits above, with the evidence in their
+messages, but the session that shipped this could not push them: its git proxy answers `403` to a
+tag push while branch pushes go through. They need placing from a machine that can push tags, at
+exactly these commits, each annotated with its row of the table above:
+
+```bash
+git tag -a v3.14.0 f9566fc730fa034a3b5ee13d37dea9396de22197 && git push origin v3.14.0   # FootMania-Back
+git tag -a v3.14.0 969435a6b03bf17b6481941a0a8706fb88322c56 && git push origin v3.14.0   # FootMania-Simple-Front
+```
+
+**Unblocked by this release:** retiring `/generate/confirm`
+([FootMania-Back#357](https://github.com/ricsnsuka/FootMania-Back/issues/357)) — the live frontend no
+longer calls it. **Still open:** GitHub reports 9 Dependabot alerts on the backend's `main`
+(2 high, 7 moderate) with no pull request behind any of them.
+
+**3.13.0 skipped this page** (2026-09-20, the honours in one place and the player of the month;
+one migration, `V58`). What can still be read back: the frontend's Netlify deploy
+`6aaf5b3b782a4b0008fb6ca1` of `94de2ce`, published 2026-09-20 04:05:10Z; the tags `v3.13.0` at
+`8d4798a` (backend, after the metaspace hotfix FootMania-Back#347) and `94de2ce` (frontend). The backend's Heroku
+release number for it was never recorded.
 
 ## 3.12.0 — shipped and confirmed 2026-09-18, small hours
 
