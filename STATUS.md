@@ -1,6 +1,13 @@
 # Project Status
 
-**Snapshot: 2026-09-25, late evening, after 3.14.0 — saved teams on the plan, a dropout close to
+**Snapshot: 2026-09-30, evening, after 3.15.0 — the starters vote on the provisional teams, or for a
+captains pick (`V64`).** **Both repos are on `3.15.0`**: the backend read back from `/api/version`
+(build 2026-09-30T17:16:41Z), the frontend from Netlify deploy `6abd4458`. Both `v3.15.0` tags are on
+the remotes. ⚠️ **Heroku's release number was not read back** (the CLI's login has expired) and ⚠️
+**the `v3.14.0` tags are still not on the remotes**; the
+[3.15.0 section](#3150--shipped-and-confirmed-2026-09-30-evening) below carries every row.
+
+**The snapshot before that: 2026-09-25, late evening, after 3.14.0 — saved teams on the plan, a dropout close to
 kickoff holds the place, the teams told to everyone when the match is created, a flagged pairing
 repaired with the fewest swaps, and the frontend screen audit shipped whole.** **Both repos are on
 `3.14.0`**: the backend read back by the owner from `/api/version`, the frontend from Netlify deploy
@@ -117,6 +124,50 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.15.0 — shipped and confirmed 2026-09-30, evening
+
+**Both repos on `3.15.0`, paired, backend first.** Version bumps
+[FootMania-Back#368](https://github.com/ricsnsuka/FootMania-Back/pull/368) and
+[FootMania-Simple-Front#275](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/275);
+promotions [FootMania-Back#369](https://github.com/ricsnsuka/FootMania-Back/pull/369) and
+[FootMania-Simple-Front#276](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/276), each a
+fast-forward push of `next` to `main` after its Release Gate passed. The `[3.15.0]` sections of both
+`CHANGELOG.md` files are the full record.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `27ba463` (merge of #368) | `fd06634` (merge of #275) |
+| Read back | `/api/version` reports `3.15.0`, buildTime 2026-09-30T17:16:41Z, minutes after the push | Netlify deploy `6abd4458ef8c0f00071f3bbf`, `ready`, production, published 2026-09-30T17:19:29Z, `commit_ref` `fd06634`, read from the Netlify API |
+| Platform release number | ⚠️ not read: `heroku releases -a footmania` answers `401`, the CLI login has expired. Fill in from an ordinary terminal after `heroku login` | the deploy id above |
+| Tag | `v3.15.0` at `27ba463`, annotated | `v3.15.0` at `fd06634`, annotated |
+| `next..main` | empty | empty |
+
+**What shipped.** The team vote: the starting selection of a `CONFIRMED` plan votes for one of the
+saved provisional pairings or for a captains pick, naming a captain. Only votes by a current starter
+count. The vote closes five minutes before kickoff and a per-minute sweep applies the winner: the
+match from the pairing, or a draft with the two most-nominated captains. A winner that cannot be
+applied is written on the plan and the managers get the new `TEAM_VOTE_CLOSED` push. Managers keep
+every button, which overrides the vote, and a manager or group admin can switch it off per plan. The
+pairings list is readable by every member now. The dashboard's Waiting on you reminds a starter who
+has not voted. Contract: `docs/api/MATCH-PLAN-TEAM-VOTE-API-CONTRACT.md` in the backend.
+
+**Dependency fixes that went out with it**, each forced by a new advisory failing CI the same day:
+jackson 2.21.7 (FootMania-Back#367), brace-expansion and undici (FootMania-Simple-Front#273), and
+Next.js 16.3.8 past the critical GHSA-vcvr-r3jv-pc5j, remote code execution in `next/og`, which the
+app never imports (FootMania-Simple-Front#274).
+
+**Migration `V64`**, one new table and four columns on `match_plans` with defaults or nullable. Not a
+rollback boundary: the 3.14.0 jar never reads them. **Nothing ships dark**: the vote is on by default
+for every plan.
+
+**What's new shows one row**, `team-vote`, for everyone, on the owner's yes, held until
+`/api/version` reports `3.15.0`, which it now does.
+
+⚠️ **The UI was not checked locally before the promotion.** The owner asked for the promotion
+directly after being reminded; the frontend promotion PR records that decision in its checklist.
+
+⚠️ **The `v3.14.0` tags are still not on either remote**, as the 3.14.0 section below describes.
 
 ## 3.14.0 — shipped and confirmed 2026-09-25, late evening
 
