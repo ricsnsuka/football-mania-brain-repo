@@ -3,17 +3,18 @@
 **Snapshot: 2026-09-30, evening, after 3.15.0 — the starters vote on the provisional teams, or for a
 captains pick (`V64`).** **Both repos are on `3.15.0`**: the backend read back from `/api/version`
 (build 2026-09-30T17:16:41Z), the frontend from Netlify deploy `6abd4458`. Both `v3.15.0` tags are on
-the remotes. ⚠️ **Heroku's release number was not read back** (the CLI's login has expired) and ⚠️
-**the `v3.14.0` tags are still not on the remotes**; the
+the remotes, and so, since the same evening, are both `v3.14.0` tags. ⚠️ **Heroku's release number
+was not read back** (the CLI's login has expired); the
 [3.15.0 section](#3150--shipped-and-confirmed-2026-09-30-evening) below carries every row.
 
 **The snapshot before that: 2026-09-25, late evening, after 3.14.0 — saved teams on the plan, a dropout close to
 kickoff holds the place, the teams told to everyone when the match is created, a flagged pairing
 repaired with the fewest swaps, and the frontend screen audit shipped whole.** **Both repos are on
 `3.14.0`**: the backend read back by the owner from `/api/version`, the frontend from Netlify deploy
-`6ab6fde2`. ⚠️ **Heroku's release number was not read back** and ⚠️ **the `v3.14.0` tags are not on
-the remote yet**; the [3.14.0 section](#3140--shipped-and-confirmed-2026-09-25-late-evening) below
-says why and carries every row. ⚠️ **3.13.0 (2026-09-20) skipped this page too**; that section
+`6ab6fde2`. ⚠️ **Heroku's release number was not read back**. The `v3.14.0` tags were not on the
+remotes when this was written; they were placed on 2026-09-30. The
+[3.14.0 section](#3140--shipped-and-confirmed-2026-09-25-late-evening) below says why and carries
+every row. ⚠️ **3.13.0 (2026-09-20) skipped this page too**; that section
 records what can still be read back for it.
 
 **The snapshot before that: 2026-09-18, small hours, after 3.12.0 — the app tells people what changed, a cancelled
@@ -167,7 +168,8 @@ for every plan.
 ⚠️ **The UI was not checked locally before the promotion.** The owner asked for the promotion
 directly after being reminded; the frontend promotion PR records that decision in its checklist.
 
-⚠️ **The `v3.14.0` tags are still not on either remote**, as the 3.14.0 section below describes.
+**The `v3.14.0` tags were placed the same evening**, at the commits the 3.14.0 section below names;
+that section has the detail.
 
 ## 3.14.0 — shipped and confirmed 2026-09-25, late evening
 
@@ -183,7 +185,7 @@ promotions [FootMania-Back#365](https://github.com/ricsnsuka/FootMania-Back/pull
 | Running commit | `f9566fc` (merge of #365) | `969435a` (merge of #271) |
 | Read back | `/api/version` reports `3.14.0`, read by the owner | Netlify deploy `6ab6fde25aec0600087e8556`, `ready`, production, published 2026-09-25 23:05:04Z, read from the Netlify API |
 | Platform release number | ⚠️ not read: no Heroku CLI in the session that shipped it, and `herokuapp.com` is outside that session's network policy. Fill in from `heroku releases -a footmania` | the deploy id above |
-| Tag | ⚠️ `v3.14.0` **not on the remote yet** (see below) | ⚠️ same |
+| Tag | `v3.14.0` at `f9566fc`, annotated, placed 2026-09-30 (see below) | `v3.14.0` at `969435a`, annotated, placed 2026-09-30 |
 | `next..main` | empty (`next` fast-forwarded to `main`) | empty (same) |
 
 **What shipped.** Backend: provisional teams saved on the plan (`V61`, epic
@@ -211,15 +213,12 @@ It is the first release whose rows need no backend version, and that opened the 
 capture of the screenshot suite until `seedSession` stamped What's new as seen (a test-only commit
 in #270).
 
-**The tags.** Both annotated tags were written at the commits above, with the evidence in their
-messages, but the session that shipped this could not push them: its git proxy answers `403` to a
-tag push while branch pushes go through. They need placing from a machine that can push tags, at
-exactly these commits, each annotated with its row of the table above:
-
-```bash
-git tag -a v3.14.0 f9566fc730fa034a3b5ee13d37dea9396de22197 && git push origin v3.14.0   # FootMania-Back
-git tag -a v3.14.0 969435a6b03bf17b6481941a0a8706fb88322c56 && git push origin v3.14.0   # FootMania-Simple-Front
-```
+**The tags.** The session that shipped this could not push them: its git proxy answers `403` to a
+tag push while branch pushes go through. **They were placed on 2026-09-30**, after 3.15.0 shipped,
+from a machine that can push tags: annotated `v3.14.0` at `f9566fc730fa034a3b5ee13d37dea9396de22197`
+in FootMania-Back and at `969435a6b03bf17b6481941a0a8706fb88322c56` in FootMania-Simple-Front. Each
+was checked first to be the 3.14.0 promotion merge carrying version `3.14.0`, and each annotation
+carries its row of the table above and says when and why it was placed late.
 
 **Unblocked by this release:** retiring `/generate/confirm`
 ([FootMania-Back#357](https://github.com/ricsnsuka/FootMania-Back/issues/357)) — the live frontend no
