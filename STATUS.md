@@ -1,6 +1,12 @@
 # Project Status
 
-**Snapshot: 2026-09-30, evening, after 3.15.0 — the starters vote on the provisional teams, or for a
+**Snapshot: 2026-09-30, late evening, after 3.15.1 — backend-only: `POST /generate/confirm` retired,
+and a path nothing maps answers `404`, not `500`.** **The backend is on `3.15.1`**, read back from
+`/api/version` (build 2026-09-30T22:34:17Z), tagged `v3.15.1`; **the frontend stays on `3.15.0`**.
+⚠️ **Heroku's release number was not read back** (the CLI's login has expired); the
+[3.15.1 section](#3151--shipped-and-confirmed-2026-09-30-late-evening) below carries every row.
+
+**The snapshot before that: 2026-09-30, evening, after 3.15.0 — the starters vote on the provisional teams, or for a
 captains pick (`V64`).** **Both repos are on `3.15.0`**: the backend read back from `/api/version`
 (build 2026-09-30T17:16:41Z), the frontend from Netlify deploy `6abd4458`. Both `v3.15.0` tags are on
 the remotes, and so, since the same evening, are both `v3.14.0` tags. ⚠️ **Heroku's release number
@@ -125,6 +131,35 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.15.1 — shipped and confirmed 2026-09-30, late evening
+
+**Backend only; the frontend stays on `3.15.0`.** Version bump
+[FootMania-Back#371](https://github.com/ricsnsuka/FootMania-Back/pull/371); promotion
+[FootMania-Back#372](https://github.com/ricsnsuka/FootMania-Back/pull/372), a fast-forward push of
+`next` to `main` after its Release Gate passed. The `[3.15.1]` section of the backend
+`CHANGELOG.md` is the full record.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `a42c878` (merge of #371) | unchanged: `fd06634`, 3.15.0 |
+| Read back | `/api/version` reports `3.15.1`, buildTime 2026-09-30T22:34:17Z, minutes after the push | Netlify deploy `6abd4458`, as in 3.15.0 |
+| Platform release number | ⚠️ not read: `heroku releases -a footmania` answers `401`, the CLI login has expired | — |
+| Tag | `v3.15.1` at `a42c878`, annotated | `v3.15.0` stays current |
+| `next..main` | empty | empty |
+
+**What shipped.** `POST /api/match-plans/{id}/generate/confirm` is retired
+([FootMania-Back#357](https://github.com/ricsnsuka/FootMania-Back/issues/357), PR #370): neither the
+live frontend nor its `next` called it, and a draw now becomes a match only through a saved pairing.
+Retiring it surfaced a live bug: a path nothing maps fell into the exception handler's catch-all and
+answered `500` with an ERROR and a full trace. It now answers `404` at debug. The Postman collection
+was regenerated, 176 → 180 requests, picking up the five 3.15.0 team vote requests it had missed.
+
+**No migration.** Not a rollback boundary: the 3.15.0 jar runs unchanged against the same schema.
+
+**Verified from outside:** an unauthenticated `POST …/generate/confirm` answers `403`, because
+security refuses anonymous callers before routing. The `404` shows only for a signed-in caller, and
+was not read back from production; CI's controller test pins it.
 
 ## 3.15.0 — shipped and confirmed 2026-09-30, evening
 
