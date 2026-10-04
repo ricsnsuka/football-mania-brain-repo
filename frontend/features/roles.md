@@ -6,7 +6,7 @@ A user holds a **set** of capability grants, not one role. The set can be empty.
 |------|--------|
 | `ORGANIZER` | See all balances, record payments, set fees *(the fee ledger — backend not built yet)* |
 | `MANAGER` | Create plans and matches, manage the roster, generate teams, record results |
-| `GROUP_ADMIN` | System settings, user accounts, rating recalculation, GDPR actions, purge |
+| `GROUP_ADMIN` | System settings, user accounts, rating recalculation, GDPR actions, purge; sees the ids of matches, plans and players on their lists (`IdTag`, `useSeesRecordIds`) |
 
 Two things that are **not** roles:
 
