@@ -1,6 +1,11 @@
 # Project Status
 
-**Snapshot: 2026-10-05, just after midnight, after 3.15.2 — a paired patch: the redundant Draft
+**Snapshot: 2026-10-05, after 3.15.3 — frontend-only: managers and admins who play see "Your
+availability", and a request the server refused is no longer sent twice.** **The frontend is on
+`3.15.3`**, from Netlify deploy `6ac2f8cc`, tagged `v3.15.3`; **the backend stays on `3.15.2`** and
+skips 3.15.3. The [3.15.3 section](#3153--shipped-and-confirmed-2026-10-05) below carries every row.
+
+**The snapshot before that: 2026-10-05, just after midnight, after 3.15.2 — a paired patch: the redundant Draft
 Sessions page is gone, draft notifications open where the reader is needed, and a multi-group
 login no longer draws a 400.** **Both repos are on `3.15.2`**: the backend read back from
 `/api/version` (build 2026-10-04T23:26:18Z), the frontend from Netlify deploy `6ac2ecf6`. Both
@@ -139,6 +144,34 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.15.3 — shipped and confirmed 2026-10-05
+
+**Frontend only; the backend stays on `3.15.2`** and skips 3.15.3. Version bump
+[FootMania-Simple-Front#285](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/285);
+promotion [FootMania-Simple-Front#286](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/286),
+a fast-forward push of `next` to `main` after the Release Gate passed and the owner checked the UI
+locally. The `[3.15.3]` section of the frontend `CHANGELOG.md` is the full record.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | unchanged: `beff49f`, 3.15.2 | `6441043` (merge of #285) |
+| Read back | as in 3.15.2 | Netlify deploy `6ac2f8cc0dcab60008928efd`, `ready`, `production`, `commit_ref` `6441043`, published 2026-10-05T01:10:27Z (read with `netlify api listSiteDeploys`); the production bundle carries `3.15.3` |
+| Tag | `v3.15.2` stays current | `v3.15.3` at `6441043`, annotated |
+| `next..main` | empty | empty |
+
+**What shipped** (front #284):
+- **Managers and admins who play see "Your availability".** The plan dialog showed the I'm In /
+  Can't Make It section, and the drop-out button after the deadline, only to members without a
+  role; staff had to answer for themselves through the roster. Staff now get it when they have a
+  linked player. Staff with none don't, having no availability of their own.
+- **A request the server refused is no longer sent twice.** The app-wide query default was
+  `retry: 1`, so every 4xx went out twice, such as the 404 from
+  `GET /api/match-plans/{id}/confirmations/me` for a plan not answered yet. A 4xx is now not
+  retried, except 408 and 429.
+
+**No API change, no migration.** Not checked in a browser after deploy: the What's new dialog,
+which should show nothing new, since this is a patch.
 
 ## 3.15.2 — shipped and confirmed 2026-10-05
 
