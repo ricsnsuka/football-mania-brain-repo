@@ -1,6 +1,14 @@
 # Project Status
 
-**Snapshot: 2026-09-30, late evening, after 3.15.1 — backend-only: `POST /generate/confirm` retired,
+**Snapshot: 2026-10-05, just after midnight, after 3.15.2 — a paired patch: the redundant Draft
+Sessions page is gone, draft notifications open where the reader is needed, and a multi-group
+login no longer draws a 400.** **Both repos are on `3.15.2`**: the backend read back from
+`/api/version` (build 2026-10-04T23:26:18Z), the frontend from Netlify deploy `6ac2ecf6`. Both
+`v3.15.2` tags are on the remotes. ⚠️ **Heroku's release number was not read back** (the CLI's
+login has still expired); the [3.15.2 section](#3152--shipped-and-confirmed-2026-10-05) below
+carries every row.
+
+**The snapshot before that: 2026-09-30, late evening, after 3.15.1 — backend-only: `POST /generate/confirm` retired,
 and a path nothing maps answers `404`, not `500`.** **The backend is on `3.15.1`**, read back from
 `/api/version` (build 2026-09-30T22:34:17Z), tagged `v3.15.1`; **the frontend stays on `3.15.0`**.
 ⚠️ **Heroku's release number was not read back** (the CLI's login has expired); the
@@ -131,6 +139,45 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.15.2 — shipped and confirmed 2026-10-05
+
+**Paired patch; the owner chose 3.15.2 over 3.16.0.** The frontend skips 3.15.1, which was
+backend-only. Version bumps: [FootMania-Back#374](https://github.com/ricsnsuka/FootMania-Back/pull/374)
+and [FootMania-Simple-Front#282](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/282).
+Promotions: [FootMania-Back#375](https://github.com/ricsnsuka/FootMania-Back/pull/375), then
+[FootMania-Simple-Front#283](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/283), after
+the owner checked the UI locally. Both were fast-forward pushes of `next` to `main` after the
+Release Gate passed. The `[3.15.2]` sections of both changelogs are the full record.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `beff49f` (merge of #374) | `78a7839` (merge of #282) |
+| Read back | `/api/version` reports `3.15.2`, buildTime 2026-10-04T23:26:18Z, a minute after the push | Netlify deploy `6ac2ecf64f03ec00088511ed`, `ready`, `commit_ref` `78a7839`, published 2026-10-05T00:20:03Z (read with `netlify api listSiteDeploys`; the Netlify connector still named `6abd4458` as current) |
+| Platform release number | ⚠️ not read: the Heroku CLI login has expired | the deploy id above |
+| Tag | `v3.15.2` at `beff49f`, annotated | `v3.15.2` at `78a7839`, annotated |
+| `next..main` | empty | empty |
+
+**What shipped.**
+- **The Draft Sessions page is removed** (front #281). It duplicated the Draft sessions tab on Team
+  generation. `/draft-sessions` now redirects (307) to `/team-generation`.
+- **Draft notifications open where the reader is needed** (back #373). They used to open the
+  admins-only `/draft-sessions` page, which sent players back to the dashboard. "It's your pick"
+  and the captains pick now open `/team-generation`, and "Teams are set" opens the drafted plan.
+- **A multi-group login no longer draws a 400** (front #279). The navbar sits outside the page
+  guard, so it requested `GET /api/draft-sessions` before a group was chosen, with no
+  `X-Group-Id`. The draft-session queries now wait for an active group.
+- Group admins see record ids on the lists.
+- `.mjs` scripts are kept LF, so the audit gate test parses on Windows (front #280).
+
+**No migration.** Not a rollback boundary.
+
+**Verified from outside:** production answers `/draft-sessions` with a 307 to `/team-generation`,
+and the 3.15.0 deploy's permalink still answers 200, so the redirect comes from the new build.
+Not checked: the What's new dialog in a browser. It should show nothing new, since this is a patch.
+
+**Open:** 17 Dependabot alerts on the backend's default branch (7 high) and 1 high on the
+frontend's, reported by GitHub during the promotion pushes. None was raised by this release.
 
 ## 3.15.1 — shipped and confirmed 2026-09-30, late evening
 
