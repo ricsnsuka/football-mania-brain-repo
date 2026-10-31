@@ -5,6 +5,11 @@
 [Phase 4](../product/roadmap.md), which is deliberately gated on real usage data rather than on
 enthusiasm. Read [When not to do this](#when-not-to-do-this) before the rest.
 
+**A throwaway rung-1 try-out ran on 2026-10-31**, against `3.15.3`, and the app ran in the iOS
+Simulator. Nothing from it is merged. It found that the static export no longer works unchanged —
+[the record](#the-rung-1-try-out-2026-10-31) supersedes the "wrap it" claims below where they
+disagree.
+
 Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
 frontend, an APNs path in the backend, one config change in production, and a set of decisions that
 are neither.
@@ -61,8 +66,9 @@ The one snag is `/join/[token]`, the invite route. Static export needs `generate
 invite tokens are issued at runtime and unguessable by design — there is no set to pre-render.
 It already reads its parameter client-side via `useParams`, so the fix is a shell route rather than
 a rewrite: export one page for the path and let the client read the token. Worth confirming early,
-because it is the only route in the app with this shape and it is on the critical path of the whole
-onboarding arc.
+because it is on the critical path of the whole onboarding arc. *(It was the only route with this
+shape when this was written; 2.2.0 added `/reset-password/[token]`, and the shell-route fix works for
+both — confirmed in [the try-out](#the-rung-1-try-out-2026-10-31).)*
 
 **Point Capacitor at the live site** (`server.url`). Rejected. It turns the app into a browser in a
 costume — which is exactly what guideline 4.2 exists to reject — and it throws away the offline
@@ -198,6 +204,67 @@ Two things change:
   auto-updating clients have never imposed. This deserves its own decision — a minimum supported
   version with a forced-upgrade screen is the usual answer, and it is much easier to add in
   version 1 than to retrofit.
+
+---
+
+## The rung-1 try-out, 2026-10-31
+
+**Run by the owner on a throwaway frontend branch, `try/capacitor-ios`, never merged.** It answers
+"does the wrap still work, and what does it look like", and nothing past that. The step-by-step guide
+it followed is the owner's private artifact
+[Football Mania iOS Try-out](https://claude.ai/artifact/79T4XhrVQCRwYkjKjV66SS).
+
+### The static export no longer works unchanged
+
+The table above was verified at `1.1.0`. At `3.15.3` (`next` @ `6441043`) the export build failed
+three times before it passed — each failure reproduced and each fix built, on a scratch copy, before
+the owner applied them:
+
+| Build failure | Fix on the try-out branch |
+|---|---|
+| `Page "/join/[token]" is missing "generateStaticParams()"` | The client page moves to `TokenRoute.tsx`; a new server `page.tsx` exports one placeholder param (`_`) and renders it. The client still reads the real token with `useParams` |
+| The same error for `/reset-password/[token]` | The same fix |
+| `dynamic = "force-static"` not configured on `/manifest.webmanifest` | `export const dynamic = "force-static"` in `app/manifest.ts` |
+
+`output: "export"` sits behind `CAPACITOR_BUILD=1` in `next.config.ts`, so the Netlify build is
+untouched — both builds were run. The next.config `headers()` and `redirects()` only **warn**: the
+CSP, the other security headers and the `/draft-sessions` redirect simply do not exist inside the
+app. Result: 28 routes, 5.1 MB in `out/`.
+
+### What it ran on
+
+macOS 26.6 (Apple Silicon), Xcode 27.2 (27B52), the iOS 27.2 Simulator, Node 26.13, Next.js 16.3.8,
+Capacitor 8.6.0. Capacitor 8 generates a **Swift Package Manager** project (iOS 15+) — no CocoaPods.
+The app's origin is `capacitor://localhost` (Capacitor's `CAPInstanceDescriptor.swift`), so the
+backend ran with `--app.cors.allowed-origins=http://localhost:3000,capacitor://localhost`: the dev
+profile's allowlist is hard-coded and does not read `CORS_ALLOWED_ORIGINS`. Production was not
+touched.
+
+### What the owner saw, all as predicted
+
+- **Logged out on every cold start.** Auth persists to `sessionStorage` (`appStore.ts`), which dies
+  with the app's session. A real app needs persistent storage for the token.
+- **The header sits under the status bar and notch.** `viewportFit: 'cover'` is set, but nothing in
+  `src/` uses `env(safe-area-inset-*)`.
+- **No way to turn on notifications.** WKWebView has no Push API, so `canUsePush()` is false.
+- **A reload or a 401 lands on `/login` or `/dashboard`, not where the user was.** Capacitor's iOS
+  router serves the root `index.html` for every path without a file extension (`Router.swift`), and
+  the root page redirects by auth state. Degrades, does not break.
+- **Invite and reset links open Safari.** No Universal Links, and in the app those two routes are
+  placeholders only.
+
+### What it did not answer
+
+Native push (the paid program plus an APNs sender), guideline 4.2, the payments question, and the
+gate itself. **Rung 2 still waits on the iOS-versus-Android push subscription numbers, and nothing
+measures them yet** — `/api/admin/platform/health` reports one total `subscriptionCount` with no
+platform split ([PLATFORM-CONSOLE-PLAN](../backend/plans/PLATFORM-CONSOLE-PLAN.md), push health).
+
+### Before rung 1 counts as done
+
+The three fixes go into `next` as a proper pull request with its changelog entry, plus a CI step that
+runs `CAPACITOR_BUILD=1 next build`. That check is what "worth protecting deliberately" above asks
+for: today the cheap path breaks silently, as these three failures show.
 
 ---
 
