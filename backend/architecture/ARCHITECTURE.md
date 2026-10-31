@@ -410,11 +410,53 @@ $env:JWT_SECRET = "dev-local-secret-do-not-use-in-production-minimum-64-chars-he
 # 4. Swagger UI
 # http://localhost:8080/swagger-ui.html
 
-# 5. Login with default admin
+# 5. Set the seeded admin's password by hand — "Admin@1234" does NOT work (see below)
 # POST http://localhost:8080/api/auth/login
-# { "identifier": "admin", "password": "Admin@1234" }
-# (force_password_change = true — change password before using other endpoints)
+# { "identifier": "admin", "password": "<the password you set>" }
 ```
+
+### The seeded admin's password is not `Admin@1234`
+
+**It never was.** `V1__initial_schema.sql` seeds `admin` under a comment saying
+`Admin@1234`, but the bcrypt hash beside it (`$2a$12$KiDoRb5o…`) does not verify against that
+string — checked on 2026-10-31 with an independent bcrypt implementation, which verifies a `$2a$`
+hash of its own making. So **every fresh database has an admin nobody can log in as**, and every
+document repeating the comment is wrong with it. Nothing caught this because the test profile runs
+with Flyway off (`application-test.yml`), so no test has ever logged in with the seed.
+
+**V1 cannot be fixed.** Editing an applied migration, comment included, changes its Flyway
+checksum, and every existing database — production among them — then refuses to start. A new
+migration resetting the password is worse: it would reset production's admin too.
+
+Set one yourself:
+
+```bash
+# 1. Hash a password of your choosing (prompts for it; nothing lands in shell history)
+pip install bcrypt
+python -c "import bcrypt, getpass; print(bcrypt.hashpw(getpass.getpass().encode(), bcrypt.gensalt(12, prefix=b'2a')).decode())"
+
+# 2. Open psql on the dev database (container and credentials from docker-compose.yml)
+docker exec -it football-db psql -U postgres -d football
+```
+
+```sql
+UPDATE users
+   SET password = '<the hash>', force_password_change = FALSE, updated_at = NOW()
+ WHERE username = 'admin';
+```
+
+Three things that make this harder than it looks:
+
+- **Retrying locks you out.** Ten failed logins on one identifier start a lock that doubles up to
+  an hour (`LoginThrottle`). It is in memory, per process: **restart the backend to clear it.**
+  `admin` and `admin@football.local` count separately.
+- **The change-password form applies `PasswordPolicy`**, which the SQL route skips: at least 12
+  characters, upper + lower + digit + symbol, not on the blocklist, and **not containing the
+  username** — so nothing with `admin` in it.
+- **The seeded admin is group 1's `GROUP_ADMIN`, not a platform operator** (V18 → V23 → V33).
+  Granting it `platform_admins` breaks V35's rule that an operator belongs to no group; for the
+  operator, register a separate account and follow
+  [Bootstrapping the first platform operator](../../architecture/multi-tenancy.md#bootstrapping-the-first-platform-operator).
 
 ---
 
