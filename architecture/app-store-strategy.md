@@ -253,6 +253,18 @@ touched.
 - **Invite and reset links open Safari.** No Universal Links, and in the app those two routes are
   placeholders only.
 
+### The owner's verdict: "it felt like a website in a frame"
+
+That is guideline 4.2's rejection reason in the owner's own words, and it is what
+[obstacle 3](#3-guideline-42--minimum-functionality) predicts for a bare wrap: the try-out added
+nothing a browser tab lacks. Two consequences:
+
+- **The wrap is not a submission.** As built, expect it to fail review under 4.2. Native push is
+  still the strongest answer, and it is the one piece the try-out could not include.
+- **"Feels like an app" is its own budget line**, separate from the about-a-day wrapper and from
+  push. Part of the verdict comes from the gaps above (the notch, logging in on every launch), which
+  are fixable; how much is inherent to a web UI is not yet known.
+
 ### What it did not answer
 
 Native push (the paid program plus an APNs sender), guideline 4.2, the payments question, and the
