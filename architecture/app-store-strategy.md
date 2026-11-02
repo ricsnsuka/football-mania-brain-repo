@@ -29,6 +29,23 @@ Phase 1. It proves the feel, not the cost: the spike is one flow in about 450 li
 the expensive parts (the design system, translations, live chat and drafts, offline goal entry,
 push) were touched. Phase 2 waits on the eight decisions in the guide.
 
+**Phase 0 decisions, all eight, 2026-11-02.** The guide holds the reasoning for each.
+
+- **Android:** decided after the iPhone app ships, with real usage to go on.
+- **Apple account:** the owner, personally ([open question 4](#open-questions)).
+- **Paid:** yes, a subscription per group paid by its group admins ([open question 1](#open-questions)).
+  The billing rung stays on hold.
+- **Minimum supported version:** version 1 ships the check and an update screen. It needs one small
+  backend setting the app reads at launch.
+- **Admin tools stay on the web:** the platform console, moderation, user administration, API
+  tokens and founding a group.
+- **Screens not yet native** open the existing web screen inside the app, so it has every feature
+  from the first beta.
+- **API code:** written by hand in the spike. Apple's OpenAPI generator is tried at the start of
+  Phase 2 and kept only if its output is readable.
+- **Name and identifier:** "Football Mania", `pt.rics.footballmania`. The identifier is permanent
+  once published.
+
 Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
 frontend, an APNs path in the backend, one config change in production, and a set of decisions that
 are neither.
@@ -352,8 +369,10 @@ Decide these before rung 2, not during:
    second source (Apple's server notifications) designed in before the hold lifts, not after.
 2. **Android at the same time?** Capacitor makes it nearly free, Play review is far gentler, and
    Android has no equivalent of the iOS push install problem — which weakens the main argument for
-   doing iOS first.
+   doing iOS first. **Answered 2026-11-02: decided after the iPhone app ships.** The route is now
+   native SwiftUI, so Android would be a separate Kotlin app rather than nearly free.
 3. **Minimum supported app version**, and whether version 1 ships the forced-upgrade screen.
+   **Answered 2026-11-02: version 1 ships it.**
 4. **Who owns the Apple account?** It is a business identity with renewal obligations, and moving
    it later is unpleasant.
 
