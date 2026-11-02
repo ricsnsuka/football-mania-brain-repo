@@ -326,9 +326,38 @@ Decide these before rung 2, not during:
 
 1. **Is anything ever going to be paid?** Determines whether IAP is in scope and constrains the
    billing rung's design. The most expensive question to answer late.
+
+   **Answered 2026-11-02: yes.** Group admins will pay a subscription per group, eventually. That is
+   a direction, not a start: the [billing rung](../backend/plans/GROUP-BILLING-PLAN.md) stays ⛔ on
+   hold until the owner lifts it in their own words. What Apple's App Review Guidelines say, read
+   from the published text on 2026-11-02:
+
+   - **3.1.1**: unlocking "features or functionality within your app" requires in-app purchase. A
+     group's subscription that decides whether the app works for that group is exactly that.
+   - **3.1.3(b)**: the app may honour a subscription bought on the website only "provided those
+     items are also available as in-app purchases within the app".
+   - **3.1.3(c)** covers apps sold "to organizations or groups for their employees or students", and
+     **3.1.3(f)** free companions to paid "VoIP, Cloud Storage, Email Services, or Web Hosting"
+     tools. Neither describes a football group, so neither exempts it.
+   - **3.1.1(a)**: a link to buying elsewhere needs a regional entitlement, except on the United
+     States storefront, where buttons and links to outside purchase need none. That makes
+     [obstacle 4](#4-guideline-311--in-app-purchase-and-the-billing-rung)'s "forbids linking out to
+     your own checkout" out of date for the US; it still describes Portugal and the rest of the EU
+     closely enough, where a link-out needs an entitlement and sits beside in-app purchase.
+
+   **Consequence for the billing design:** a group's paid status has to be an entitlement on the
+   organization that more than one payment source can grant (Stripe on the web, App Store in-app
+   purchase in the app), not a Stripe subscription the backend reads directly. The plan's §3
+   already keeps subscription state on the organization, but its columns are Stripe's; it needs a
+   second source (Apple's server notifications) designed in before the hold lifts, not after.
 2. **Android at the same time?** Capacitor makes it nearly free, Play review is far gentler, and
    Android has no equivalent of the iOS push install problem — which weakens the main argument for
    doing iOS first.
 3. **Minimum supported app version**, and whether version 1 ships the forced-upgrade screen.
 4. **Who owns the Apple account?** It is a business identity with renewal obligations, and moving
    it later is unpleasant.
+
+   **Answered 2026-11-02: the owner, personally**, as an individual enrollment. Expect the App
+   Store to show the owner's own name as the seller, and in-app purchase revenue to be paid to
+   them personally; both are worth confirming during enrollment rather than assuming. Converting
+   to an organization later is the move this question warned about.
