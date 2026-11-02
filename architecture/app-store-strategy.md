@@ -49,6 +49,15 @@ push) were touched. Phase 2 waits on the eight decisions in the guide.
 - **Name and identifier:** "Football Mania", `pt.rics.footballmania`. The identifier is permanent
   once published.
 
+Settled the same day while setting up the Xcode project (FootMania-iOS#2), beyond the eight:
+
+- **Lowest supported iOS: 18.0.** Xcode's default was the latest (27.2), which would have shut out
+  every iPhone not yet on it. The code needs iOS 17 at least, for `@Observable`.
+- **Swift 6 language mode**, so data races are checked at compile time, switched on while the
+  project was still the empty template.
+- **iPhone only for version 1.** The App Store lets an update add iPad support but not take it away
+  once released, and an iPad version means its own layouts and screenshots.
+
 Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
 frontend, an APNs path in the backend, one config change in production, and a set of decisions that
 are neither.
