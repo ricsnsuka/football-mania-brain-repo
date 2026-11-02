@@ -58,6 +58,13 @@ Settled the same day while setting up the Xcode project (FootMania-iOS#2), beyon
 - **iPhone only for version 1.** The App Store lets an update add iPad support but not take it away
   once released, and an iPad version means its own layouts and screenshots.
 
+Settled while laying the design foundation (FootMania-iOS#4):
+
+- **Lettering: the iPhone's system font, not the web's Geist.** The owner's call. The colours match
+  the web token for token; the type does not, on purpose. The system font follows each person's
+  text-size setting without extra work and is what every other app on the phone uses; Geist would
+  mean bundling the font file and wiring every text style to scale with it.
+
 Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
 frontend, an APNs path in the backend, one config change in production, and a set of decisions that
 are neither.
