@@ -21,7 +21,9 @@ and the decisions still open live in the owner's private guide
 
 **Phase 1 spike, 2026-11-02: passed.** The owner ran a throwaway SwiftUI app (log in, see the next
 match, mark availability; [the spike guide](https://claude.ai/artifact/Fd4wzRVTfdibJwqmdDm9De))
-against a local backend in the Simulator. The verdict: **"it feels like a proper app"**, against "a
+against a local backend in the Simulator. Its six files compiled and ran exactly as written on
+Xcode 27.2, although no compiler had seen them before the owner ran them. The verdict: **"it feels
+like a proper app"**, against "a
 website in a frame" for the Capacitor wrap on the same backend. That clears the gate the plan set for
 Phase 1. It proves the feel, not the cost: the spike is one flow in about 450 lines, and none of
 the expensive parts (the design system, translations, live chat and drafts, offline goal entry,
