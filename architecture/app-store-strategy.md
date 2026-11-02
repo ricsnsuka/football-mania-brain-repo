@@ -19,6 +19,14 @@ comes, it is a separate Kotlin app. Nothing is built yet. The phased plan, the s
 and the decisions still open live in the owner's private guide
 [Football Mania in Swift](https://claude.ai/artifact/CoGWNyawucDLJ1pkPR8Cy2).
 
+**Phase 1 spike, 2026-11-02: passed.** The owner ran a throwaway SwiftUI app (log in, see the next
+match, mark availability; [the spike guide](https://claude.ai/artifact/Fd4wzRVTfdibJwqmdDm9De))
+against a local backend in the Simulator. The verdict: **"it feels like a proper app"**, against "a
+website in a frame" for the Capacitor wrap on the same backend. That clears the gate the plan set for
+Phase 1. It proves the feel, not the cost: the spike is one flow in about 450 lines, and none of
+the expensive parts (the design system, translations, live chat and drafts, offline goal entry,
+push) were touched. Phase 2 waits on the eight decisions in the guide.
+
 Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
 frontend, an APNs path in the backend, one config change in production, and a set of decisions that
 are neither.
