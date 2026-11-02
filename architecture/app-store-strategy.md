@@ -22,8 +22,11 @@ and the decisions still open live in the owner's private guide
 **Phase 1 spike, 2026-11-02: passed.** The owner ran a throwaway SwiftUI app (log in, see the next
 match, mark availability; [the spike guide](https://claude.ai/artifact/Fd4wzRVTfdibJwqmdDm9De))
 against a local backend in the Simulator. Its six files compiled and ran exactly as written on
-Xcode 27.2, although no compiler had seen them before the owner ran them. The verdict: **"it feels
-like a proper app"**, against "a
+Xcode 27.2, although no compiler had seen them before the owner ran them. A session on the owner's
+Mac then rebuilt it with `xcodebuild` and compared the local backend's real JSON with the spike's
+models: login, the match-plans page and `confirmations/me` all decode, and `createdAt`, `updatedAt`
+and `joinedAt` carry six-digit fractional seconds, which is why the custom date decoder exists. The
+verdict: **"it feels like a proper app"**, against "a
 website in a frame" for the Capacitor wrap on the same backend. That clears the gate the plan set for
 Phase 1. It proves the feel, not the cost: the spike is one flow in about 450 lines, and none of
 the expensive parts (the design system, translations, live chat and drafts, offline goal entry,
