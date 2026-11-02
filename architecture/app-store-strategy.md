@@ -10,6 +10,15 @@ Simulator. Nothing from it is merged. It found that the static export no longer 
 [the record](#the-rung-1-try-out-2026-10-31) supersedes the "wrap it" claims below where they
 disagree.
 
+**Decision, 2026-11-02: a native SwiftUI app, not the Capacitor wrap.** After the try-out's verdict
+("a website in a frame"), the owner chose to rebuild the frontend natively in Swift and SwiftUI for
+iPhone, as a new client of the existing backend. This supersedes the Capacitor recommendation in
+[The short answer](#the-short-answer). The obstacles below still apply to it: native push, guideline
+4.2, the payments rule, and the release and version discipline. **Android is undecided**; if it
+comes, it is a separate Kotlin app. Nothing is built yet. The phased plan, the screen-by-screen map
+and the decisions still open live in the owner's private guide
+[Football Mania in Swift](https://claude.ai/artifact/CoGWNyawucDLJ1pkPR8Cy2).
+
 Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
 frontend, an APNs path in the backend, one config change in production, and a set of decisions that
 are neither.
