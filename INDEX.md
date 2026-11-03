@@ -52,6 +52,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | Document | What it is |
 |---|---|
 | [INCIDENT 2026-05-26](backend/fixes/INCIDENT_2026-05-26_Java_Version_Mismatch.md) | Java 21 vs IntelliJ's 17 |
+| [DEPENDENCY-ADVISORIES 2026-11-03](backend/security/DEPENDENCY-ADVISORIES-2026-11-03.md) | Next.js 16.4.4; two Spring advisories set aside until 2027-02-01, **Spring Boot 4 due by then** |
 | [DEPENDENCY-CVE-SCAN 2026-08-24](backend/security/DEPENDENCY-CVE-SCAN-2026-08-24.md) | Dependencies, both repos — and the CI checks that keep it current |
 | [SECURITY-AUDIT 2025-07-09](backend/security/SECURITY-AUDIT-2025-07-09.md) · [2025-07-16](backend/security/SECURITY-AUDIT-2025-07-16.md) | Two audit passes — application security; superseded on **dependencies** by the scan above |
 | [code-review 2026-08-24](architecture/code-review-2026-08-24.md) | Cross-repo, so it lives in `architecture/` rather than here. Linked from Start here |
