@@ -65,8 +65,10 @@ reading that it is hasn't been proven. The deadline bounds that risk.
 
 ## Still open
 
-- **Spring Boot 4 migration, due before 2027-02-01.** That means Spring Framework 7, Jakarta EE 11,
-  Jackson 3, Hibernate 7 and Spring Security 7. It needs its own plan; nothing here has started it.
+- **Spring Boot 4 migration, due before 2027-02-01**, filed as
+  [FootMania-Back#382](https://github.com/ricsnsuka/FootMania-Back/issues/382): the current state
+  file by file, the change, a JSON contract check before and after, and the allowlist emptied at the
+  end. Not started.
 - **Releases.** The frontend fix reaches users only with a release to `main` (3.15.4, frontend-only).
   The backend's exception unblocks #378 (group timezones, `V65`), which ships in a paired release,
   backend first.
