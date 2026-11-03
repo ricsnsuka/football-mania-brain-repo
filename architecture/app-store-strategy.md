@@ -65,6 +65,20 @@ Settled while laying the design foundation (FootMania-iOS#4):
   text-size setting without extra work and is what every other app on the phone uses; Geist would
   mean bundling the font file and wiring every text style to scale with it.
 
+Settled 2026-11-03, before the in-app web screens (Phase 2, slice 4):
+
+- **The web gets an entry made for the app; the app doesn't write into the web's storage.** The
+  owner's call. The app opens `/app/open?to=<path>` and hands over its token, group and language
+  by script, never in a URL; the web signs in from the token as a reload would. Writing straight
+  into the web's `sessionStorage` would have needed no web change, but that format is the web's
+  private business and has changed before (`migrateStoredUser`). Installed apps can't follow a
+  deploy, so the next change would have broken every installed copy's web screens until an App
+  Store update. The contract lives with the code, in FootMania-Simple-Front's
+  `docs/guides/native-app.md`.
+- **Inside the app, the web hides its own header, footer and install hint.** The owner's call. The
+  app draws its own navigation, and a second one inside the page would let people wander the whole
+  website from a screen, and log out from two places.
+
 Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
 frontend, an APNs path in the backend, one config change in production, and a set of decisions that
 are neither.
