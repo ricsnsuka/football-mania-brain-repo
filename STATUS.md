@@ -3,11 +3,10 @@
 **Snapshot: 2026-11-03, after 3.16.0 — a paired minor release: recurring match plans keep their
 local time across daylight saving (`V65`, `V66`), Next.js 16.4.4 closes two critical advisories, and
 `/app/open` lets the iPhone app open web screens.** **Both repos are on `3.16.0`**: the backend read
-back by the owner from `/api/version`, the frontend confirmed by the owner. ⚠️ **Neither the Heroku
-release number nor the Netlify deploy id was read back; the `v3.16.0` tags are made but not on the
-remotes** (this session may not push tags); **and `next` is one commit behind `main` in both repos**,
-the promotion merge commits. The [3.16.0 section](#3160--shipped-and-confirmed-2026-11-03) below
-carries every row.
+back by the owner from `/api/version`, the frontend confirmed by the owner. Both `v3.16.0` tags are
+on the remotes, and `next..main` is empty in both repos. ⚠️ **Neither the Heroku release number nor
+the Netlify deploy id was read back.** The [3.16.0 section](#3160--shipped-and-confirmed-2026-11-03)
+below carries every row.
 
 **The snapshot before that: 2026-10-05, after 3.15.3 — frontend-only: managers and admins who play see "Your
 availability", and a request the server refused is no longer sent twice.** **The frontend is on
@@ -162,15 +161,16 @@ read back from both platforms, and the evidence is in the table.
 promotions [FootMania-Back#381](https://github.com/ricsnsuka/FootMania-Back/pull/381) and
 [FootMania-Simple-Front#292](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/292), each
 after its Release Gate passed. **Both promotions were merged with GitHub's merge button**, which
-added a merge commit to `main` instead of fast-forwarding it as 3.15.3 did, so `next` was left one
-commit behind. The `[3.16.0]` sections of both `CHANGELOG.md` files are the full record.
+added a merge commit to `main` instead of fast-forwarding it as 3.15.3 did, which left `next` one
+commit behind until the owner fast-forwarded it (`git push origin origin/main:next`, both repos). The
+`[3.16.0]` sections of both `CHANGELOG.md` files are the full record.
 
 | | Backend | Frontend |
 |---|---|---|
 | Running commit | `07206dc` (merge of #381) | `d048052` (merge of #292) |
 | Read back | the owner: production `/api/version` reports `3.16.0`, post-merge checks ok. Heroku release number and `buildTime` **not read back** | the owner: post-merge checks ok. Netlify deploy id **not read back** |
-| Tag | `v3.16.0` at `07206dc`, annotated, **not pushed**: this session's tag push was refused (HTTP 403) | `v3.16.0` at `d048052`, annotated, **not pushed**, same |
-| `next..main` | **one commit**, `07206dc`, until `next` is fast-forwarded | **one commit**, `d048052`, same |
+| Tag | `v3.16.0` at `07206dc`, annotated, pushed by the owner (the cloud session's tag push was refused, HTTP 403) | `v3.16.0` at `d048052`, annotated, pushed by the owner |
+| `next..main` | empty, after the owner fast-forwarded `next` to `07206dc` | empty, after the same fast-forward to `d048052` |
 
 **What shipped**
 - **Recurring match plans keep their local time across daylight saving** (back #378, front #288).
