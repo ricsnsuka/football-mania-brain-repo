@@ -32,6 +32,22 @@ Phase 1. It proves the feel, not the cost: the spike is one flow in about 450 li
 the expensive parts (the design system, translations, live chat and drafts, offline goal entry,
 push) were touched. Phase 2 waits on the eight decisions in the guide.
 
+**Phase 2, the foundation: done 2026-11-03**, in six pull requests to FootMania-iOS, each built and
+tested on the owner's Mac before merging (121 tests by the last):
+
+| PR | What it added |
+|---|---|
+| #3 | Log in, stay logged in (Keychain), choose a group, log out |
+| #4 | The web's colours in light and dark, the shared building blocks |
+| #5 | The app's wording copied from the web's locale files by a script |
+| #6 | Every feature from the home screen, as the web's own page inside the app (with web #289) |
+| #7 | The minimum-build check and update screen (with backend #383) |
+| #8 | Forgot your password, from the login screen |
+
+That meets the guide's exit: the app logs in, switches groups, shows every feature (most as web
+screens) and looks like Football Mania. **Phase 3 is next**: the screens every player uses, built
+natively into the tab bar settled below.
+
 **Phase 0 decisions, all eight, 2026-11-02.** The guide holds the reasoning for each.
 
 - **Android:** decided after the iPhone app ships, with real usage to go on.
@@ -78,6 +94,20 @@ Settled 2026-11-03, before the in-app web screens (Phase 2, slice 4):
 - **Inside the app, the web hides its own header, footer and install hint.** The owner's call. The
   app draws its own navigation, and a second one inside the page would let people wander the whole
   website from a screen, and log out from two places.
+
+Settled 2026-11-03, at the end of Phase 2:
+
+- **The tab bar: Home, Matches, Rankings, Chat, More.** The owner's call, keeping the guide's
+  suggestion. The web shows six entries to everyone (Dashboard, Chat, Matches, Match plans,
+  Rankings, Payments) and an iPhone tab bar holds five comfortably, so upcoming plans and results
+  share **Matches**. **Home** is the next match, **More** holds payments, profile, settings and
+  privacy, with a Manage section for managers and group admins. Phase 3 builds its screens into
+  these five.
+- **The minimum build is a platform setting, and the check fails open.** `IOS_MINIMUM_BUILD`, read
+  publicly at `GET /api/clients/ios` (FootMania-Back#383), compared with the app's build number,
+  which is one whole number that only goes up. No answer means carry on: a check that could lock
+  every installed copy out during an outage is worse than an old build running a little longer, so
+  the check is never a reason to skip the release order in FootMania-iOS's `AGENTS.md`.
 
 Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
 frontend, an APNs path in the backend, one config change in production, and a set of decisions that
