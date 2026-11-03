@@ -1,6 +1,15 @@
 # Project Status
 
-**Snapshot: 2026-10-05, after 3.15.3 — frontend-only: managers and admins who play see "Your
+**Snapshot: 2026-11-03, after 3.16.0 — a paired minor release: recurring match plans keep their
+local time across daylight saving (`V65`, `V66`), Next.js 16.4.4 closes two critical advisories, and
+`/app/open` lets the iPhone app open web screens.** **Both repos are on `3.16.0`**: the backend read
+back by the owner from `/api/version`, the frontend confirmed by the owner. ⚠️ **Neither the Heroku
+release number nor the Netlify deploy id was read back; the `v3.16.0` tags are made but not on the
+remotes** (this session may not push tags); **and `next` is one commit behind `main` in both repos**,
+the promotion merge commits. The [3.16.0 section](#3160--shipped-and-confirmed-2026-11-03) below
+carries every row.
+
+**The snapshot before that: 2026-10-05, after 3.15.3 — frontend-only: managers and admins who play see "Your
 availability", and a request the server refused is no longer sent twice.** **The frontend is on
 `3.15.3`**, from Netlify deploy `6ac2f8cc`, tagged `v3.15.3`; **the backend stays on `3.15.2`** and
 skips 3.15.3. The [3.15.3 section](#3153--shipped-and-confirmed-2026-10-05) below carries every row.
@@ -144,6 +153,41 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.16.0 — shipped and confirmed 2026-11-03
+
+**Paired, backend first: both repos `3.16.0`.** Version bumps
+[FootMania-Back#380](https://github.com/ricsnsuka/FootMania-Back/pull/380) and
+[FootMania-Simple-Front#291](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/291);
+promotions [FootMania-Back#381](https://github.com/ricsnsuka/FootMania-Back/pull/381) and
+[FootMania-Simple-Front#292](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/292), each
+after its Release Gate passed. **Both promotions were merged with GitHub's merge button**, which
+added a merge commit to `main` instead of fast-forwarding it as 3.15.3 did, so `next` was left one
+commit behind. The `[3.16.0]` sections of both `CHANGELOG.md` files are the full record.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `07206dc` (merge of #381) | `d048052` (merge of #292) |
+| Read back | the owner: production `/api/version` reports `3.16.0`, post-merge checks ok. Heroku release number and `buildTime` **not read back** | the owner: post-merge checks ok. Netlify deploy id **not read back** |
+| Tag | `v3.16.0` at `07206dc`, annotated, **not pushed**: this session's tag push was refused (HTTP 403) | `v3.16.0` at `d048052`, annotated, **not pushed**, same |
+| `next..main` | **one commit**, `07206dc`, until `next` is fast-forwarded | **one commit**, `d048052`, same |
+
+**What shipped**
+- **Recurring match plans keep their local time across daylight saving** (back #378, front #288).
+  Groups have a timezone (`V65`, existing groups `Europe/Lisbon`), and `V66` moved the upcoming plans
+  of recurring runs back to their local time. A group admin sets it in Settings, on the group tab;
+  `PUT /api/groups/{id}/timezone` is new. The daily jobs run on `PLATFORM_TIMEZONE`, default
+  `Europe/Lisbon`.
+- **Next.js 16.3.8 → 16.4.4**, closing two critical advisories (front #290), and the web's CI
+  dependency gate passing again after failing every pull request since at least 2026-10-28.
+- **Two critical Spring advisories set aside until 2027-02-01** (back #379), with **Spring Boot 4 due
+  by then**: [DEPENDENCY-ADVISORIES-2026-11-03](backend/security/DEPENDENCY-ADVISORIES-2026-11-03.md).
+- **`/app/open`** (front #289), where the iPhone app opens web screens, with the web's header hidden
+  inside the app. Nothing changes in a browser.
+- Build-classpath version floors (back #376, #377) and `.env.example` (front #287).
+
+**Migrations `V65` and `V66`, neither a rollback boundary; a rollback does not undo `V66`.** What's
+new shows nothing: no highlight was asked for.
 
 ## 3.15.3 — shipped and confirmed 2026-10-05
 
