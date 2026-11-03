@@ -5,6 +5,80 @@
 [Phase 4](../product/roadmap.md), which is deliberately gated on real usage data rather than on
 enthusiasm. Read [When not to do this](#when-not-to-do-this) before the rest.
 
+**A throwaway rung-1 try-out ran on 2026-10-31**, against `3.15.3`, and the app ran in the iOS
+Simulator. Nothing from it is merged. It found that the static export no longer works unchanged —
+[the record](#the-rung-1-try-out-2026-10-31) supersedes the "wrap it" claims below where they
+disagree.
+
+**Decision, 2026-11-02: a native SwiftUI app, not the Capacitor wrap.** After the try-out's verdict
+("a website in a frame"), the owner chose to rebuild the frontend natively in Swift and SwiftUI for
+iPhone, as a new client of the existing backend. This supersedes the Capacitor recommendation in
+[The short answer](#the-short-answer). The obstacles below still apply to it: native push, guideline
+4.2, the payments rule, and the release and version discipline. **Android is undecided**; if it
+comes, it is a separate Kotlin app. Nothing is built yet. The phased plan, the screen-by-screen map
+and the decisions still open live in the owner's private guide
+[Football Mania in Swift](https://claude.ai/artifact/CoGWNyawucDLJ1pkPR8Cy2).
+
+**Phase 1 spike, 2026-11-02: passed.** The owner ran a throwaway SwiftUI app (log in, see the next
+match, mark availability; [the spike guide](https://claude.ai/artifact/Fd4wzRVTfdibJwqmdDm9De))
+against a local backend in the Simulator. Its six files compiled and ran exactly as written on
+Xcode 27.2, although no compiler had seen them before the owner ran them. A session on the owner's
+Mac then rebuilt it with `xcodebuild` and compared the local backend's real JSON with the spike's
+models: login, the match-plans page and `confirmations/me` all decode, and `createdAt`, `updatedAt`
+and `joinedAt` carry six-digit fractional seconds, which is why the custom date decoder exists. The
+verdict: **"it feels like a proper app"**, against "a
+website in a frame" for the Capacitor wrap on the same backend. That clears the gate the plan set for
+Phase 1. It proves the feel, not the cost: the spike is one flow in about 450 lines, and none of
+the expensive parts (the design system, translations, live chat and drafts, offline goal entry,
+push) were touched. Phase 2 waits on the eight decisions in the guide.
+
+**Phase 0 decisions, all eight, 2026-11-02.** The guide holds the reasoning for each.
+
+- **Android:** decided after the iPhone app ships, with real usage to go on.
+- **Apple account:** the owner, personally ([open question 4](#open-questions)).
+- **Paid:** yes, a subscription per group paid by its group admins ([open question 1](#open-questions)).
+  The billing rung stays on hold.
+- **Minimum supported version:** version 1 ships the check and an update screen. It needs one small
+  backend setting the app reads at launch.
+- **Admin tools stay on the web:** the platform console, moderation, user administration, API
+  tokens and founding a group.
+- **Screens not yet native** open the existing web screen inside the app, so it has every feature
+  from the first beta.
+- **API code:** written by hand in the spike. Apple's OpenAPI generator is tried at the start of
+  Phase 2 and kept only if its output is readable.
+- **Name and identifier:** "Football Mania", `pt.rics.footballmania`. The identifier is permanent
+  once published.
+
+Settled the same day while setting up the Xcode project (FootMania-iOS#2), beyond the eight:
+
+- **Lowest supported iOS: 18.0.** Xcode's default was the latest (27.2), which would have shut out
+  every iPhone not yet on it. The code needs iOS 17 at least, for `@Observable`.
+- **Swift 6 language mode**, so data races are checked at compile time, switched on while the
+  project was still the empty template.
+- **iPhone only for version 1.** The App Store lets an update add iPad support but not take it away
+  once released, and an iPad version means its own layouts and screenshots.
+
+Settled while laying the design foundation (FootMania-iOS#4):
+
+- **Lettering: the iPhone's system font, not the web's Geist.** The owner's call. The colours match
+  the web token for token; the type does not, on purpose. The system font follows each person's
+  text-size setting without extra work and is what every other app on the phone uses; Geist would
+  mean bundling the font file and wiring every text style to scale with it.
+
+Settled 2026-11-03, before the in-app web screens (Phase 2, slice 4):
+
+- **The web gets an entry made for the app; the app doesn't write into the web's storage.** The
+  owner's call. The app opens `/app/open?to=<path>` and hands over its token, group and language
+  by script, never in a URL; the web signs in from the token as a reload would. Writing straight
+  into the web's `sessionStorage` would have needed no web change, but that format is the web's
+  private business and has changed before (`migrateStoredUser`). Installed apps can't follow a
+  deploy, so the next change would have broken every installed copy's web screens until an App
+  Store update. The contract lives with the code, in FootMania-Simple-Front's
+  `docs/guides/native-app.md`.
+- **Inside the app, the web hides its own header, footer and install hint.** The owner's call. The
+  app draws its own navigation, and a second one inside the page would let people wander the whole
+  website from a screen, and log out from two places.
+
 Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
 frontend, an APNs path in the backend, one config change in production, and a set of decisions that
 are neither.
@@ -61,8 +135,9 @@ The one snag is `/join/[token]`, the invite route. Static export needs `generate
 invite tokens are issued at runtime and unguessable by design — there is no set to pre-render.
 It already reads its parameter client-side via `useParams`, so the fix is a shell route rather than
 a rewrite: export one page for the path and let the client read the token. Worth confirming early,
-because it is the only route in the app with this shape and it is on the critical path of the whole
-onboarding arc.
+because it is on the critical path of the whole onboarding arc. *(It was the only route with this
+shape when this was written; 2.2.0 added `/reset-password/[token]`, and the shell-route fix works for
+both — confirmed in [the try-out](#the-rung-1-try-out-2026-10-31).)*
 
 **Point Capacitor at the live site** (`server.url`). Rejected. It turns the app into a browser in a
 costume — which is exactly what guideline 4.2 exists to reject — and it throws away the offline
@@ -201,6 +276,79 @@ Two things change:
 
 ---
 
+## The rung-1 try-out, 2026-10-31
+
+**Run by the owner on a throwaway frontend branch, `try/capacitor-ios`, never merged.** It answers
+"does the wrap still work, and what does it look like", and nothing past that. The step-by-step guide
+it followed is the owner's private artifact
+[Football Mania iOS Try-out](https://claude.ai/artifact/79T4XhrVQCRwYkjKjV66SS).
+
+### The static export no longer works unchanged
+
+The table above was verified at `1.1.0`. At `3.15.3` (`next` @ `6441043`) the export build failed
+three times before it passed — each failure reproduced and each fix built, on a scratch copy, before
+the owner applied them:
+
+| Build failure | Fix on the try-out branch |
+|---|---|
+| `Page "/join/[token]" is missing "generateStaticParams()"` | The client page moves to `TokenRoute.tsx`; a new server `page.tsx` exports one placeholder param (`_`) and renders it. The client still reads the real token with `useParams` |
+| The same error for `/reset-password/[token]` | The same fix |
+| `dynamic = "force-static"` not configured on `/manifest.webmanifest` | `export const dynamic = "force-static"` in `app/manifest.ts` |
+
+`output: "export"` sits behind `CAPACITOR_BUILD=1` in `next.config.ts`, so the Netlify build is
+untouched — both builds were run. The next.config `headers()` and `redirects()` only **warn**: the
+CSP, the other security headers and the `/draft-sessions` redirect simply do not exist inside the
+app. Result: 28 routes, 5.1 MB in `out/`.
+
+### What it ran on
+
+macOS 26.6 (Apple Silicon), Xcode 27.2 (27B52), the iOS 27.2 Simulator, Node 26.13, Next.js 16.3.8,
+Capacitor 8.6.0. Capacitor 8 generates a **Swift Package Manager** project (iOS 15+) — no CocoaPods.
+The app's origin is `capacitor://localhost` (Capacitor's `CAPInstanceDescriptor.swift`), so the
+backend ran with `--app.cors.allowed-origins=http://localhost:3000,capacitor://localhost`: the dev
+profile's allowlist is hard-coded and does not read `CORS_ALLOWED_ORIGINS`. Production was not
+touched.
+
+### What the owner saw, all as predicted
+
+- **Logged out on every cold start.** Auth persists to `sessionStorage` (`appStore.ts`), which dies
+  with the app's session. A real app needs persistent storage for the token.
+- **The header sits under the status bar and notch.** `viewportFit: 'cover'` is set, but nothing in
+  `src/` uses `env(safe-area-inset-*)`.
+- **No way to turn on notifications.** WKWebView has no Push API, so `canUsePush()` is false.
+- **A reload or a 401 lands on `/login` or `/dashboard`, not where the user was.** Capacitor's iOS
+  router serves the root `index.html` for every path without a file extension (`Router.swift`), and
+  the root page redirects by auth state. Degrades, does not break.
+- **Invite and reset links open Safari.** No Universal Links, and in the app those two routes are
+  placeholders only.
+
+### The owner's verdict: "it felt like a website in a frame"
+
+That is guideline 4.2's rejection reason in the owner's own words, and it is what
+[obstacle 3](#3-guideline-42--minimum-functionality) predicts for a bare wrap: the try-out added
+nothing a browser tab lacks. Two consequences:
+
+- **The wrap is not a submission.** As built, expect it to fail review under 4.2. Native push is
+  still the strongest answer, and it is the one piece the try-out could not include.
+- **"Feels like an app" is its own budget line**, separate from the about-a-day wrapper and from
+  push. Part of the verdict comes from the gaps above (the notch, logging in on every launch), which
+  are fixable; how much is inherent to a web UI is not yet known.
+
+### What it did not answer
+
+Native push (the paid program plus an APNs sender), guideline 4.2, the payments question, and the
+gate itself. **Rung 2 still waits on the iOS-versus-Android push subscription numbers, and nothing
+measures them yet** — `/api/admin/platform/health` reports one total `subscriptionCount` with no
+platform split ([PLATFORM-CONSOLE-PLAN](../backend/plans/PLATFORM-CONSOLE-PLAN.md), push health).
+
+### Before rung 1 counts as done
+
+The three fixes go into `next` as a proper pull request with its changelog entry, plus a CI step that
+runs `CAPACITOR_BUILD=1 next build`. That check is what "worth protecting deliberately" above asks
+for: today the cheap path breaks silently, as these three failures show.
+
+---
+
 ## When not to do this
 
 The roadmap gates Phase 4 on evidence, and that gate is worth respecting:
@@ -228,9 +376,40 @@ Decide these before rung 2, not during:
 
 1. **Is anything ever going to be paid?** Determines whether IAP is in scope and constrains the
    billing rung's design. The most expensive question to answer late.
+
+   **Answered 2026-11-02: yes.** Group admins will pay a subscription per group, eventually. That is
+   a direction, not a start: the [billing rung](../backend/plans/GROUP-BILLING-PLAN.md) stays ⛔ on
+   hold until the owner lifts it in their own words. What Apple's App Review Guidelines say, read
+   from the published text on 2026-11-02:
+
+   - **3.1.1**: unlocking "features or functionality within your app" requires in-app purchase. A
+     group's subscription that decides whether the app works for that group is exactly that.
+   - **3.1.3(b)**: the app may honour a subscription bought on the website only "provided those
+     items are also available as in-app purchases within the app".
+   - **3.1.3(c)** covers apps sold "to organizations or groups for their employees or students", and
+     **3.1.3(f)** free companions to paid "VoIP, Cloud Storage, Email Services, or Web Hosting"
+     tools. Neither describes a football group, so neither exempts it.
+   - **3.1.1(a)**: a link to buying elsewhere needs a regional entitlement, except on the United
+     States storefront, where buttons and links to outside purchase need none. That makes
+     [obstacle 4](#4-guideline-311--in-app-purchase-and-the-billing-rung)'s "forbids linking out to
+     your own checkout" out of date for the US; it still describes Portugal and the rest of the EU
+     closely enough, where a link-out needs an entitlement and sits beside in-app purchase.
+
+   **Consequence for the billing design:** a group's paid status has to be an entitlement on the
+   organization that more than one payment source can grant (Stripe on the web, App Store in-app
+   purchase in the app), not a Stripe subscription the backend reads directly. The plan's §3
+   already keeps subscription state on the organization, but its columns are Stripe's; it needs a
+   second source (Apple's server notifications) designed in before the hold lifts, not after.
 2. **Android at the same time?** Capacitor makes it nearly free, Play review is far gentler, and
    Android has no equivalent of the iOS push install problem — which weakens the main argument for
-   doing iOS first.
+   doing iOS first. **Answered 2026-11-02: decided after the iPhone app ships.** The route is now
+   native SwiftUI, so Android would be a separate Kotlin app rather than nearly free.
 3. **Minimum supported app version**, and whether version 1 ships the forced-upgrade screen.
+   **Answered 2026-11-02: version 1 ships it.**
 4. **Who owns the Apple account?** It is a business identity with renewal obligations, and moving
    it later is unpleasant.
+
+   **Answered 2026-11-02: the owner, personally**, as an individual enrollment. Expect the App
+   Store to show the owner's own name as the seller, and in-app purchase revenue to be paid to
+   them personally; both are worth confirming during enrollment rather than assuming. Converting
+   to an organization later is the move this question warned about.
