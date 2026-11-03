@@ -61,7 +61,8 @@ natively into the tab bar settled below.
 - **Screens not yet native** open the existing web screen inside the app, so it has every feature
   from the first beta.
 - **API code:** written by hand in the spike. Apple's OpenAPI generator is tried at the start of
-  Phase 2 and kept only if its output is readable.
+  Phase 2 and kept only if its output is readable. *Tried 2026-11-03 and set aside: see
+  [the generator trial](#the-openapi-generator-trial-2026-11-03).*
 - **Name and identifier:** "Football Mania", `pt.rics.footballmania`. The identifier is permanent
   once published.
 
@@ -108,6 +109,10 @@ Settled 2026-11-03, at the end of Phase 2:
   which is one whole number that only goes up. No answer means carry on: a check that could lock
   every installed copy out during an outage is worse than an old build running a little longer, so
   the check is never a reason to skip the release order in FootMania-iOS's `AGENTS.md`.
+- **API code stays hand-written.** The owner had the generator tried, and its output, while tidy,
+  describes a contract less exact than the hand-written models: every field optional, every
+  failure undocumented. [The trial](#the-openapi-generator-trial-2026-11-03) has the evidence and
+  what would change the answer.
 
 Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
 frontend, an APNs path in the backend, one config change in production, and a set of decisions that
@@ -376,6 +381,71 @@ platform split ([PLATFORM-CONSOLE-PLAN](../backend/plans/PLATFORM-CONSOLE-PLAN.m
 The three fixes go into `next` as a proper pull request with its changelog entry, plus a CI step that
 runs `CAPACITOR_BUILD=1 next build`. That check is what "worth protecting deliberately" above asks
 for: today the cheap path breaks silently, as these three failures show.
+
+---
+
+## The OpenAPI generator trial, 2026-11-03
+
+**Run on the owner's Mac in a throwaway package, never added to the app.** Apple's
+`swift-openapi-generator` 1.14.3 (with `swift-openapi-runtime` 1.13.3 and
+`swift-openapi-urlsession` 1.4.0, Swift 6.4.2), `namingStrategy: idiomatic`, against the backend's
+own `/v3/api-docs` from `next` @ `707f480`, cut down to the 8 operations the app uses and the 13
+schemas they reference. Two runs: **A**, the spec as served; **B**, the same with every `*/*` media
+type replaced by `application/json`.
+
+### What came out
+
+| | Run A | Run B |
+|---|---|---|
+| Builds | ✅ no generator diagnostics; one compiler warning (`role` is deprecated) | ✅ the same |
+| Generated lines for 8 operations | 2,204 across 11 files | 2,204 |
+| A `200` body | `.any(HTTPBody)`: **raw bytes**, decoded by hand | `.json(Components.Schemas.…)`: typed |
+| Response fields | **all optional** | all optional |
+
+B differs from A only in the six JSON responses, so **one line of backend config
+(`springdoc.default-produces-media-type: application/json`) turns raw bodies into typed ones** and
+changes nothing else. The rest is the spec's, and no generator setting fixes it:
+
+- **No response field is required.** Only 43 of the full spec's 1,054 properties are, all of them
+  in request bodies. So `LoginResponseDTO.token`, `MembershipSummaryDTO.groupId` and
+  `ClientRequirementsDTO.minimumBuild` all come out optional, and integers come out `Int32` or
+  `Int64`. The shortest call that compiles is
+  `Int(try await client.ios().ok.body.json.minimumBuild ?? 0)`, where the hand-written model knows
+  the field is always there.
+- **Only `200` is documented, on all 182 operations.** Logout and the reset request answer `204`,
+  which the generated client calls `.undocumented`, and so is every `400`, `403`, `404` and `429`.
+  The app's `403` handling (`explainForbidden`) and its error messages would stay hand-written
+  either way.
+- **37 properties are enums elsewhere in the spec.** The generator is expected to make them closed
+  Swift enums, so a value the backend adds later would fail to decode in every installed copy. The
+  hand-written models read such fields as strings on purpose. None of the 8 trial operations has
+  one, so this is inferred, not seen in the output.
+- **Paginated lists need a `Pageable` on every call.** springdoc publishes it as a required query
+  object. The generator accepted it and encodes it as form-exploded `page`, `size` and `sort`;
+  whether the nested `sort` array goes out the way Spring reads it was not checked.
+- **Dates were not exercised.** The backend's mix of whole-second and six-digit fractional
+  timestamps will most likely need a custom `DateTranscoder`, the same job `JSONCoding.swift` does
+  now.
+
+### The verdict: hand-written, for now
+
+The output is readable, but it describes a contract less exact than the hand-written models:
+optional where the backend is certain, `200` where it says `204`, nothing at all where it refuses.
+Adopting it would mean either wrapping every generated type in the hand-written one it replaces, or
+fixing the spec first. **Fixing the spec is the real cost, and the risky part lands in installed
+apps.** Marking about 1,000 response fields required means knowing, field by field, which ones the
+backend omits when null (`non_null`), and a field marked required that is sometimes absent fails to
+decode in every installed copy until the next App Store update.
+
+**What would change the answer:** the backend publishing an exact contract for its own reasons
+(required and nullable fields, real status codes, JSON media types), after which the generator is
+worth a second trial on a Phase 3 surface. The media-type line is cheap and harmless on its own, and
+can go in whenever someone touches the backend's OpenAPI setup; it was not made as part of this
+trial.
+
+**Costs it would also have carried:** three Apple packages and their own dependencies, which
+FootMania-iOS's `AGENTS.md` lets in only after a decision recorded here; about 275 generated lines
+per operation, so an estimated tens of thousands for the full spec, compiled into every build.
 
 ---
 
