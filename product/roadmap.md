@@ -102,6 +102,8 @@ Don't start this speculatively — do it once you have real usage data suggestin
 
 > Worked through in detail in [architecture/app-store-strategy.md](../architecture/app-store-strategy.md): the four obstacles, a three-rung route where the first rung costs nothing, and the payments decision that has to be made before the billing rung — not after.
 
+> **Superseded on 2026-11-02:** the owner chose a native SwiftUI iPhone app, not the Capacitor wrap below, after the wrap's try-out felt like "a website in a frame". It is being built in [FootMania-iOS](https://github.com/ricsnsuka/FootMania-iOS); the record and its progress are in [app-store-strategy.md](../architecture/app-store-strategy.md). The two bullets about Capacitor describe the route not taken; the listing requirements still apply.
+
 - Wrap the existing Next.js frontend with **Capacitor** rather than forking a separate React Native codebase — you keep one frontend to maintain.
 - Add native push via Capacitor's push plugin (APNs/FCM), reusing the same `push_subscriptions` table with a device\-token variant alongside the Web Push endpoints.
 - Store listing requirements to budget for: Apple Developer account ($99/yr), Google Play one\\\-time fee ($25), app icons/screenshots at required sizes, and — because you collect phone numbers and emails — a public privacy policy page is mandatory for both stores, not optional paperwork.
