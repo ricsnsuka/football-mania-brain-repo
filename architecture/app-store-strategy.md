@@ -1,6 +1,8 @@
 # Putting FootMania on the Apple App Store
 
-**Status: DRAFT — nothing here is implemented, and starting it is not yet authorised.** Written
+**Status: IN PROGRESS, 2026-11-04 — the native iPhone app chosen on 2026-11-02 (below) is built
+through Phase 3, the screens every player uses. Nothing is on TestFlight or the App Store yet. The
+Capacitor route this document first drafted was not taken; its obstacles still apply.** Written
 2026-08-03 against backend `2981bd3` and frontend `ac831ee`, both at `1.1.0`. This is roadmap
 [Phase 4](../product/roadmap.md), which is deliberately gated on real usage data rather than on
 enthusiasm. Read [When not to do this](#when-not-to-do-this) before the rest.
@@ -47,6 +49,73 @@ tested on the owner's Mac before merging (121 tests by the last):
 That meets the guide's exit: the app logs in, switches groups, shows every feature (most as web
 screens) and looks like Football Mania. **Phase 3 is next**: the screens every player uses, built
 natively into the tab bar settled below.
+
+**Phase 3, what every player uses: done 2026-11-04**, in sixteen pull requests to FootMania-iOS
+(#9 to #25; #15 is an issue, not a pull request). Each was built and tested on the owner's Mac,
+unpiped and with Xcode closed, and checked in the Simulator by the owner before merging. There were
+369 tests by the last. The first ten (#9 to #19) were written in a cloud session with no compiler
+and built on the Mac, apart from #16's paging commit, which the Mac session wrote. From #20 on, the
+Mac session wrote them too, after the cloud session handed the work over.
+
+| PR | What it made native |
+|---|---|
+| #9 | The tab bar: Home, Matches, Rankings, Chat, More |
+| #10 | Home: your next match and your answer |
+| #11 | Matches → Upcoming: the plan list and a plan's screen |
+| #12 | The saved teams and the team vote; a plan's screen in two parts, Squad and Teams |
+| #13 | Matches → Results: the match list, the scoresheet, and the squads with skill ratings |
+| #14 | The man of the match vote on a played match |
+| #16 | Rankings: the league table (paged, 5, 7 or 10 a page) and the leaderboards |
+| #17 | A player's profile, from the league table |
+| #18 | A player's profile from the match screens too |
+| #19 | Your balance, in More → Payments |
+| #20 | "I've paid", one report per person, from your credit or not |
+| #21 | Settings, your data: a copy of it, leaving a group, and deleting your account |
+| #22 | Settings: your profile, password, theme and language |
+| #23 | Chat: the conversations, reading and writing, the live stream, the unread badge |
+| #24 | Chat: starting a conversation, who's around, reporting, leaving, deleting; a match's chat |
+| #25 | Rankings → Honours: the week, the month, the season's awards, the Ballon d'Or roll |
+
+**Against the exit ("a player never needs the web screens"): met for everything a player does
+every week, with five links left.** The app still opens these web pages for a player:
+
+- **More → Profile**: your own player profile. The native profile exists (#17); More doesn't open it yet.
+- **Settings on the website**: notifications and the linked player.
+- **A match on the web**: the goal timeline, and recording the result.
+- **A plan on the web**: making and running plans.
+- **Home → Dashboard**.
+
+None blocks Phase 4; the first is the obvious next small change.
+
+Settled during Phase 3, 2026-11-03 to 2026-11-04:
+
+- **The league table pages on the phone: 5, 7 or 10 a page, 5 unless the reader picks another.**
+  The owner's call, iPhone only: the web keeps its 10, 25 or 50. The whole table still arrives in
+  one answer; a page is a slice of it (FootMania-iOS#16).
+- **A player's profile opens from the match screens too**: the scoresheet, the squads and the man
+  of the match count. That goes beyond the web, whose match dialog doesn't link players (#18).
+- **The language follows the iPhone's own per-app setting**, which Settings opens, rather than a
+  picker in the app: iOS offers it for every app, and the app then speaks it everywhere, the
+  system's text included. **The theme is chosen in the app**, System, Light or Dark, and kept on
+  the device, as the web keeps it in the browser (#22).
+- **API tokens stay on the web**, on purpose. The owner's plan for an Apple Watch app that records a
+  match offline (kickoff, full time, each goal with its scorer, assister and time) is better served
+  by the iPhone app's own login, handed to the Watch, than by a token. The Watch work belongs after
+  the TestFlight beta.
+- **Changing your password keeps you signed in.** The backend ends every session on a change, this
+  phone's too, which the web doesn't handle; the app logs straight back in with the new password
+  (#22).
+- **Chat has no push notifications until Phase 5**, because the backend sends Web Push only.
+  The Chat tab's badge counts what's addressed to you, direct and group chats, not the Everyone
+  channel, as the web's navbar does (#23).
+- **Honours is a screen of its own**, opened from a row under the table and the leaderboards,
+  rather than a third segment: three wouldn't fit a phone's navigation bar in every language (#25).
+- **"I've paid" has no duplicate warnings yet**, because the web doesn't (FootMania-Simple-Front#223,
+  brain #88). The app copies the web's rules rather than inventing its own.
+- **The goal timeline needs revisiting.** It was held back because the web shows it only for a match
+  recorded goal by goal. But the owner does record goals that way, with timestamps, through a
+  Shortcuts and Reminders workaround, so the timeline has real data behind it. It belongs with match
+  day in Phase 4.
 
 **Phase 0 decisions, all eight, 2026-11-02.** The guide holds the reasoning for each.
 
@@ -114,9 +183,30 @@ Settled 2026-11-03, at the end of Phase 2:
   failure undocumented. [The trial](#the-openapi-generator-trial-2026-11-03) has the evidence and
   what would change the answer.
 
-Lives in `architecture/` because it is not a frontend job. It needs a Capacitor shell in the
-frontend, an APNs path in the backend, one config change in production, and a set of decisions that
-are neither.
+**What's left, as the guide plans it:**
+
+| Phase | What | Exit |
+|---|---|---|
+| 4 | What managers and organisers use: making and running plans (recurring plans, guests), team generation and live drafts, match day (lineups, live stats, the clock and goal entry, which the backend already accepts offline, `V44`), the payments ledger, the roster and seasons | A match can be planned, drawn, played and recorded entirely in the app |
+| 5 | Push notifications: the Developer Program, a second kind of subscription for Apple device tokens and an APNs sender beside Web Push; permission asked when it means something | Match-day notifications arrive on an iPhone without installing anything from Safari |
+| 6 | TestFlight with the owner's group, then the listing: privacy labels, screenshots, age rating, a support address; expect the first submission back once | The app is in the store |
+
+Still open, beside the phases:
+
+- **The production API and web addresses**, which a Release build refuses to guess.
+- **Testing on the owner's iPhone**: it reaches the Mac over plain `http` only once a Debug-only
+  Info.plist allows local networking. Proposed on 2026-11-04 and not yet decided.
+- **The secret man of the match ballot** (brain #104): after the vote closes, show the runner-up
+  counts, or only the winner's?
+- **Small cleanups.** The Results list's paging repeats Upcoming's. Home's requests could run side by
+  side. `sync-strings` can't handle a plural with named placeholders. The tier colours on rungs are
+  neutral until `Palette` has tokens for them.
+- **Group billing stays on hold** until the owner says otherwise.
+
+Lives in `architecture/` because it is not a frontend job. It needs an iPhone app in its own
+repository (FootMania-iOS), an APNs path in the backend, the production addresses, and a set of
+decisions that are neither. (It was written for a Capacitor shell in the frontend, the route not
+taken.)
 
 ---
 
