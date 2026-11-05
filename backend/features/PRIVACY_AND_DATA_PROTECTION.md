@@ -46,6 +46,14 @@ tokens. The money moves between phones and this application never sees it; a pay
 somebody's word that it arrived, holding an amount and a date and nothing else. Also not stored:
 location beyond a free-text pitch name, and biometric or special-category data of any kind.
 
+**Apple Health is not an exception to that.** Since 2026-11-05 the iPhone app's Watch recording saves
+each match as a Soccer workout, with heart rate and energy. Heart rate is special-category data,
+and it stays true that this application holds none: the workout goes from the Watch to Apple Health
+on the person's own devices, and no request to the backend carries it. What a match sends is the
+two whistles and the goals. The policy says so under "What is stored on your device". Anything that
+ever sent Health data to the backend would change this section, the policy, and the App Store
+privacy details together.
+
 ---
 
 ## Who is responsible for what: the controller/processor split
