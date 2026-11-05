@@ -1,6 +1,12 @@
 # Project Status
 
-**Snapshot: 2026-11-03, after 3.16.0 — a paired minor release: recurring match plans keep their
+**Snapshot: 2026-11-05, after 3.17.0 — backend-only: native push for the iPhone app (APNs, `V67`),
+shipped dark, and the iPhone app's minimum build.** **The backend is on `3.17.0`**, read back from
+`/api/version` and `/api/health`; **the frontend stays on `3.16.0`** and skips 3.17.0. `v3.17.0` is on
+the remote, and `next..main` is empty. ⚠️ **The Heroku release number was not read back.** The
+[3.17.0 section](#3170--shipped-and-confirmed-2026-11-05-small-hours) below carries every row.
+
+**The snapshot before that: 2026-11-03, after 3.16.0 — a paired minor release: recurring match plans keep their
 local time across daylight saving (`V65`, `V66`), Next.js 16.4.4 closes two critical advisories, and
 `/app/open` lets the iPhone app open web screens.** **Both repos are on `3.16.0`**: the backend read
 back by the owner from `/api/version`, the frontend confirmed by the owner. Both `v3.16.0` tags are
@@ -152,6 +158,43 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.17.0 — shipped and confirmed 2026-11-05, small hours
+
+**Backend-only: the backend is on `3.17.0`, the frontend stays on `3.16.0`.** Version bump
+[FootMania-Back#386](https://github.com/ricsnsuka/FootMania-Back/pull/386); promotion
+[FootMania-Back#388](https://github.com/ricsnsuka/FootMania-Back/pull/388), after its Release Gate passed. The
+promotion was merged with GitHub's merge button, which left `next` one commit behind until it was
+fast-forwarded to `34f876d`. The `[3.17.0]` section of the backend `CHANGELOG.md` is the full record.
+It is dated 2026-11-04, the day it was cut; the deploy landed on 2026-11-05.
+
+| | Backend |
+|---|---|
+| Running commit | `34f876d` (merge of #388). `main` moved `07206dc..34f876d` with no other commit since |
+| Read back | production `/api/version` reports `3.17.0`, `buildTime` `2026-11-05T00:41:44.203Z`, read at 00:42:54Z; `/api/health` `UP`. Heroku release number **not read back**: the CLI is not installed on the machine that ran this release |
+| Migration | `V67`, applied on boot. `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise; the schema history itself was not read. Not a rollback boundary in practice |
+| Tag | `v3.17.0` at `34f876d`, annotated, pushed |
+| `next..main` | empty, after `next` was fast-forwarded to `34f876d` |
+
+**What shipped**
+- **Native push for the iPhone app** (#385), dark: production's `/api/push/public-key` answers
+  `apns: false` until the four `APNS_*` config vars are set. It has never run in production.
+- **The iPhone app's minimum build** (#383): `GET /api/clients/ios` answers `{ "minimumBuild": 0 }`,
+  which means no minimum, until `IOS_MINIMUM_BUILD` is raised.
+- **Tooling** (#387): the VAPID key guard in `.githooks/pre-commit` runs now. It was tracked as
+  100644, so git had been ignoring it. The version check also runs on macOS, and the paperwork hook
+  judges a worktree session's own branch.
+
+**Still open**
+- Set the `APNS_*` config vars and prove native push with a real notification.
+- Read this deploy's Heroku release number.
+- [FootMania-Back#382](https://github.com/ricsnsuka/FootMania-Back/issues/382): Spring Boot 4 before 2027-02-01.
+  A trial on Boot 4.1.2 on 2026-11-05 changed 36 files with all tests green; the web and iPhone apps,
+  a live SSE stream and Heroku memory were not tested. Spring's 2026-08-20 batch holds 25 advisories
+  against the shipped versions, only two of them visible to Dependabot; the trial's assessment found
+  none reachable.
+- Files in the backend repo still name `football-app-prod.herokuapp.com`, which no longer exists.
+  Production is `footmania-d6aef2be6bc3.herokuapp.com`.
 
 ## 3.16.0 — shipped and confirmed 2026-11-03
 
