@@ -1,7 +1,8 @@
 # Putting FootMania on the Apple App Store
 
-**Status: IN PROGRESS, 2026-11-04 — the native iPhone app chosen on 2026-11-02 (below) is built
-through Phase 3, the screens every player uses. Nothing is on TestFlight or the App Store yet. The
+**Status: IN PROGRESS, 2026-11-05 — the native iPhone app chosen on 2026-11-02 (below) is built
+through Phase 5 and is on TestFlight at build 3, with push working in production. It is not on the
+App Store yet: the listing is left, and the Apple Watch app is the next thing being built. The
 Capacitor route this document first drafted was not taken; its obstacles still apply.** Written
 2026-08-03 against backend `2981bd3` and frontend `ac831ee`, both at `1.1.0`. This is roadmap
 [Phase 4](../product/roadmap.md), which is deliberately gated on real usage data rather than on
@@ -100,8 +101,9 @@ Settled during Phase 3, 2026-11-03 to 2026-11-04:
   the device, as the web keeps it in the browser (#22).
 - **API tokens stay on the web**, on purpose. The owner's plan for an Apple Watch app that records a
   match offline (kickoff, full time, each goal with its scorer, assister and time) is better served
-  by the iPhone app's own login, handed to the Watch, than by a token. The Watch work belongs after
-  the TestFlight beta.
+  by the iPhone app's own login than by a token. The Watch work belongs after the TestFlight beta.
+  *Corrected 2026-11-05: the login isn't handed to the Watch either. See
+  [the Watch app](#phase-7-the-apple-watch-app-planned-2026-11-05).*
 - **Changing your password keeps you signed in.** The backend ends every session on a change, this
   phone's too, which the web doesn't handle; the app logs straight back in with the new password
   (#22).
@@ -126,14 +128,17 @@ Settled during Phase 3, 2026-11-03 to 2026-11-04:
 - **Minimum supported version:** version 1 ships the check and an update screen. It needs one small
   backend setting the app reads at launch.
 - **Admin tools stay on the web:** the platform console, moderation, user administration, API
-  tokens and founding a group.
+  tokens and founding a group. *Changed since: moderation, members and founding a group went native
+  on the owner's word (#49, #51, #54). The platform console and API tokens stay on the web.*
 - **Screens not yet native** open the existing web screen inside the app, so it has every feature
   from the first beta.
 - **API code:** written by hand in the spike. Apple's OpenAPI generator is tried at the start of
   Phase 2 and kept only if its output is readable. *Tried 2026-11-03 and set aside: see
   [the generator trial](#the-openapi-generator-trial-2026-11-03).*
 - **Name and identifier:** "Football Mania", `pt.rics.footballmania`. The identifier is permanent
-  once published.
+  once published. *The name changed during Phase 6: "Football Mania" was taken on the App Store, so
+  the listing is "SportsMania - Football" and the Home Screen name "SportsMania". Inside the app the
+  brand stays Football Mania.*
 
 Settled the same day while setting up the Xcode project (FootMania-iOS#2), beyond the eight:
 
@@ -183,19 +188,118 @@ Settled 2026-11-03, at the end of Phase 2:
   failure undocumented. [The trial](#the-openapi-generator-trial-2026-11-03) has the evidence and
   what would change the answer.
 
-**What's left, as the guide plans it:**
+**Phase 4, what managers and organisers use: done 2026-11-04**, in thirteen pull requests to
+FootMania-iOS. A match can now be planned, drawn, played and recorded in the app. The live captains'
+draft was left for later and went native in #52.
+
+| PR | What it made native |
+|---|---|
+| #26 | Match day: goals recorded as they're scored, kept on the phone until sent, and the timeline |
+| #27 | Making plans: one-off and weekly, editing, confirming, cancelling, deleting, cost and charge |
+| #28 | Running the squad: answering for players, held places, guests, the team vote switch |
+| #29 | Drawing teams by every method, the preview, saving, and creating the match |
+| #30 | Regenerating, repairing and discarding saved teams |
+| #31 | Completing a match from match day, and editing its details |
+| #32 | A group admin's corrections: the sheet, the lineup, recalculating, deleting |
+| #33 | A match without a plan |
+| #34 | The organiser's Owed list, review queue and Record payment |
+| #35 | Balances and a player's money |
+| #36 | The roster, with the manager's controls |
+| #37 | A group admin's part of the roster, and linking an account |
+| #38 | The group's seasons |
+
+**Phase 5, push: done 2026-11-05.** The owner joined the Apple Developer Program on 2026-11-04.
+The backend half is FootMania-Back#385, shipped in 3.17.0, and the app's is FootMania-iOS#39. Permission
+is asked after a first plan answer, with a screen saying why, and Settings holds the switches.
+Production first refused every send with `403 BadEnvironmentKeyInToken`, because the APNs key wasn't
+enabled for production. With a new key on Heroku, a notification reached the owner's phone on
+2026-11-05. **Tapping a notification opens its screen** since #55.
+
+**Phase 6, TestFlight: under way.** #40 and #41 made the app ready: the icon, production addresses in
+Release builds, and the Home Screen name. **TestFlight is at build 3, as of 2026-11-05.** The owner
+uploads from Xcode.
+
+**The rest of the web, made native, 2026-11-05**, listed by the owner's order once TestFlight was up:
+
+| PR | What it made native |
+|---|---|
+| #42, #44 | Your own profile, your details, and rating, ladder and head-to-head charts |
+| #43 | A fix: logging in lands on Home, not on Chat |
+| #45, #46 | The player of the season vote, and Waiting on you, on Home |
+| #47 | Joining a group with an invite, and linking yourself to your player |
+| #48 | Creating an account in the app |
+| #49, #50, #51 | Members, invites and the moderation queue, for group admins |
+| #52, #53 | The captains' draft and draft sessions |
+| #54 | Group settings, founding a group, the forced password change |
+| #55 | Notifications open their screen, and invite links open the app (with web #296) |
+
+API tokens stay on the web, as the owner chose. The app also still links to the web's page for a
+plan, a match, the dashboard and settings. Whether each of those is still needed hasn't been reviewed.
+
+### Phase 7, the Apple Watch app: planned 2026-11-05
+
+Replaces the Reminders and Shortcuts workaround. The owner plays in the matches they record, so the
+app is for a wrist, mid-game: kick-off, goals, full time and nothing else. It was added as a phase on
+the owner's word, after TestFlight, as agreed. The minimum is watchOS 11, which covers the owner's
+Series 7, and it ships inside the iPhone app's upload. None of it is built yet.
+
+**The Watch is offline and only ever talks to the iPhone.** The owner's call. It has no internet
+use, no login and no token. The iPhone app is the only thing that talks to the server. A late score
+doesn't matter, the owner says, because everyone who cares is on the pitch.
+
+**This reverses two earlier answers, and the reasons matter:**
+
+- *"The Watch borrows the iPhone's login."* Rejected once the contracts were read: the session lasts
+  24 hours with no refresh, so a login handed to the Watch would die between matches.
+- *A scoped API token on the Watch, calling the server itself.* Proposed and agreed the same day,
+  then dropped when the owner settled that only the iPhone sends: a credential on the wrist then
+  buys nothing. It also removes a real question, raised by the owner: a token revoked by logging out
+  mid-match would strand the recording. With no token, logging out or an expired login only delays
+  sending until the next login. A token can still be added later on the iPhone alone.
+
+**How it works:**
+
+- **The iPhone sends the match.** A **Send to Watch** button shows for a manager on a match with both
+  teams filled, until kick-off, with a Watch paired and the app on it. It's the owner's idea, and it
+  means the Watch never has to find a match. A plan has no match id, so **Create match** comes first.
+  It's iPhone only for now: the web can't reach a Watch without a new path through the backend.
+- **The Watch holds everything until full time.** Sending on reconnect would push goals out
+  mid-match whenever the phone sits in a bag by the pitch. Holding means any goal can be fixed until
+  the whistle, by a 20-second Undo after each goal (the owner's number, from experience) or from a
+  list.
+- **Assists go on the goal,** as `assisterId` on `POST /events`, never as `PATCH /stats/live`, which
+  writes no goal row and so nothing for the timeline.
+- **The iPhone reviews, then sends.** The match arrives as a card with the score and goals, and a
+  **Send** button. Full time completes the match, runs the ratings and opens the vote, and can't be
+  moved once recorded, so this is the last chance to catch a mistake. Delivery to a closed iPhone
+  app isn't promised, and the app has to be open anyway.
+- **The order is kick-off, then goals, then full time.** The clock contract allows any order, but
+  ratings don't: completion reads both whistles for pace, and a goal behind full time meets a `409`.
+  A refused goal stops full time from going.
+- **What's waiting belongs to the account that recorded it.** Today's `GoalQueue` checks only the
+  group, so somebody else logging in on that phone would send it as them.
+- **A Soccer workout runs from kick-off to full time** and is saved to Fitness, which keeps the app on
+  screen when the wrist comes up. The owner doesn't use Apple's Workout app, so nothing conflicts. It
+  needs a HealthKit permission and a line in the privacy policy and App Store labels.
+
+**Afterwards, backend first: a delete-goal endpoint.** No path removes a goal row today. Amending
+the counters leaves the goal on the timeline, and `goalEventsAreComplete` then silently rates the
+match on flat weights. Managers on an open match; group admins on a completed one, with the ratings
+run again. It's a real gap whatever the Watch does, but the review step means the Watch doesn't wait
+for it.
+
+### What's left
 
 | Phase | What | Exit |
 |---|---|---|
-| 4 | What managers and organisers use: making and running plans (recurring plans, guests), team generation and live drafts, match day (lineups, live stats, the clock and goal entry, which the backend already accepts offline, `V44`), the payments ledger, the roster and seasons | A match can be planned, drawn, played and recorded entirely in the app |
-| 5 | Push notifications: the Developer Program, a second kind of subscription for Apple device tokens and an APNs sender beside Web Push; permission asked when it means something | Match-day notifications arrive on an iPhone without installing anything from Safari |
-| 6 | TestFlight with the owner's group, then the listing: privacy labels, screenshots, age rating, a support address; expect the first submission back once | The app is in the store |
+| 6 | The listing: privacy labels, screenshots, age rating, a support address; expect the first submission back once | The app is in the store |
+| 7 | The Apple Watch app, above | A match is recorded from the wrist, and the Reminders and Shortcuts workaround is retired |
 
 Still open, beside the phases:
 
-- **The production API and web addresses**, which a Release build refuses to guess.
-- **Testing on the owner's iPhone**: it reaches the Mac over plain `http` only once a Debug-only
-  Info.plist allows local networking. Proposed on 2026-11-04 and not yet decided.
+- **Sign in with Apple**: the backend's part was outlined on 2026-11-05 and not started.
+- **Testing on the owner's iPhone against the Mac**: it reaches the Mac over plain `http` only once
+  a Debug-only Info.plist allows local networking. Declined for now on 2026-11-04.
 - **The secret man of the match ballot** (brain #104): after the vote closes, show the runner-up
   counts, or only the winner's?
 - **Small cleanups.** The Results list's paging repeats Upcoming's. Home's requests could run side by
