@@ -1,9 +1,10 @@
 # Project Status
 
-**Snapshot: 2026-11-05, after 3.17.0 — backend-only: native push for the iPhone app (APNs, `V67`),
-shipped dark, and the iPhone app's minimum build.** **The backend is on `3.17.0`**, read back from
-`/api/version` and `/api/health`; **the frontend stays on `3.16.0`** and skips 3.17.0. `v3.17.0` is on
-the remote, and `next..main` is empty. ⚠️ **The Heroku release number was not read back.** The
+**Snapshot: 2026-11-05, after 3.17.0 — native push for the iPhone app (APNs, `V67`), shipped dark,
+and the iPhone app's minimum build; the frontend moved its version only.** **Both repos are on
+`3.17.0`**: the backend read back from `/api/version` and `/api/health`, the frontend from the
+bundles the live site serves. Both `v3.17.0` tags are on the remotes, and `next..main` is empty in
+both repos. ⚠️ **Neither the Heroku release number nor the Netlify deploy id was read back.** The
 [3.17.0 section](#3170--shipped-and-confirmed-2026-11-05-small-hours) below carries every row.
 
 **The snapshot before that: 2026-11-03, after 3.16.0 — a paired minor release: recurring match plans keep their
@@ -161,20 +162,28 @@ read back from both platforms, and the evidence is in the table.
 
 ## 3.17.0 — shipped and confirmed 2026-11-05, small hours
 
-**Backend-only: the backend is on `3.17.0`, the frontend stays on `3.16.0`.** Version bump
+**Both repos are on `3.17.0`. The release is the backend's; the frontend moved its version only.**
+Backend version bump
 [FootMania-Back#386](https://github.com/ricsnsuka/FootMania-Back/pull/386); promotion
 [FootMania-Back#388](https://github.com/ricsnsuka/FootMania-Back/pull/388), after its Release Gate passed. The
 promotion was merged with GitHub's merge button, which left `next` one commit behind until it was
 fast-forwarded to `34f876d`. The `[3.17.0]` section of the backend `CHANGELOG.md` is the full record.
 It is dated 2026-11-04, the day it was cut; the deploy landed on 2026-11-05.
 
-| | Backend |
-|---|---|
-| Running commit | `34f876d` (merge of #388). `main` moved `07206dc..34f876d` with no other commit since |
-| Read back | production `/api/version` reports `3.17.0`, `buildTime` `2026-11-05T00:41:44.203Z`, read at 00:42:54Z; `/api/health` `UP`. Heroku release number **not read back**: the CLI is not installed on the machine that ran this release |
-| Migration | `V67`, applied on boot. `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise; the schema history itself was not read. Not a rollback boundary in practice |
-| Tag | `v3.17.0` at `34f876d`, annotated, pushed |
-| `next..main` | empty, after `next` was fast-forwarded to `34f876d` |
+The frontend was first recorded here as skipping 3.17.0. The owner then chose to cut it although
+`[Unreleased]` was empty, so nothing changed on the web. Version bump
+[FootMania-Simple-Front#294](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/294); promotion
+[FootMania-Simple-Front#295](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/295), after its
+Release Gate passed. The merge button left `next` one commit behind here too, until the fast-forward
+to `c0adcd3`, which went through on the owner's admin bypass of the `next` ruleset.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `34f876d` (merge of #388). `main` moved `07206dc..34f876d` with no other commit since | `c0adcd3` (merge of #295). `main` moved `d048052..c0adcd3` with no other commit since |
+| Read back | production `/api/version` reports `3.17.0`, `buildTime` `2026-11-05T00:41:44.203Z`, read at 00:42:54Z; `/api/health` `UP`. Heroku release number **not read back**: the CLI is not installed on the machine that ran this release | the bundles `amadora-foot.netlify.app` serves carry version `3.17.0`, read 2026-11-05, and the site answers 200. Netlify deploy id **not read back**: no CLI or connector on the machine that ran this release. The What's new dialog was not read, since it needs a sign-in; the 3.17.0 highlights list is empty |
+| Migration | `V67`, applied on boot. `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise; the schema history itself was not read. Not a rollback boundary in practice | none |
+| Tag | `v3.17.0` at `34f876d`, annotated, pushed | `v3.17.0` at `c0adcd3`, annotated, pushed |
+| `next..main` | empty, after `next` was fast-forwarded to `34f876d` | empty, after `next` was fast-forwarded to `c0adcd3` |
 
 **What shipped**
 - **Native push for the iPhone app** (#385), dark: production's `/api/push/public-key` answers
@@ -184,10 +193,17 @@ It is dated 2026-11-04, the day it was cut; the deploy landed on 2026-11-05.
 - **Tooling** (#387): the VAPID key guard in `.githooks/pre-commit` runs now. It was tracked as
   100644, so git had been ignoring it. The version check also runs on macOS, and the paperwork hook
   judges a worktree session's own branch.
+- **Frontend: the version only.** No highlights, so the What's new dialog has nothing new to show.
 
 **Still open**
 - Set the `APNS_*` config vars and prove native push with a real notification.
 - Read this deploy's Heroku release number.
+- Read this deploy's Netlify deploy id.
+- Plain `npx vitest run` fails 311 tests on Node 26, the only Node on the owner's machine, because
+  Node's own `localStorage` shadows jsdom's. `NODE_OPTIONS=--no-experimental-webstorage` gets all
+  2719 passing, and CI runs Node 20.
+- GitHub reports 3 moderate alerts on the frontend's default branch, with no pull request open for
+  them. Not looked at yet.
 - [FootMania-Back#382](https://github.com/ricsnsuka/FootMania-Back/issues/382): Spring Boot 4 before 2027-02-01.
   A trial on Boot 4.1.2 on 2026-11-05 changed 36 files with all tests green; the web and iPhone apps,
   a live SSE stream and Heroku memory were not tested. Spring's 2026-08-20 batch holds 25 advisories
