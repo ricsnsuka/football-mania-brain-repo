@@ -1,11 +1,11 @@
 # Project Status
 
-**Snapshot: 2026-11-06, after 3.17.1 — the privacy policy covers the iPhone app and names its service
-providers, invite links can open the app, and a stream timing out no longer logs an error.** **Both
-repos are on `3.17.1`**: the backend read back from `/api/version` and `/api/health`, the frontend from
-what the live site serves. Both `v3.17.1` tags are on the remotes, and `next..main` is empty in both
-repos. The [3.17.1 section](#3171--shipped-and-confirmed-2026-11-06-small-hours) below carries every
-row.
+**Snapshot: 2026-11-06, after web 3.17.2 — the privacy policy names Brevo, ahead of password reset
+email being switched on.** **The frontend is on `3.17.2` and the backend stays on `3.17.1`**: the
+backend read back from `/api/version`, the frontend from what the live site serves. `v3.17.2` is on
+the frontend's remote, and `next..main` is empty there. Production email is still off until the
+`MAIL_*` config vars go on Heroku. The
+[3.17.2 section](#3172--shipped-and-confirmed-2026-11-06-evening) below carries every row.
 
 **The iPhone app, to 2026-11-06: on TestFlight at build 8, not on the App Store.** The Apple Watch app
 is built, and a match went from the owner's Watch through their iPhone to production. Build 8 carries
@@ -172,6 +172,29 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.17.2 — shipped and confirmed 2026-11-06, evening
+
+**The frontend is on `3.17.2`; the backend stays on `3.17.1`.** Frontend-only. Policy change
+[FootMania-Simple-Front#301](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/301), version
+bump [#302](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/302), promotion
+[#303](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/303), after its Release Gate passed.
+The owner asked for the promotion directly, and no local UI check was made; the updated English
+light-theme baseline was looked at.
+
+| | Frontend |
+|---|---|
+| Running commit | `8eb90c1` (merge of #303) |
+| Read back | `/privacy` names Brevo and shows 6 November 2026. The Netlify deploy id wasn't read |
+| Tag | `v3.17.2` at `8eb90c1`, annotated, pushed |
+| `next..main` | empty, after `next` was fast-forwarded to `8eb90c1` |
+
+**What shipped**
+- **The privacy policy** names Brevo as the provider that delivers password reset emails (#301).
+
+**What's next:** the `MAIL_*` config vars go on Heroku, sending from `sidekickfc.dpdns.org`, which
+Brevo has authenticated. Then a real reset email is tested. `availability` reads
+`emailEnabled: false` until then.
 
 ## 3.17.1 — shipped and confirmed 2026-11-06, small hours
 
