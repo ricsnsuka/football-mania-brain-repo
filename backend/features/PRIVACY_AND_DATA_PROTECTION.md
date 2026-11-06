@@ -33,7 +33,7 @@ advice and it is not the privacy policy — see [What is still outstanding](#wha
 | Skill rating and its full change history | `players`, `skill_rating_history` | Team generation and balance |
 | Availability responses and free-text notes | `player_confirmations` | Running the availability poll |
 | Username as audit actor | `players.created_by`/`updated_by`, `match_plans.created_by`, `draft_sessions.created_by` | Accountability for administrative actions |
-| Push endpoint + encryption keys, device label | `push_subscriptions` | Delivering notifications to a specific browser install |
+| Push endpoint + encryption keys, or an iPhone's APNs device token, and a device label | `push_subscriptions` | Delivering notifications to a specific browser install or iPhone |
 | Muted notification categories | `notification_mutes` | Respecting an explicit opt-out |
 | Achievement badges and when they were earned | `player_badges` | Recognising milestones. Derived entirely from statistics already held, and a fact about one person only — so unlike the MOTM votes it needs no special handling in the export. Awards are permanent: there is no revocation path, and erasure anonymises rather than deletes |
 | Weeks a player was player of the week or in the team of the week, per format | `week_honours` (V54, after 3.9.0) | The record behind the `PLAYER_OF_THE_WEEK` and `TEAM_OF_THE_WEEK` badges and their counts. Written once per closed week by a daily sweep from the honours page's own answer; a fact about its holder alone — it says who was honoured, not who they beat — so it is exported plainly under `weekHonours` and needs no special handling. Permanent like a badge: never updated or deleted by the application, and erasure anonymises rather than deletes |
@@ -45,6 +45,14 @@ advice and it is not the privacy policy — see [What is still outstanding](#wha
 tokens. The money moves between phones and this application never sees it; a payment row is
 somebody's word that it arrived, holding an amount and a date and nothing else. Also not stored:
 location beyond a free-text pitch name, and biometric or special-category data of any kind.
+
+**Apple Health is not an exception to that.** Since 2026-11-05 the iPhone app's Watch recording saves
+each match as a Soccer workout, with heart rate and energy. Heart rate is special-category data,
+and it stays true that this application holds none: the workout goes from the Watch to Apple Health
+on the person's own devices, and no request to the backend carries it. What a match sends is the
+two whistles and the goals. The policy says so under "What is stored on your device". Anything that
+ever sent Health data to the backend would change this section, the policy, and the App Store
+privacy details together.
 
 ---
 
@@ -92,8 +100,28 @@ which is why guests were deliberately given no phone number.
 
 ### Sub-processors
 
-*None at present.* This section exists and is deliberately empty so that the first one has an
-obvious home. The billing rung would add a payment processor here; it is on hold.
+The privacy policy names these under "Who it is shared with", since 2026-11-06. It used to say there
+were none, which was never true of the hosting.
+
+| Provider | What it does | Where |
+|---|---|---|
+| Heroku | Runs the server and its database, Heroku Postgres | EU region, confirmed by the owner on 2026-11-06 |
+| Netlify | Hosts the website | Not recorded |
+
+Two push services also carry notifications, and they differ in what they can read:
+
+- **A browser's push service** relays an encrypted payload it cannot read.
+- **Apple's push service** receives the title and body readable, for the iPhone app, because
+  `ApnsSender` sends them as an alert. The policy says so.
+
+**Email has no provider, because it is off.** Production answers `emailEnabled: false` on
+`GET /api/auth/password-reset/availability`. Setting `MAIL_HOST` to a provider means naming it here
+and in the policy, in the same change.
+
+The billing rung would add a payment processor here; it is on hold.
+
+Netlify and Apple are US companies. Whether that needs a transfers sentence in the policy is an
+**operator task requiring legal review**, flagged here before the App Store release.
 
 ### Data processing agreement
 
@@ -257,7 +285,7 @@ this should be set explicitly before public signup rather than left to the platf
 
 The privacy policy needs to state, at minimum: who the controller is, what is collected (the table
 at the top of this document), why, the lawful basis, how long it is kept, who it is shared with
-(nobody today — no third-party processors, no analytics), the rights above and how to exercise them,
+(the service providers listed under [Sub-processors](#sub-processors), and no analytics), the rights above and how to exercise them,
 and a contact address.
 
 ---
