@@ -137,8 +137,9 @@ Settled during Phase 3, 2026-11-03 to 2026-11-04:
   [the generator trial](#the-openapi-generator-trial-2026-11-03).*
 - **Name and identifier:** "Football Mania", `pt.rics.footballmania`. The identifier is permanent
   once published. *The name changed during Phase 6: "Football Mania" was taken on the App Store, so
-  the listing is "SportsMania - Football" and the Home Screen name "SportsMania". Inside the app the
-  brand stays Football Mania.*
+  the listing is "SportsMania - Football" and the Home Screen name "SportsMania". On 2026-11-06 the
+  owner extended the rename to the web and inside the app, so SportsMania is the brand everywhere
+  users see it. The identifier and other stored or contract values keep their old names.*
 
 Settled the same day while setting up the Xcode project (FootMania-iOS#2), beyond the eight:
 
