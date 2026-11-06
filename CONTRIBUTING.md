@@ -39,6 +39,8 @@ many links.
       back to the raw enum name and reaches production looking like `FEE_CHARGED`
 - [ ] Backend deployed *before* the frontend that depends on it, and confirmed running — see
       [Deployment order](#deployment-order). Merged is not deployed
+- [ ] A web change says what the iPhone app needs, even if that is nothing — see
+      [A web change can need an iPhone change](#a-web-change-can-need-an-iphone-change)
 - [ ] CHANGELOG entry says what actually happened — a release that shipped does not still read
       "awaiting deployment"
 - [ ] [STATUS.md](STATUS.md) still accurate
@@ -355,6 +357,40 @@ that assumes it.
 **When the order genuinely cannot hold**, ship the frontend so it tolerates both shapes — feature
 detection or a graceful empty state that says so — rather than shipping something that assumes a
 backend that is not there yet.
+
+## A web change can need an iPhone change
+
+**Every change to the web might need a change to the iPhone app, so every web pull request says
+whether it does.** The owner's rule, 2026-11-05. The pull request's "iPhone impact" section holds
+one of three answers: the paired [FootMania-iOS](https://github.com/ricsnsuka/FootMania-iOS) pull
+request, an issue there for later, or `none` and why. Plenty of changes are `none`. What the rule
+asks for is that somebody looked.
+
+**Nothing else would notice.** The app is a third client, not a wrapper: most of it is Swift written
+from the web's pages, down to rules such as `pickSpotlight`, and a deploy doesn't reach it.
+FootMania-iOS has no CI, so `PaletteTests` and `sync-strings --check` speak only when somebody next
+builds the app, and neither says anything about behaviour. A page the app still opens as a web
+screen picks a change up by itself, which is what makes the gap easy to forget: each screen that
+goes native stops getting that for free.
+
+| A web change to | What it can need in the app |
+|---|---|
+| What a page does: a rule, a field, a flow, a role gate | The same change in the native screen. The Swift comments name the web's components and functions, so search for the name. A page the app opens as a web screen needs nothing |
+| A route, a query parameter such as `?plan=`, or the menus in `Navbar.tsx` and `AccountMenu.tsx` | `WebSection.swift`, which copies their paths, names and role gates |
+| Wording in `src/locales/` | A `sync-strings` run in the app. A key the app names that was renamed or removed needs its Swift changing too: the script refuses it |
+| A colour token in `globals.css` | `Palette` and `PaletteTests` |
+| A shared primitive, such as `DataStateMessage`, `.btn-primary` or a `ui-chip-*` | Its counterpart in the app's `Components/` |
+| Page chrome, such as a new banner or bar | Nothing in the app, but a `[data-in-app]` rule on the web, or it shows inside the app's web screens |
+| `/app/open`, the hand-off or the user-agent mark | The contract with installed apps, in [`docs/guides/native-app.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/docs/guides/native-app.md). A rename or removal waits for the minimum-version check |
+
+**The rule asks a question; it adds no deployment order.** The web ships in minutes and the app
+through App Review, so the app's half of a paired change usually lands later, and the web does not
+wait for it. The exception is the last row, where shipping first breaks installed copies.
+
+The web's [`AGENTS.md`](https://github.com/ricsnsuka/FootMania-Simple-Front/blob/main/AGENTS.md) and
+pull request template carry a short copy. That is the same exception to "link, don't copy" as the
+branch rule: it governs the moment somebody is inside that repo finishing a change. This section is
+canonical.
 
 ## Structure
 
