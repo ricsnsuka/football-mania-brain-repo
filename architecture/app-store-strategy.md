@@ -1,8 +1,8 @@
 # Putting FootMania on the Apple App Store
 
-**Status: IN PROGRESS, 2026-11-05 — the native iPhone app chosen on 2026-11-02 (below) is built
-through Phase 5 and is on TestFlight at build 3, with push working in production. It is not on the
-App Store yet: the listing is left, and the Apple Watch app is the next thing being built. The
+**Status: IN PROGRESS, 2026-11-06 — the native iPhone app chosen on 2026-11-02 (below) is built
+through Phase 5 and is on TestFlight at build 6, with push working in production and the Apple Watch
+app working end to end on real devices. It is not on the App Store yet: the listing is left. The
 Capacitor route this document first drafted was not taken; its obstacles still apply.** Written
 2026-08-03 against backend `2981bd3` and frontend `ac831ee`, both at `1.1.0`. This is roadmap
 [Phase 4](../product/roadmap.md), which is deliberately gated on real usage data rather than on
@@ -216,7 +216,7 @@ enabled for production. With a new key on Heroku, a notification reached the own
 2026-11-05. **Tapping a notification opens its screen** since #55.
 
 **Phase 6, TestFlight: under way.** #40 and #41 made the app ready: the icon, production addresses in
-Release builds, and the Home Screen name. **TestFlight is at build 3, as of 2026-11-05.** The owner
+Release builds, and the Home Screen name. **TestFlight is at build 6, as of 2026-11-06.** The owner
 uploads from Xcode.
 
 **The rest of the web, made native, 2026-11-05**, listed by the owner's order once TestFlight was up:
@@ -236,12 +236,22 @@ uploads from Xcode.
 API tokens stay on the web, as the owner chose. The app also still links to the web's page for a
 plan, a match, the dashboard and settings. Whether each of those is still needed hasn't been reviewed.
 
-### Phase 7, the Apple Watch app: planned 2026-11-05
+### Phase 7, the Apple Watch app: planned and built 2026-11-05
 
 Replaces the Reminders and Shortcuts workaround. The owner plays in the matches they record, so the
 app is for a wrist, mid-game: kick-off, goals, full time and nothing else. It was added as a phase on
 the owner's word, after TestFlight, as agreed. The minimum is watchOS 11, which covers the owner's
-Series 7, and it ships inside the iPhone app's upload. None of it is built yet.
+Series 7, and it ships inside the iPhone app's upload.
+
+**Built and working on real devices.** On TestFlight build 6, the owner recorded a match on their
+Series 7, reviewed it on their iPhone and sent it to production, and the app reported it done.
+
+| PR | What it built |
+|---|---|
+| #57 | The Watch target, and Send to Watch |
+| #58 | Recording on the Watch, with the workout |
+| #59 | The hand-over to the iPhone, the review screen and sending |
+| #62 | A fix: the review screen opened black on build 5, because its `.task` sat on an empty view and never ran |
 
 **The Watch is offline and only ever talks to the iPhone.** The owner's call. It has no internet
 use, no login and no token. The iPhone app is the only thing that talks to the server. A late score
@@ -282,18 +292,17 @@ doesn't matter, the owner says, because everyone who cares is on the pitch.
   screen when the wrist comes up. The owner doesn't use Apple's Workout app, so nothing conflicts. It
   needs a HealthKit permission and a line in the privacy policy and App Store labels.
 
-**Afterwards, backend first: a delete-goal endpoint.** No path removes a goal row today. Amending
-the counters leaves the goal on the timeline, and `goalEventsAreComplete` then silently rates the
-match on flat weights. Managers on an open match; group admins on a completed one, with the ratings
-run again. It's a real gap whatever the Watch does, but the review step means the Watch doesn't wait
-for it.
+**A delete-goal endpoint: dropped by the owner on 2026-11-06.** It was planned for after the Watch,
+because no path removes a goal row. The owner's reason: the Undo button stays long enough to take a
+mistake back. The gap stays for a goal found wrong after sending: amending the counters leaves the
+goal on the timeline, and `goalEventsAreComplete` then silently rates the match on flat weights.
 
 ### What's left
 
 | Phase | What | Exit |
 |---|---|---|
 | 6 | The listing: privacy labels, screenshots, age rating, a support address; expect the first submission back once | The app is in the store |
-| 7 | The Apple Watch app, above | A match is recorded from the wrist, and the Reminders and Shortcuts workaround is retired |
+| 7 | The Apple Watch app, above: recording works, and the owner's checks on a real match are left (taking a goal off in review, Discard, the wrist coming down, the workout in Fitness, wet buttons) | A match is recorded from the wrist, and the Reminders and Shortcuts workaround is retired |
 
 Still open, beside the phases:
 

@@ -7,9 +7,9 @@ bundles the live site serves. Both `v3.17.0` tags are on the remotes, and `next.
 both repos. ⚠️ **Neither the Heroku release number nor the Netlify deploy id was read back.** The
 [3.17.0 section](#3170--shipped-and-confirmed-2026-11-05-small-hours) below carries every row.
 
-**The iPhone app, the same day: on TestFlight at build 3, not on the App Store.** Push reached the
-owner's phone in production once a new APNs key was on Heroku. The Apple Watch app is the next thing
-built. [The record](architecture/app-store-strategy.md) has every pull request and decision.
+**The iPhone app, to 2026-11-06: on TestFlight at build 6, not on the App Store.** Push reached the
+owner's phone in production once a new APNs key was on Heroku. The Apple Watch app is built, and a
+match went from the owner's Watch through their iPhone to production. [The record](architecture/app-store-strategy.md) has every pull request and decision.
 
 **The snapshot before that: 2026-11-03, after 3.16.0 — a paired minor release: recurring match plans keep their
 local time across daylight saving (`V65`, `V66`), Next.js 16.4.4 closes two critical advisories, and

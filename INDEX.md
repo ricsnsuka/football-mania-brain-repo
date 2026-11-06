@@ -21,7 +21,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
 | [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V33 history + deployment state |
 | [architecture/multi-tenancy](architecture/multi-tenancy.md) | Phase 5 cross-repo contract: tenant resolution, cache/key rules, the rollout ladder |
-| [architecture/app-store-strategy](architecture/app-store-strategy.md) 🟡 | Phase 4, in progress: the native SwiftUI iPhone app chosen 2026-11-02 over the Capacitor route, its decisions, and its phases (0–5 done, 6 under way on TestFlight, 7 the Apple Watch app planned, as of 2026-11-05). The four obstacles, and when *not* to start, still stand |
+| [architecture/app-store-strategy](architecture/app-store-strategy.md) 🟡 | Phase 4, in progress: the native SwiftUI iPhone app chosen 2026-11-02 over the Capacitor route, its decisions, and its phases (0–5 done, 6 under way on TestFlight, 7 the Apple Watch app built and in testing, as of 2026-11-06). The four obstacles, and when *not* to start, still stand |
 | [architecture/code-review-2026-08-24](architecture/code-review-2026-08-24.md) ⚠️ | Whole-codebase read of `2.0.0`, both repos. Eight open findings, ordered, with a suggested branch split |
 
 ---
