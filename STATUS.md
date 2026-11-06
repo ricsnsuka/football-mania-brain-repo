@@ -1,15 +1,24 @@
 # Project Status
 
-**Snapshot: 2026-11-05, after 3.17.0 — native push for the iPhone app (APNs, `V67`), shipped dark,
+**Snapshot: 2026-11-06, after 3.17.1 — the privacy policy covers the iPhone app and names its service
+providers, invite links can open the app, and a stream timing out no longer logs an error.** **Both
+repos are on `3.17.1`**: the backend read back from `/api/version` and `/api/health`, the frontend from
+what the live site serves. Both `v3.17.1` tags are on the remotes, and `next..main` is empty in both
+repos. The [3.17.1 section](#3171--shipped-and-confirmed-2026-11-06-small-hours) below carries every
+row.
+
+**The iPhone app, to 2026-11-06: on TestFlight at build 8, not on the App Store.** The Apple Watch app
+is built, and a match went from the owner's Watch through their iPhone to production. Build 8 carries
+the whole dashboard on Home, the Results season filter, the owed search and the redrawn history
+charts, and the owner's checks on it are still to come. [The record](architecture/app-store-strategy.md)
+has every pull request and decision.
+
+**The snapshot before that: 2026-11-05, after 3.17.0 — native push for the iPhone app (APNs, `V67`), shipped dark,
 and the iPhone app's minimum build; the frontend moved its version only.** **Both repos are on
 `3.17.0`**: the backend read back from `/api/version` and `/api/health`, the frontend from the
 bundles the live site serves. Both `v3.17.0` tags are on the remotes, and `next..main` is empty in
 both repos. ⚠️ **Neither the Heroku release number nor the Netlify deploy id was read back.** The
 [3.17.0 section](#3170--shipped-and-confirmed-2026-11-05-small-hours) below carries every row.
-
-**The iPhone app, to 2026-11-06: on TestFlight at build 6, not on the App Store.** Push reached the
-owner's phone in production once a new APNs key was on Heroku. The Apple Watch app is built, and a
-match went from the owner's Watch through their iPhone to production. [The record](architecture/app-store-strategy.md) has every pull request and decision.
 
 **The snapshot before that: 2026-11-03, after 3.16.0 — a paired minor release: recurring match plans keep their
 local time across daylight saving (`V65`, `V66`), Next.js 16.4.4 closes two critical advisories, and
@@ -163,6 +172,37 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.17.1 — shipped and confirmed 2026-11-06, small hours
+
+**Both repos are on `3.17.1`.** Version bumps
+[FootMania-Back#390](https://github.com/ricsnsuka/FootMania-Back/pull/390) and
+[FootMania-Simple-Front#299](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/299); promotions
+[FootMania-Back#391](https://github.com/ricsnsuka/FootMania-Back/pull/391) and
+[FootMania-Simple-Front#300](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/300), after their
+Release Gates passed. The web was promoted 6 seconds after the backend, before the backend was
+confirmed running, which was safe only because neither needs the other. The merge button left `next`
+one commit behind in both repos until each was fast-forwarded.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `de65fc0` (merge of #391). The owner read `de65fc04` from Heroku | `de6fc98` (merge of #300). The owner read `main@de6fc98` from Netlify |
+| Read back | production `/api/version` reports `3.17.1`, `buildTime` `2026-11-06T03:32:12.363Z`, read at 03:33:01Z; `/api/health` `UP`. The Heroku release number itself wasn't read | `/privacy` shows 6 November 2026 and "Nobody except our service providers"; `/.well-known/apple-app-site-association` answers 200. The Netlify deploy id itself wasn't read |
+| Migration | None | — |
+| Tag | `v3.17.1` at `de65fc0`, annotated, pushed | `v3.17.1` at `de6fc98`, annotated, pushed |
+| `next..main` | empty, after `next` was fast-forwarded to `de65fc0` | empty, after `next` was fast-forwarded to `de6fc98` |
+
+**What shipped**
+- **Backend:** a chat or draft stream reaching its time limit no longer logs an error (#389).
+- **The privacy policy** covers Apple Health, Apple's push service and what stays on an iPhone, and
+  names Heroku and Netlify (#298). The transfers question is flagged in
+  [the privacy record](backend/features/PRIVACY_AND_DATA_PROTECTION.md#sub-processors).
+- **Invite links** can open the iPhone app (#296). Apple's CDN holds the file, read at 03:34Z. Tapping a
+  link on an iPhone hasn't been tried.
+
+⚠️ **The Apple file goes out as `text/plain`, not JSON.** Netlify serves it directly, past the header
+in `next.config.ts`. Apple accepted it all the same. A `[[headers]]` entry in `netlify.toml` would
+correct it, in the next web change.
 
 ## 3.17.0 — shipped and confirmed 2026-11-05, small hours
 
