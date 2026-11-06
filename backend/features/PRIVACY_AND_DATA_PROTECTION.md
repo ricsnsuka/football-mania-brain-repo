@@ -107,6 +107,7 @@ were none, which was never true of the hosting.
 |---|---|---|
 | Heroku | Runs the server and its database, Heroku Postgres | EU region, confirmed by the owner on 2026-11-06 |
 | Netlify | Hosts the website | Not recorded |
+| Brevo | Delivers password reset emails, and receives the account's email address and the message. Named since web 3.17.2, before any email went out | Not recorded |
 
 Two push services also carry notifications, and they differ in what they can read:
 
