@@ -233,8 +233,11 @@ uploads from Xcode.
 | #54 | Group settings, founding a group, the forced password change |
 | #55 | Notifications open their screen, and invite links open the app (with web #296) |
 
-API tokens stay on the web, as the owner chose. The app also still links to the web's page for a
-plan, a match, the dashboard and settings. Whether each of those is still needed hasn't been reviewed.
+API tokens stay on the web, as the owner chose, and Settings is the one screen left that links to the
+web, for those and the platform's settings. A review on 2026-11-06 found the plan and match links had
+nothing left to offer, and the dashboard held only the Ballon d'Or result, which came over to Home.
+#63 removed all three, and the owner chose to remove Upcoming's link to the plans page too, so
+browsing past plans by week stays on the website.
 
 ### Phase 7, the Apple Watch app: planned and built 2026-11-05
 
