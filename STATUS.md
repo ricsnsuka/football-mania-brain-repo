@@ -208,8 +208,9 @@ button left `next` one commit behind until it was fast-forwarded.
   changed screens have not been looked at yet.
 - **A new TestFlight build** carries the iPhone rebrand
   ([FootMania-iOS#71](https://github.com/ricsnsuka/FootMania-iOS/pull/71), merged into `next`).
-- **`MAIL_FROM_NAME`** wasn't read from Heroku. If it's set when email goes on, it overrides the new
-  sender name.
+- **`MAIL_FROM_NAME`** wasn't read from Heroku. Production email is on (`availability` reads
+  `emailEnabled: true`, and the owner says the variables have been set for a while), so if this one
+  is set it overrides the new sender name. A real reset email will show which.
 - **Two critical `spring-webmvc` Dependabot alerts** (#48, #49) are open with no patched version
   listed. This release didn't change them, and whether they affect the app hasn't been checked.
 
