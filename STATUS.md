@@ -1,6 +1,21 @@
 # Project Status
 
-**Snapshot: 2026-11-07, after web 3.18.0 — the app is SportsMania on the web and in the password reset
+**Snapshot: 2026-11-07, after 3.19.0 — the app is Sidekick, on the web and in the password reset
+email.** **Both repos are on `3.19.0`**: the backend read back from `/api/version` and `/api/health`,
+the frontend from what the live site serves. Both `v3.19.0` tags are on the remotes, and `next..main`
+is empty in both repos. The App Store listing is to be "Sidekick FC", set by the owner in App Store
+Connect, and the iPhone rebrand is merged into `next` and needs a new TestFlight build. ⚠️ **Neither
+the Heroku release number nor the Netlify deploy id was read back, and nobody has confirmed the screens
+or the What's new dialog by eye.** The
+[3.19.0 section](#3190--shipped-and-confirmed-2026-11-07-small-hours) below carries every row.
+
+**The iPhone app, to 2026-11-06: on TestFlight at build 8, not on the App Store.** The Apple Watch app
+is built, and a match went from the owner's Watch through their iPhone to production. Build 8 carries
+the whole dashboard on Home, the Results season filter, the owed search and the redrawn history
+charts, and the owner's checks on it are still to come. [The record](architecture/app-store-strategy.md)
+has every pull request and decision.
+
+**The snapshot before that: 2026-11-07, after web 3.18.0 — the app is SportsMania on the web and in the password reset
 email.** **Both repos are on `3.18.0`**: the backend read back from `/api/version` and `/api/health`,
 the frontend from what the live site serves. Both `v3.18.0` tags are on the remotes, and `next..main`
 is empty in both repos. The iPhone half of the rebrand is merged into `next` and needs a new TestFlight
@@ -8,12 +23,6 @@ build. ⚠️ **Neither the Heroku release number nor the Netlify deploy id was 
 confirmed the screens or the What's new dialog by eye.** The
 [web 3.18.0 section](#web-3180--shipped-and-confirmed-2026-11-07-just-after-midnight) below carries
 every row.
-
-**The iPhone app, to 2026-11-06: on TestFlight at build 8, not on the App Store.** The Apple Watch app
-is built, and a match went from the owner's Watch through their iPhone to production. Build 8 carries
-the whole dashboard on Home, the Results season filter, the owed search and the redrawn history
-charts, and the owner's checks on it are still to come. [The record](architecture/app-store-strategy.md)
-has every pull request and decision.
 
 **The snapshot before that: 2026-11-06, after backend 3.18.0 — the password reset email says SportsMania.** **The
 backend is on `3.18.0` and the frontend stays on `3.17.2`**: the backend read back from `/api/version`
@@ -189,6 +198,48 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.19.0 — shipped and confirmed 2026-11-07, small hours
+
+**Both repos are on `3.19.0`.** The app was renamed from SportsMania to Sidekick, to match the domain,
+hours after 3.18.0. Rebrand [FootMania-Back#395](https://github.com/ricsnsuka/FootMania-Back/pull/395)
+and [FootMania-Simple-Front#307](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/307); version
+bumps [FootMania-Back#396](https://github.com/ricsnsuka/FootMania-Back/pull/396) and
+[FootMania-Simple-Front#308](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/308); promotions
+[FootMania-Back#397](https://github.com/ricsnsuka/FootMania-Back/pull/397) and
+[FootMania-Simple-Front#309](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/309), after their
+Release Gates passed, the web only once the backend read back `3.19.0`. The owner asked for the web
+promotion directly, and its "owner has checked the UI locally" box was left unticked: whether a local
+check happened wasn't recorded. The merge button left `next` one commit behind in both repos until
+each was fast-forwarded.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `f55a745` (merge of #397). `main` has no later commit, but Heroku wasn't asked: the CLI isn't installed on the machine that cut this | `8404834` (merge of #309), the only commit that moved `main` in this release |
+| Read back | production `/api/version` reports `3.19.0`, `buildTime` `2026-11-07T01:16:28.375Z`, read at 01:17:11Z; `/api/health` `UP` on `3.19.0`. The Heroku release number wasn't read | at 01:18:39Z the manifest name changed to `Sidekick`, `/login` is titled `Login — Sidekick`, `/privacy` is titled `Privacy Policy — Sidekick`, and a served bundle contains `3.19.0`. The Netlify deploy id wasn't read |
+| Migration | None | — |
+| Tag | `v3.19.0` at `f55a745`, annotated, pushed | `v3.19.0` at `8404834`, annotated, pushed |
+| `next..main` | empty, after `next` was fast-forwarded to `f55a745` | empty, after `next` was fast-forwarded to `8404834` |
+
+**What shipped**
+- **The app is Sidekick** on the login screens, navigation, page titles, install prompt and privacy
+  policy, in all three languages (#307).
+- **The password reset email** says Sidekick in its subject, body and default sender name, and
+  `sidekick` joins the common password blocklist (#395).
+- **What's new** shows one highlight to everyone, "We're now Sidekick". 3.18.0's "We're now
+  SportsMania" was emptied by the owner, so nobody returning later is told about the old name. It
+  hasn't been seen rendered in production.
+
+**What's next**
+- **The App Store listing** is set to "Sidekick FC" in App Store Connect by the owner, because
+  "Sidekick" is taken. Whether the name is free isn't known until then.
+- **A new TestFlight build** carries the iPhone rebrand
+  ([FootMania-iOS#72](https://github.com/ricsnsuka/FootMania-iOS/pull/72), merged into `next`).
+- **`MAIL_FROM_NAME`** wasn't read from Heroku, and production email is on. If it's set, it overrides
+  the new sender name. A real reset email will show which.
+- **`sidekickfc.dpdns.org`** didn't answer on HTTPS on 2026-11-07. The site and the iPhone app still
+  use `amadora-foot.netlify.app`.
+- The two critical `spring-webmvc` Dependabot alerts and the web's three moderate ones still stand.
 
 ## Web 3.18.0 — shipped and confirmed 2026-11-07, just after midnight
 
