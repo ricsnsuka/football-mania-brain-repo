@@ -210,8 +210,8 @@ behind until it was fast-forwarded.
 **What shipped**
 - **The app is SportsMania** on the login screens, navigation, page titles, install prompt and privacy
   policy, in all three languages (#304).
-- **What's new** shows one highlight to everyone, "We're now SportsMania". This is the first stamped
-  highlight since 3.17.0's empty list, and it hasn't been seen rendered in production.
+- **What's new** shows one highlight to everyone, "We're now SportsMania". It hasn't been seen
+  rendered in production.
 
 **What's next**
 - **A new TestFlight build** carries the iPhone rebrand
