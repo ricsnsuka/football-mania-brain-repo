@@ -1,17 +1,25 @@
 # Project Status
 
-**Snapshot: 2026-11-06, after web 3.17.2 — the privacy policy names Brevo, ahead of password reset
-email being switched on.** **The frontend is on `3.17.2` and the backend stays on `3.17.1`**: the
-backend read back from `/api/version`, the frontend from what the live site serves. `v3.17.2` is on
-the frontend's remote, and `next..main` is empty there. Production email is still off until the
-`MAIL_*` config vars go on Heroku. The
-[3.17.2 section](#3172--shipped-and-confirmed-2026-11-06-evening) below carries every row.
+**Snapshot: 2026-11-06, after backend 3.18.0 — the password reset email says SportsMania.** **The
+backend is on `3.18.0` and the frontend stays on `3.17.2`**: the backend read back from `/api/version`
+and `/api/health`, the frontend unchanged since it was read back. `v3.18.0` is on the backend's remote,
+and `next..main` is empty there. The web and iPhone halves of the rebrand are merged into `next` but
+not shipped: web still needs its 3.18.0, and the iPhone needs a new TestFlight build. ⚠️ **The Heroku
+release number was not read back.** The
+[3.18.0 section](#3180--shipped-and-confirmed-2026-11-06-late-evening) below carries every row.
 
 **The iPhone app, to 2026-11-06: on TestFlight at build 8, not on the App Store.** The Apple Watch app
 is built, and a match went from the owner's Watch through their iPhone to production. Build 8 carries
 the whole dashboard on Home, the Results season filter, the owed search and the redrawn history
 charts, and the owner's checks on it are still to come. [The record](architecture/app-store-strategy.md)
 has every pull request and decision.
+
+**The snapshot before that: 2026-11-06, after web 3.17.2 — the privacy policy names Brevo, ahead of password reset
+email being switched on.** **The frontend is on `3.17.2` and the backend stays on `3.17.1`**: the
+backend read back from `/api/version`, the frontend from what the live site serves. `v3.17.2` is on
+the frontend's remote, and `next..main` is empty there. Production email is still off until the
+`MAIL_*` config vars go on Heroku. The
+[3.17.2 section](#3172--shipped-and-confirmed-2026-11-06-evening) below carries every row.
 
 **The snapshot before that: 2026-11-05, after 3.17.0 — native push for the iPhone app (APNs, `V67`), shipped dark,
 and the iPhone app's minimum build; the frontend moved its version only.** **Both repos are on
@@ -172,6 +180,39 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.18.0 — shipped and confirmed 2026-11-06, late evening
+
+**The backend is on `3.18.0`; the frontend stays on `3.17.2` until its own 3.18.0.** Rebrand
+[FootMania-Back#392](https://github.com/ricsnsuka/FootMania-Back/pull/392), version bump
+[#393](https://github.com/ricsnsuka/FootMania-Back/pull/393), promotion
+[#394](https://github.com/ricsnsuka/FootMania-Back/pull/394), after its Release Gate passed. The merge
+button left `next` one commit behind until it was fast-forwarded.
+
+| | Backend |
+|---|---|
+| Running commit | `3513e2f` (merge of #394). `main` has no later commit, but Heroku wasn't asked: the CLI isn't installed on the machine that cut this |
+| Read back | production `/api/version` reports `3.18.0`, `buildTime` `2026-11-06T23:44:15.207Z`, read at 23:45:11Z; `/api/health` `UP` on `3.18.0`. The Heroku release number wasn't read |
+| Migration | None |
+| Tag | `v3.18.0` at `3513e2f`, annotated, pushed |
+| `next..main` | empty, after `next` was fast-forwarded to `3513e2f` |
+
+**What shipped**
+- **The password reset email** says SportsMania in its subject, body and default sender name, and
+  `sportsmania` joins the common password blocklist (#392).
+
+**What's next**
+- **Web 3.18.0** carries the rebrand and the "We're now SportsMania" highlight
+  ([FootMania-Simple-Front#304](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/304), merged
+  into `next`). It can't be a patch release, because `src/releases/unreleased.ts` is not empty. The
+  changed screens have not been looked at yet.
+- **A new TestFlight build** carries the iPhone rebrand
+  ([FootMania-iOS#71](https://github.com/ricsnsuka/FootMania-iOS/pull/71), merged into `next`).
+- **`MAIL_FROM_NAME`** wasn't read from Heroku. Production email is on (`availability` reads
+  `emailEnabled: true`, and the owner says the variables have been set for a while), so if this one
+  is set it overrides the new sender name. A real reset email will show which.
+- **Two critical `spring-webmvc` Dependabot alerts** (#48, #49) are open with no patched version
+  listed. This release didn't change them, and whether they affect the app hasn't been checked.
 
 ## 3.17.2 — shipped and confirmed 2026-11-06, evening
 
