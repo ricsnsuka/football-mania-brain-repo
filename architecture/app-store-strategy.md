@@ -139,7 +139,10 @@ Settled during Phase 3, 2026-11-03 to 2026-11-04:
   once published. *The name changed during Phase 6: "Football Mania" was taken on the App Store, so
   the listing is "SportsMania - Football" and the Home Screen name "SportsMania". On 2026-11-06 the
   owner extended the rename to the web and inside the app, so SportsMania is the brand everywhere
-  users see it. The identifier and other stored or contract values keep their old names.*
+  users see it. On 2026-11-07 the owner renamed it again, to Sidekick, to match the domain: the
+  listing is "Sidekick FC", because "Sidekick" is taken on the App Store, and the Home Screen name and
+  everything else say "Sidekick". The identifier and other stored or contract values keep their old
+  names.*
 
 Settled the same day while setting up the Xcode project (FootMania-iOS#2), beyond the eight:
 
