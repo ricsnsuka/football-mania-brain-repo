@@ -86,13 +86,48 @@ On success a `success` toast is shown via `addNotification`. On `409 Conflict`, 
 
 ## Auth State
 
-Token and user are persisted to **`sessionStorage`** (locale and theme go to `localStorage` — two
-genuinely different lifetimes from one `persist()` call). The session therefore **survives a page
-refresh** and is scoped to the tab: closing it ends the session, and `clearAuth()` removes all
-three auth keys.
+The access token and user are persisted to **`sessionStorage`** (locale and theme go to
+`localStorage` — two genuinely different lifetimes from one `persist()` call). The access token
+therefore **survives a page refresh** and is scoped to the tab.
 
-Never `localStorage` and never a cookie: `localStorage` would outlive the tab on a shared machine,
-and a cookie would be sent on every request, which is what the bearer-token scheme exists to avoid.
+### Staying signed in: the refresh token (decided 2026-11-07, web #313)
+
+Since backend V69, login also returns a **refresh token**. The web keeps it in **`localStorage`**
+(key `refreshToken`), with a copy of the user and last group (`session.user`,
+`session.activeGroupId`) kept only while a refresh token exists. A new tab, or an installed app
+relaunched, restores from that copy with no access token, and the first request renews one through
+`POST /api/auth/refresh` (`src/lib/sessionRefresh.ts`). `clearAuth()` forgets all three.
+
+**Why `localStorage` and not an httpOnly cookie.** A cookie page scripts cannot read is the better
+place in principle, and it was the first choice. It does not work on this deployment: the web is on
+`amadora-foot.netlify.app` and the API on Heroku, and `netlify.app` and `herokuapp.com` are both on
+the public suffix list, so the two are different *sites*. A cookie the API sets is third-party, and
+Safari blocks third-party cookies by default, including in the app installed to an iPhone home
+screen, which is most of the audience. The alternatives were weighed and set aside for now:
+
+| Option | Why not now |
+|---|---|
+| Netlify proxy for `/api/*`, cookie first-party | Every call takes an extra hop, the chat and draft live streams (SSE) would run through the proxy, and the backend needs a cookie and CSRF change |
+| A shared custom domain (`app.` and `api.` of one domain) | Needs a domain and DNS, Heroku and Netlify setup first. **This is the upgrade path:** with it, move the refresh token to an httpOnly `SameSite` cookie |
+
+**What the choice costs, and why it is acceptable.** A script injected into the page could read the
+refresh token. Such a script can already read the access token in `sessionStorage`, so there is no
+new reader. A refresh token outlives the tab on a shared machine, which is what the old rule here
+guarded against. Signing out ends it, and so does a password change anywhere. Every use rotates it,
+and a spent token presented again ends that device's session, which limits what a stolen copy is
+worth. It lasts 60 days since last use. The access token stays at 24h until both clients refresh.
+
+**Renewal rules** (`sessionRefresh.ts`):
+- The API answers an ended session with **403**, which is also its answer to a missing role, so the
+  client reads the access token's `exp` claim. It renews before a request when the token is missing
+  or within 60 seconds of expiry. After a 403, it renews and retries once only if the token had
+  actually run out.
+- Renewals are serialised, because a spent token sent again more than 30 seconds later signs the
+  device out. Inside a tab, concurrent requests share one promise. Across tabs, a Web Lock
+  (`football-mania-session-refresh`) does the same where the browser supports it. The refresh token is
+  always read from storage at the moment of use, never from memory.
+- A refused renewal clears the session and goes to `/login?next=…`. A renewal that cannot be
+  attempted (offline, 5xx, 429) keeps the session.
 
 > ⚠️ This section previously claimed the token was held in memory only and lost on refresh. That
 > stopped being true when persistence was added; it is recorded here because "memory-only" is
@@ -128,6 +163,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 ## Security Notes
 
 - Password never logged or stored beyond the fetch call
-- Token never touches `localStorage` (XSS mitigation)
+- The access token never touches `localStorage`. The refresh token does, by decision; see
+  *Staying signed in* above for why, and for the upgrade path to an httpOnly cookie
 - Any 401 from the API client auto-calls `clearAuth()` and redirects to `/login`
 - Form fields use `autoComplete="username"` / `autoComplete="current-password"` / `autoComplete="new-password"` for password manager support
