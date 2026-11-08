@@ -17,8 +17,42 @@ An overview of what is happening and what needs you. One page for every role.
 | What happened recently? | `RecentResults` |
 
 None of that is role-specific, which is why there is one component rather than three. The only
-role-dependent piece left is the admin panel of unlinked players — genuinely an admin's outstanding
-work rather than a link to a page.
+role-dependent pieces left are the manager's count of unlinked players and the organiser's
+payments to confirm: outstanding work for the one role that can clear it.
+
+## One order, one visibility rule (web and iPhone)
+
+Decided 2026-11-08 (gap IOS-09, FootMania-iOS#97). The web's dashboard and the iPhone's Home show
+the same cards, in the same order, to the same people. Both read them from one request,
+`GET /api/me/home` (backend `docs/api/HOME-API-CONTRACT.md`), so the selection rules live on the
+server.
+
+| # | Card | Shown to |
+|---|------|----------|
+| 1 | Greeting, with your roles | Everyone |
+| 2 | Waiting on you | Everyone, when something is waiting |
+| 3 | Ballon d'Or vote | Everyone in the group, while a poll is open |
+| 4 | Ballon d'Or result | Everyone in the group, for 14 days after it closes |
+| 5 | Live match, then next match or plan | A player, a `GROUP_ADMIN` or a `MANAGER` |
+| 6 | Your numbers | A player |
+| 7 | Recent results (your own) | A player, when there are any |
+| 8 | Payments to confirm | An `ORGANIZER`, when there are any |
+
+The iPhone also shows the Watch's inbox under the greeting, which has no web counterpart.
+
+- **The votes sit above the next match** because they are the same kind of thing as "Waiting on
+  you": something to do before a window closes. The iPhone used to put them below it.
+- **The match card is group information**, so whoever runs the group sees it whether or not they
+  play. An account that is none of player, admin or manager gets the "link a player" line instead.
+  The iPhone used to show the card to everyone.
+- **Inside "Waiting on you"**, the server decides the role lines: payments to confirm go to an
+  `ORGANIZER`, and unlinked players to a `MANAGER`. The iPhone used to count them for
+  `GROUP_ADMIN`. Who may link a player from that line is gap WEB-04 (FootMania-Simple-Front#327).
+  The iPhone leaves guests out of the count; the server and the web include them, which is still
+  to be settled.
+- **The MOTM vote offered** is the one on your own latest completed match, on both clients.
+- **A section the server could not read** (`unavailable`) says "couldn't be loaded" with a retry,
+  in its card's place, never its empty state. A failed player read is not "not linked".
 
 ## Widgets
 
@@ -39,7 +73,7 @@ It can carry three things, in this order:
 
 ### NextMatchSection (the match spotlight)
 
-One section, three shapes, chosen by `pickSpotlight()` (pure, unit-tested) in `useDashboardData`:
+One section, three shapes, chosen by the server (`spotlight` in `GET /api/me/home`, `HomeServiceTest`):
 
 - **A plan is next** (`NextMatchCard`): the chronologically next upcoming plan, **`PENDING` or
   `CONFIRMED`**. It used to be `PENDING` only, which treated confirming a plan as if it had already
@@ -78,28 +112,17 @@ repeating it here would make this a second Matches page.
 
 ## Data
 
-All reads live in `useDashboardData`, not in the widgets. Every widget needs a slice of the same few
-queries, and having each one call them independently made the fetch pattern impossible to see.
+One read, `useHome` over `GET /api/me/home`, shaped for the cards by `useDashboardData`
+(FootMania-Simple-Front#337). It used to be four queries there and nine more in the cards, and the
+skeleton waited only for the first four, so the rest popped in (gap WEB-03). Now the page is either
+loading or whole.
 
-| Source | Notes |
-|--------|-------|
-| `usePlayers` | Shaped with `select` off the one canonical query — no extra request |
-| `useMatchPlans({ status: 'PENDING,CONFIRMED', timeframe: 'upcoming', size: 5 })` | Server windows and sorts ascending — the old unbounded `PENDING`-only query could page-truncate the real next plan behind stale ones |
-| `useMatches({ completed: false, size: 50, sort: ['matchDate,asc'] })` | Group-wide open matches: the live one, and settled fixtures. `useMatches` polls every 30 s while any listed match is live |
-| `useMatches({ completed: true, size: 3 })` | |
-| `useDraftSessions` | |
-| `useMvpVote` | **Most recent completed match only** — see below |
-
-> **Only the newest completed match is checked for an open MOTM poll.** Vote state is per match and
-> would otherwise be one request per match on every dashboard load. With a window measured in hours
-> two matches can be open at once, and this shows only the newer one; the full list is on the
-> Matches page. Catching the common case beats N requests.
-
-`Date.now()` is snapshotted once on mount via `useState(() => Date.now())` rather than read during
-render. Reading the clock while rendering is non-deterministic — two renders of the same data could
-disagree about which plan is "next" — which `react-hooks/purity` correctly rejects. The cost is that
-a dashboard left open past a kickoff keeps showing that match until something re-mounts, which beats
-silently retiring the card while somebody is looking at it.
+- **Staying fresh.** Every successful mutation marks Home stale (a `MutationCache` in
+  `QueryProvider`), and so does every push about the group (`queryKeysToInvalidate`). While a match
+  is live, Home is re-read every 30 s.
+- **Not in Home**, by the contract: the unread chat count, which follows chat's own stream.
+- **The MOTM vote** is the one on your own latest completed match, chosen by the server. Only one
+  vote is offered even when two are open; the full list is on the Matches page.
 
 ## File map
 
@@ -107,7 +130,7 @@ silently retiring the card while somebody is looking at it.
 |-------|------|
 | Route | `src/app/(app)/dashboard/page.tsx` |
 | Page component | `src/features/dashboard/DashboardOverview.tsx` |
-| Reads | `src/features/dashboard/useDashboardData.ts` (incl. `pickSpotlight`) |
+| Reads | `src/hooks/home/useHome.ts`, shaped by `src/features/dashboard/useDashboardData.ts` |
 | Widgets | `AwaitingYou.tsx`, `NextMatchSection.tsx`, `NextMatchCard.tsx`, `SettledMatchCard.tsx`, `YourStats.tsx`, `RecentResults.tsx` |
 | Admin panel | `src/features/dashboard/UnlinkedPlayersPanel.tsx`, `LinkPlayerModal.tsx` |
 
