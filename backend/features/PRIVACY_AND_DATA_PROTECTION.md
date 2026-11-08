@@ -280,11 +280,18 @@ this should be set explicitly before public signup rather than left to the platf
 | Item | Owner | Blocking |
 |------|-------|----------|
 | **Public privacy policy page** | Frontend | Mandatory for both app stores (Phase 4) and for any public signup |
-| **The policy mentions blocks** | Frontend | `policy.stored` should say a block is held on the account, when [FootMania-Back#399](https://github.com/ricsnsuka/FootMania-Back/issues/399) ships |
 | **Log retention policy** | Deployment | Erasure cannot reach logs; retention is the backstop |
-| **Cookie / local-storage disclosure** | Frontend | The app stores a JWT and a theme preference in `localStorage` — strictly necessary, so no consent banner is required, but it must be disclosed |
 | **Controller/processor split** | Phase 5 | Only becomes a question once one deployment serves multiple independent groups |
 | ~~**Push subscription data**~~ | ~~Phase 2~~ | ✅ Done — `push_subscriptions` and `notification_mutes` are in the export and cascade on erasure. See below |
+
+*Resolved 2026-11-08 by [FootMania-Simple-Front#325](https://github.com/ricsnsuka/FootMania-Simple-Front/issues/325),
+live with the next web release:*
+- **The policy mentions blocks.** `policy.stored.chat` covers blocks, and `policy.rights` says the export lists them.
+- **Cookie and local-storage disclosure.** `policy.device.text` names the refresh token and the session copy the website keeps in local storage, and `policy.stored.sessions` covers the server-side record of signed-in devices.
+
+The same change corrects what 3.20.0 made untrue: group deletion in `policy.rights` and
+`policy.retention`. It also adds chat (24-hour messages, kept reports, blocks) and fees and payments,
+which the policy never listed.
 
 The privacy policy needs to state, at minimum: who the controller is, what is collected (the table
 at the top of this document), why, the lawful basis, how long it is kept, who it is shared with
