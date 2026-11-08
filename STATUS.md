@@ -1,13 +1,21 @@
 # Project Status
 
-**Snapshot: 2026-11-08, after backend 3.20.0, the P1 gaps' backend half.** **The backend is on
-`3.20.0`; the frontend stays on `3.19.0` until its own 3.20.0**
-([FootMania-Simple-Front#323](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/323), cut,
-not merged). The backend was read back from `/api/version` and `/api/health`. `v3.20.0` is on the
-backend's remote, and `next..main` is empty there. Migrations V68 and V69 ran on boot. The iPhone
-halves of the P1 gaps are merged into `next` and need a new TestFlight build;
-[FootMania-iOS#89](https://github.com/ricsnsuka/FootMania-iOS/pull/89) can now merge. ⚠️ **The Heroku
-release number wasn't read back.** The
+**Snapshot: 2026-11-08, after 3.20.0: the P1 gaps from the 2026-11 gap analysis, on the web and the
+backend.** **Both repos are on `3.20.0`**:
+- the backend, read back from `/api/version` and `/api/health`;
+- the frontend, from what the live site serves.
+
+Both `v3.20.0` tags are on the remotes, and `next..main` is empty in both repos. Migrations V68 and V69
+ran on boot.
+
+On the web, people now stay signed in across closing the tab. The scoresheet records goal events and
+the clock. A member can block another, and the last member can leave a group.
+
+The iPhone halves are merged into `next` and need a new TestFlight build, and
+[FootMania-iOS#89](https://github.com/ricsnsuka/FootMania-iOS/pull/89) can now merge.
+
+⚠️ **Neither the Heroku release number nor the Netlify deploy id was read back. The owner was asked to
+check the UI locally before the web promotion and merged it without saying whether they had.** The
 [3.20.0 section](#3200--shipped-and-confirmed-2026-11-08-small-hours) below carries every row.
 
 **The snapshot before that: 2026-11-07, after 3.19.0 — the app is Sidekick, on the web and in the password reset
@@ -211,21 +219,41 @@ read back from both platforms, and the evidence is in the table.
 
 ## 3.20.0 — shipped and confirmed 2026-11-08, small hours
 
-**The backend is on `3.20.0`; the frontend stays on `3.19.0` until its own 3.20.0, which needs this
-first.** The backend halves of the P1 gaps from the 2026-11 gap analysis. Version bump
-[FootMania-Back#409](https://github.com/ricsnsuka/FootMania-Back/pull/409), promotion
-[#410](https://github.com/ricsnsuka/FootMania-Back/pull/410), after its Release Gate passed. The merge
-left `next` one commit behind, and it was fast-forwarded.
+**Both repos are on `3.20.0`.** The P1 gaps from the 2026-11 gap analysis.
 
-| | Backend |
-|---|---|
-| Running commit | `7f2bd67` (merge of #410). `main` has no later commit, but Heroku wasn't asked: the CLI isn't installed on the machine that cut this |
-| Read back | production `/api/version` reports `3.20.0`, `buildTime` `2026-11-08T01:02:46.181Z`, read at 01:04:08Z; `/api/health` `UP` on `3.20.0`. `POST /api/auth/refresh` with a made-up token answers `401`, so the endpoint and V69's table are live. The Heroku release number wasn't read |
-| Migration | V68 `user_blocks`, V69 `refresh_tokens`. Both additive; the 3.19.0 jar starts against them, so neither is a rollback boundary |
-| Tag | `v3.20.0` at `7f2bd67`, annotated, pushed |
-| `next..main` | empty, after `next` was fast-forwarded to `7f2bd67` |
+The backend went first:
+- version bump [FootMania-Back#409](https://github.com/ricsnsuka/FootMania-Back/pull/409);
+- promotion [#410](https://github.com/ricsnsuka/FootMania-Back/pull/410).
 
-**What shipped**
+Then the web, once the backend read back `3.20.0`:
+- version bump [FootMania-Simple-Front#323](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/323);
+- promotion [#324](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/324).
+
+All Release Gates passed. Each promotion left `next` one commit behind, and it was fast-forwarded.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `7f2bd67` (merge of #410). `main` has no later commit, but Heroku wasn't asked: the CLI isn't installed on the machine that cut this | `497af9c` (merge of #324). `main` has no later commit; Netlify wasn't asked |
+| Read back | production `/api/version` reports `3.20.0`, `buildTime` `2026-11-08T01:02:46.181Z`, read at 01:04:08Z; `/api/health` `UP` on `3.20.0`. `POST /api/auth/refresh` with a made-up token answers `401`, so the endpoint and V69's table are live. The Heroku release number wasn't read | at 01:10:05Z the live site served a bundle containing `3.20.0` (`/_next/static/chunks/0rsh41zgq_mq_.js`), the manifest still reads `Sidekick`, and `/privacy` answers `200`. The Netlify deploy id wasn't read. What's new shows nothing new, by design |
+| Migration | V68 `user_blocks`, V69 `refresh_tokens`. Both additive; the 3.19.0 jar starts against them, so neither is a rollback boundary | None |
+| Tag | `v3.20.0` at `7f2bd67`, annotated, pushed | `v3.20.0` at `497af9c`, annotated, pushed |
+| `next..main` | empty, after `next` was fast-forwarded to `7f2bd67` | empty, after `next` was fast-forwarded to `497af9c` |
+
+**What shipped on the web**
+- **Staying signed in** ([#322](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/322),
+  WEB-01). The refresh token is kept in `localStorage`, for the reasons in
+  [frontend/features/login.md](frontend/features/login.md). Together with
+  [#317](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/317), sign-in returns to the page
+  you were on.
+- **The scoresheet records each goal and the clock**
+  ([#321](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/321), WEB-02):
+  - each goal is an event, with retry and take back;
+  - Kick-off and Full time are recorded.
+- **Blocking a member** ([#318](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/318)).
+- **Game change notification labels** ([#319](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/319)).
+- **The last member leaving a group** ([#320](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/320)).
+
+**What shipped on the backend**
 - **Refresh tokens** ([#408](https://github.com/ricsnsuka/FootMania-Back/pull/408), BE-05). Login also
   returns a refresh token, and `POST /api/auth/refresh` rotates it. It lasts 60 days since its last use,
   and reuse ends that device's session. The access token stays at 24h until the clients that refresh
@@ -242,10 +270,8 @@ left `next` one commit behind, and it was fast-forwarded.
   - a corrected scorer is no longer rated as a non-scorer.
 
 **What's next**
-- **Web 3.20.0** ([FootMania-Simple-Front#323](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/323))
-  is cut and green. Netlify has no preview, so the owner checks the UI locally before its promotion.
-  It carries staying signed in, the scoresheet's goal events and clock, blocks, and the last member
-  leaving.
+- **Nobody has looked at the 3.20.0 screens by eye**: signed in after closing the tab, the
+  scoresheet's goal list and clock, blocking, and leaving as the last member.
 - **A new TestFlight build** carries the iPhone halves:
   - account deletion;
   - the game change labels;
