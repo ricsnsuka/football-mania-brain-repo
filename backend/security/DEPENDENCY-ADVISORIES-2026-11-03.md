@@ -3,8 +3,14 @@
 **Status:** frontend fixed and merged into `next`
 ([FootMania-Simple-Front #290](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/290)); backend
 **set aside until 2027-02-01**, with **Spring Boot 4 due by then**
-([FootMania-Back #379](https://github.com/ricsnsuka/FootMania-Back/pull/379)). **Neither is deployed**
-until a release reaches `main` on each side.
+([FootMania-Back #379](https://github.com/ricsnsuka/FootMania-Back/pull/379)).
+
+**Update 2026-11-08: the backend side is fixed on `next`.**
+[FootMania-Back#412](https://github.com/ricsnsuka/FootMania-Back/pull/412) moved to Spring Boot 4.1.2 with
+Spring Framework 7.0.10, past the 7.0.9 that fixes both advisories. `config/cve-allowlist.json` is empty,
+and `dependencyCveScan` reports nothing. The JSON contract was pinned on Boot 3 first
+([#411](https://github.com/ricsnsuka/FootMania-Back/pull/411)) and is unchanged. **It reaches production
+with 4.0.0**, the next release, well inside the deadline.
 
 **Follows** [DEPENDENCY-CVE-SCAN 2026-08-24](DEPENDENCY-CVE-SCAN-2026-08-24.md), whose CI checks did
 their job here: they went red. Nobody acted on red for about a month, and that is the finding.
@@ -65,10 +71,9 @@ reading that it is hasn't been proven. The deadline bounds that risk.
 
 ## Still open
 
-- **Spring Boot 4 migration, due before 2027-02-01**, filed as
-  [FootMania-Back#382](https://github.com/ricsnsuka/FootMania-Back/issues/382): the current state
-  file by file, the change, a JSON contract check before and after, and the allowlist emptied at the
-  end. Not started.
+- ~~**Spring Boot 4 migration, due before 2027-02-01**~~
+  ([FootMania-Back#382](https://github.com/ricsnsuka/FootMania-Back/issues/382)). Done on `next` on
+  2026-11-08 by #411 and #412, allowlist emptied. It ships in 4.0.0.
 - **Releases.** The frontend fix reaches users only with a release to `main` (3.15.4, frontend-only).
   The backend's exception unblocks #378 (group timezones, `V65`), which ships in a paired release,
   backend first.
