@@ -53,4 +53,4 @@ None of this exists yet.
   backend and the web; the iPhone half ships with the next TestFlight build.
 
 The plumbing is tracked in [football-mania-brain-repo#124](https://github.com/ricsnsuka/football-mania-brain-repo/issues/124),
-for 3.21.0.
+for 4.0.0.
