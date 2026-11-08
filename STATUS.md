@@ -1,6 +1,16 @@
 # Project Status
 
-**Snapshot: 2026-11-07, after 3.19.0 — the app is Sidekick, on the web and in the password reset
+**Snapshot: 2026-11-08, after backend 3.20.0, the P1 gaps' backend half.** **The backend is on
+`3.20.0`; the frontend stays on `3.19.0` until its own 3.20.0**
+([FootMania-Simple-Front#323](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/323), cut,
+not merged). The backend was read back from `/api/version` and `/api/health`. `v3.20.0` is on the
+backend's remote, and `next..main` is empty there. Migrations V68 and V69 ran on boot. The iPhone
+halves of the P1 gaps are merged into `next` and need a new TestFlight build;
+[FootMania-iOS#89](https://github.com/ricsnsuka/FootMania-iOS/pull/89) can now merge. ⚠️ **The Heroku
+release number wasn't read back.** The
+[3.20.0 section](#3200--shipped-and-confirmed-2026-11-08-small-hours) below carries every row.
+
+**The snapshot before that: 2026-11-07, after 3.19.0 — the app is Sidekick, on the web and in the password reset
 email.** **Both repos are on `3.19.0`**: the backend read back from `/api/version` and `/api/health`,
 the frontend from what the live site serves. Both `v3.19.0` tags are on the remotes, and `next..main`
 is empty in both repos. The App Store listing is to be "Sidekick FC", set by the owner in App Store
@@ -198,6 +208,55 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 3.20.0 — shipped and confirmed 2026-11-08, small hours
+
+**The backend is on `3.20.0`; the frontend stays on `3.19.0` until its own 3.20.0, which needs this
+first.** The backend halves of the P1 gaps from the 2026-11 gap analysis. Version bump
+[FootMania-Back#409](https://github.com/ricsnsuka/FootMania-Back/pull/409), promotion
+[#410](https://github.com/ricsnsuka/FootMania-Back/pull/410), after its Release Gate passed. The merge
+left `next` one commit behind, and it was fast-forwarded.
+
+| | Backend |
+|---|---|
+| Running commit | `7f2bd67` (merge of #410). `main` has no later commit, but Heroku wasn't asked: the CLI isn't installed on the machine that cut this |
+| Read back | production `/api/version` reports `3.20.0`, `buildTime` `2026-11-08T01:02:46.181Z`, read at 01:04:08Z; `/api/health` `UP` on `3.20.0`. `POST /api/auth/refresh` with a made-up token answers `401`, so the endpoint and V69's table are live. The Heroku release number wasn't read |
+| Migration | V68 `user_blocks`, V69 `refresh_tokens`. Both additive; the 3.19.0 jar starts against them, so neither is a rollback boundary |
+| Tag | `v3.20.0` at `7f2bd67`, annotated, pushed |
+| `next..main` | empty, after `next` was fast-forwarded to `7f2bd67` |
+
+**What shipped**
+- **Refresh tokens** ([#408](https://github.com/ricsnsuka/FootMania-Back/pull/408), BE-05). Login also
+  returns a refresh token, and `POST /api/auth/refresh` rotates it. It lasts 60 days since its last use,
+  and reuse ends that device's session. The access token stays at 24h until the clients that refresh
+  have shipped.
+- **Game change alerts** ([#407](https://github.com/ricsnsuka/FootMania-Back/pull/407), BE-03).
+  `PLAN_CREATED`, `PLAN_CHANGED` and `PLAN_CANCELLED` push categories.
+- **Blocking a member** ([#406](https://github.com/ricsnsuka/FootMania-Back/pull/406), BE-02), across every
+  shared group, with V68.
+- **The last member can leave or delete their account** ([#404](https://github.com/ricsnsuka/FootMania-Back/pull/404),
+  BE-01). The group goes with it, payment records included, after `?dissolveGroup=true`.
+- **Recording parity** ([#403](https://github.com/ricsnsuka/FootMania-Back/pull/403), BE-04):
+  - a goal can be taken back;
+  - simultaneous recorders take turns on the match row;
+  - a corrected scorer is no longer rated as a non-scorer.
+
+**What's next**
+- **Web 3.20.0** ([FootMania-Simple-Front#323](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/323))
+  is cut and green. Netlify has no preview, so the owner checks the UI locally before its promotion.
+  It carries staying signed in, the scoresheet's goal events and clock, blocks, and the last member
+  leaving.
+- **A new TestFlight build** carries the iPhone halves:
+  - account deletion;
+  - the game change labels;
+  - staying signed in;
+  - the cold notification crash fix;
+  - plus [#89](https://github.com/ricsnsuka/FootMania-iOS/pull/89), blocking, which was waiting for
+    this release.
+
+  A tapped notification after the token has expired is still to be checked on a device.
+- **Two critical `spring-webmvc` alerts** are still open. They're allowlisted until 2027-02-01, and the
+  Boot 4.1 migration is gap BE-06.
 
 ## 3.19.0 — shipped and confirmed 2026-11-07, small hours
 
