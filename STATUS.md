@@ -27,11 +27,13 @@ the Heroku release number nor the Netlify deploy id was read back, and nobody ha
 or the What's new dialog by eye.** The
 [3.19.0 section](#3190--shipped-and-confirmed-2026-11-07-small-hours) below carries every row.
 
-**The iPhone app, to 2026-11-06: on TestFlight at build 8, not on the App Store.** The Apple Watch app
-is built, and a match went from the owner's Watch through their iPhone to production. Build 8 carries
-the whole dashboard on Home, the Results season filter, the owed search and the redrawn history
-charts, and the owner's checks on it are still to come. [The record](architecture/app-store-strategy.md)
-has every pull request and decision.
+**The iPhone app, to 2026-11-09: on TestFlight at build 11, not on the App Store.** Build 11 went up
+on 2026-11-07 (FootMania-iOS `AGENTS.md`). Build 12 is next (`CURRENT_PROJECT_VERSION` on the
+iPhone's `next`) and carries the iPhone half of 4.0.0 merged since; it waits on the backend 4.0.0
+deploy, and its device checks (notification taps that switch group, the icon badge, opening on last
+time's data, notifications in the reader's language) are still to come. The Apple Watch app is built,
+and a match went from the owner's Watch through their iPhone to production.
+[The record](architecture/app-store-strategy.md) has every pull request and decision.
 
 **The snapshot before that: 2026-11-07, after web 3.18.0 — the app is SportsMania on the web and in the password reset
 email.** **Both repos are on `3.18.0`**: the backend read back from `/api/version` and `/api/health`,
