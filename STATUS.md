@@ -50,10 +50,12 @@ or the What's new dialog by eye.** The
 [3.19.0 section](#3190--shipped-and-confirmed-2026-11-07-small-hours) below carries every row.
 
 **The iPhone app, to 2026-11-09: on TestFlight at build 11, not on the App Store.** Build 11 went up
-on 2026-11-07 (FootMania-iOS `AGENTS.md`). Build 12 is next (`CURRENT_PROJECT_VERSION` on the
-iPhone's `next`) and carries the iPhone half of 4.0.0 merged since; it waits on the backend 4.0.0
-deploy, and its device checks (notification taps that switch group, the icon badge, opening on last
-time's data, notifications in the reader's language) are still to come. The Apple Watch app is built,
+on 2026-11-07 (FootMania-iOS `AGENTS.md`). Build 12 has been archived, so the iPhone's `next` is on
+build 13 (`CURRENT_PROJECT_VERSION`,
+[FootMania-iOS#122](https://github.com/ricsnsuka/FootMania-iOS/pull/122)). The iPhone half of 4.0.0
+is on `next`, and backend 4.0.0, which it needs, is live. Its device checks (notification taps that
+switch group, the icon badge, opening on last time's data, notifications in the reader's language, add
+to calendar, the Watch complication) are still to come. The Apple Watch app is built,
 and a match went from the owner's Watch through their iPhone to production.
 [The record](architecture/app-store-strategy.md) has every pull request and decision.
 
@@ -304,7 +306,8 @@ the web that push bypassed the `Check` rule on `next`; the tree is the one `Chec
 
 **What's next**
 - **Nobody has looked at the 4.0.0 screens by eye**, nor at What's new showing nothing.
-- **TestFlight build 12** carries the iPhone half of 4.0.0, and its device checks are still to come:
+- **The next TestFlight upload** carries the iPhone half of 4.0.0 (build 12 is archived; `next` is on
+  build 13, FootMania-iOS#122), and its device checks are still to come:
   notification taps that switch group, the icon badge, opening on last time's data, notifications in
   the reader's language, add to calendar, and the Watch complication.
 - **Terms going live**: final text (brain #123), then the web pages' text in three languages, then the
