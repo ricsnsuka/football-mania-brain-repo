@@ -1,6 +1,28 @@
 # Project Status
 
-**Snapshot: 2026-11-08, after 3.20.0: the P1 gaps from the 2026-11 gap analysis, on the web and the
+**Snapshot: 2026-11-09, after 4.0.0: the rest of the 2026-11 gap programme, on the web and the
+backend.** **Both repos are on `4.0.0`**:
+- the backend, read back from `/api/version` and `/api/health`;
+- the frontend, from what the live site serves.
+
+Both `v4.0.0` tags are on the remotes, and `next..main` is empty in both repos. Migrations V70 to V75
+ran on boot. The backend is on Spring Boot 4.1.
+
+Home is one read on both apps. Notifications say which group they belong to and come in the account's
+language, as do the two emails. Teams are named in the reader's language. Email addresses are confirmed
+before they count. Managers are told when a match has no result. The web's content-security policy is
+tighter. **Terms acceptance ships dark**: the backend publishes no document and refuses nothing, and the
+web's `/terms` and `/group-terms` say the terms are being prepared.
+
+The owner cut 4.0.0 before every gap had landed. Error tracking (BE-15's remainder, BE-16, BE-17,
+WEB-06 to WEB-08, IOS-13), WEB-10, the parked WEB-05 and the iPhone half of terms
+([FootMania-iOS#83](https://github.com/ricsnsuka/FootMania-iOS/issues/83)) go to a later release.
+
+⚠️ **Neither the Heroku release number nor the Netlify deploy id was read back, and nobody has
+confirmed the screens or the What's new dialog by eye.** The
+[4.0.0 section](#400--shipped-and-confirmed-2026-11-09-afternoon) below carries every row.
+
+**The snapshot before that: 2026-11-08, after 3.20.0: the P1 gaps from the 2026-11 gap analysis, on the web and the
 backend.** **Both repos are on `3.20.0`**:
 - the backend, read back from `/api/version` and `/api/health`;
 - the frontend, from what the live site serves.
@@ -218,6 +240,77 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 4.0.0 — shipped and confirmed 2026-11-09, afternoon
+
+**Both repos are on `4.0.0`.** The rest of the 2026-11 gap programme, cut by the owner before the
+error-tracking gaps had a service.
+
+The backend went first:
+- version bump [FootMania-Back#442](https://github.com/ricsnsuka/FootMania-Back/pull/442);
+- promotion [#443](https://github.com/ricsnsuka/FootMania-Back/pull/443).
+
+Then the web, once the backend read back `4.0.0`:
+- version bump [FootMania-Simple-Front#353](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/353);
+- promotion [#354](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/354).
+
+All Release Gates passed. Each promotion left `next` one commit behind, and it was fast-forwarded. On
+the web that push bypassed the `Check` rule on `next`; the tree is the one `Check` passed on #353.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `c402cca` (merge of #443). `main` has no later commit, but Heroku wasn't asked: the CLI isn't installed on the machine that cut this | `3712919` (merge of #354). `main` has no later commit; Netlify wasn't asked |
+| Read back | production `/api/version` reports `4.0.0`, `buildTime` `2026-11-09T16:09:44.666Z`; `/api/health` `UP` on `4.0.0`. `GET /api/terms` answers `{"documents":[],"acceptanceRequired":false}`, so V75 is live and nothing is published. The Heroku release number wasn't read | the live site serves a bundle containing `4.0.0` (`/_next/static/chunks/3o1p1icz_iw2e.js`), and `/terms` and `/group-terms`, new in this release, answer `200`. The Netlify deploy id wasn't read. What's new shows nothing new, by design |
+| Migration | V70 `charges` unique while live, V71 `matches.result_reminder_sent_at`, V72 email confirmation, V73 `users.language`, V74 `match_teams.named_after` (backfilled), V75 `terms_acceptances`. All additive; the 3.20.0 jar starts against them, so none is a rollback boundary | None |
+| Tag | `v4.0.0` at `c402cca`, annotated, pushed | `v4.0.0` at `3712919`, annotated, pushed |
+| `next..main` | empty, after `next` was fast-forwarded to `c402cca` | empty, after `next` was fast-forwarded to `3712919` |
+
+**What shipped on the backend**
+- **Spring Boot 4.1** ([#412](https://github.com/ricsnsuka/FootMania-Back/pull/412), BE-06), with the JSON contract pinned first ([#411](https://github.com/ricsnsuka/FootMania-Back/pull/411)).
+- **Home in one read** ([#425](https://github.com/ricsnsuka/FootMania-Back/pull/425)): `GET /api/me/home`.
+- **Match fixes**: deleting an unplayed match frees its plan ([#426](https://github.com/ricsnsuka/FootMania-Back/pull/426), V70); moving a played match
+  replays the ratings around it ([#427](https://github.com/ricsnsuka/FootMania-Back/pull/427)); deleting one no longer leaves later ones flagged
+  ([#428](https://github.com/ricsnsuka/FootMania-Back/pull/428)); a manual match announces its teams, and plans write matches one way
+  ([#432](https://github.com/ricsnsuka/FootMania-Back/pull/432)); a match says whether its season is finalised ([#431](https://github.com/ricsnsuka/FootMania-Back/pull/431)).
+- **"Result missing"** for managers ([#430](https://github.com/ricsnsuka/FootMania-Back/pull/430), V71). Home's unlinked players go to the group
+  admin ([#429](https://github.com/ricsnsuka/FootMania-Back/pull/429)).
+- **Email confirmation and a sign-up throttle** ([#433](https://github.com/ricsnsuka/FootMania-Back/pull/433), V72).
+- **Push**: every push names its group ([#434](https://github.com/ricsnsuka/FootMania-Back/pull/434)); the iPhone badge counts unread chat
+  ([#435](https://github.com/ricsnsuka/FootMania-Back/pull/435)), leaving out the Everyone channel ([#438](https://github.com/ricsnsuka/FootMania-Back/pull/438)); a transient failure is retried
+  ([#436](https://github.com/ricsnsuka/FootMania-Back/pull/436), part of BE-15).
+- **Two uncalled match endpoints are gone** ([#437](https://github.com/ricsnsuka/FootMania-Back/pull/437)): breaking for any outside caller.
+- **Notifications and emails in Portuguese and Spanish** ([#439](https://github.com/ricsnsuka/FootMania-Back/pull/439), V73, BE-07), and team names
+  in each app's language ([#440](https://github.com/ricsnsuka/FootMania-Back/pull/440), V74).
+- **Terms acceptance, dark** ([#441](https://github.com/ricsnsuka/FootMania-Back/pull/441), V75): recorded and listed as pending, but nothing is
+  published until `TERMS_OF_SERVICE_VERSION` and `GROUP_ORGANISER_TERMS_VERSION` are set, and nothing
+  is refused until `TERMS_ACCEPTANCE_REQUIRED` is on.
+
+**What shipped on the web**
+- **The privacy policy, brought up to date** ([#326](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/326)).
+- **Home in one read** ([#337](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/337)), formatted with Prettier in CI ([#338](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/338)).
+- **Match and plan fixes**: deleting an unplayed match asks whether the game is off ([#340](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/340));
+  linking an account is the group admin's ([#341](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/341)); rankings refresh when a played match moves
+  ([#342](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/342)); a finalised
+  season warns first ([#343](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/343)); the uncalled match endpoint is dropped ([#345](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/345)).
+- **Email confirmation** ([#344](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/344)).
+- **Links and notifications**: match, plan, chat and rankings links open the iPhone app ([#346](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/346)); a notification
+  opens in its own group ([#347](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/347)).
+- **The account's language** is sent to the server ([#348](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/348)), and team names follow it
+  ([#349](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/349)).
+- **Dependency alerts** cleared ([#350](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/350)), and **a tighter content-security policy**
+  ([#351](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/351), WEB-09).
+- **Terms acceptance, dark** ([#352](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/352)): the box, the prompt and placeholder pages, shown only
+  once a document is published.
+
+**What's next**
+- **Nobody has looked at the 4.0.0 screens by eye**, nor at What's new showing nothing.
+- **TestFlight build 12** carries the iPhone half of 4.0.0, and its device checks are still to come:
+  notification taps that switch group, the icon badge, opening on last time's data, notifications in
+  the reader's language, add to calendar, and the Watch complication.
+- **Terms going live**: final text (brain #123), then the web pages' text in three languages, then the
+  two versions on Heroku, then the iPhone half (#83), and only then `TERMS_ACCEPTANCE_REQUIRED`.
+- **Error tracking** waits on the owner's choice of service.
+- **The Portuguese and Spanish text** wants a native read.
 
 ## 3.20.0 — shipped and confirmed 2026-11-08, small hours
 
