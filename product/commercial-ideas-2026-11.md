@@ -45,6 +45,38 @@ The owner's idea is player-count levels. Claude's advice on it, not yet accepted
   avoids that. Check Apple's current rules before relying on this.
 - Expect modest money: a few euros a month from a minority of groups.
 
+## How this sits beside the billing plan
+
+Compared on 2026-11-13 with [GROUP-BILLING-PLAN.md](../backend/plans/GROUP-BILLING-PLAN.md), which
+was written on 2026-08-01, before the iPhone app existed. Which side wins is the owner's call and
+is not made here.
+
+Where they agree:
+
+- No money moves through the app. The plan opens with that sentence.
+- The group pays, through Stripe's own pages on the web, and the plan launches with a free level
+  and one paid level.
+- The plan rules out a price per seat and says "group-sized tiers first", which is the owner's
+  player-count idea.
+- Payments from players to the organiser are out of the plan's scope, as they are out of this
+  page's.
+
+Where they differ:
+
+| Subject | The billing plan | This page |
+| --- | --- | --- |
+| Who is free | Groups that exist when billing ships, for good, and trials. A new group needs a subscription or a trial | Any group, for good, up to about 20 to 25 players |
+| The first groups brought in by hand | Free for good, whatever their size, because they exist before billing ships | Not considered. They are also the first groups that might pay |
+| What not paying does | The whole group becomes read-only | Nothing stops; the group cannot add players past the cap or use the paid features |
+| Where the check sits | One place, the group's status, and it rejects checks spread over endpoints | A cap on adding players and a gate on each paid feature are checks of exactly that kind |
+| What the paid level buys first | AI match reports, because they cost money to run | The reliability record, ledger tools and full history |
+| Creation codes | Kept, and turned into trial and promotion codes | Described as a barrier to remove |
+| The iPhone app | Not mentioned. Its billing wall is a web screen | Apple takes a share of a subscription bought in the app, and its rules limit sending people to the web to pay |
+
+The last row is a gap in the plan, not a disagreement: it needs an answer for the iPhone before it
+can be built. The plan also records that Stripe would become the first company personal data is
+shared with, which changes the privacy page; that holds for any version of the pricing idea.
+
 ## Features that could sit behind the paid level
 
 All four add to what exists. None is built.
