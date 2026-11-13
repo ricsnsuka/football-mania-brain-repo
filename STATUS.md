@@ -20,10 +20,11 @@ listing's support URL. This page did not record it at the time; the
 at the pitch cost field, the grouped notification list or the What's new dialog by eye, on the web or
 on the iPhone.** The owner ordered both releases knowing the screens were unseen.
 
-**The iPhone app, to 2026-11-13: `next` is on build 17, not yet uploaded.** `next` carries the pitch
+**The iPhone app, to 2026-11-13: build 17 is on TestFlight.** The owner archived and uploaded it that
+morning (the owner's word; App Store Connect was not read). It carries the pitch
 cost field ([FootMania-iOS#124](https://github.com/ricsnsuka/FootMania-iOS/pull/124)), the grouped notification settings
 ([#126](https://github.com/ricsnsuka/FootMania-iOS/pull/126)) and the build number ([#125](https://github.com/ricsnsuka/FootMania-iOS/pull/125)); backend 4.1.0, which the pitch cost field
-needs, is live. The build number went from 13 to 17 because the owner's working copy had reached 16;
+needs, is live. The move to build 18 for the next upload is [#127](https://github.com/ricsnsuka/FootMania-iOS/pull/127). The build number went from 13 to 17 because the owner's working copy had reached 16;
 which of 14 to 16 were uploaded was not checked in App Store Connect. The paragraph on the iPhone
 further down is as of 2026-11-09.
 
@@ -317,14 +318,15 @@ merged `main` into the release branch to bring it back; that merge carries no ch
   answered `200` on the live site. Neither a bundle carrying `4.0.1` nor the Netlify deploy id was read
   back. The backend stayed on 4.0.0.
 
-**On the iPhone, merged into `next`, not uploaded**
+**On the iPhone, merged into `next` and uploaded as build 17 on 2026-11-13**
 - The pitch cost field ([FootMania-iOS#124](https://github.com/ricsnsuka/FootMania-iOS/pull/124)), the grouped notification settings
   ([#126](https://github.com/ricsnsuka/FootMania-iOS/pull/126)) and build number 17 ([#125](https://github.com/ricsnsuka/FootMania-iOS/pull/125)). The simulator build and tests passed for each
   feature; the repository runs no CI, and neither screen was opened in the Simulator.
 
 **What's next**
 - **Nobody has looked at the 4.1.0 screens by eye**, on the web or the iPhone.
-- **The next TestFlight upload** is build 17, from `next`.
+- **Build 17 is on TestFlight**, uploaded by the owner after this release. The next upload is build 18
+  ([FootMania-iOS#127](https://github.com/ricsnsuka/FootMania-iOS/pull/127)).
 - **The demo group for App Review** ([FootMania-Back#444](https://github.com/ricsnsuka/FootMania-Back/pull/444)) is open and not part of this release.
 - **The fast-forward of `next` after a promotion** is a direct push that only the owner's bypass allows
   on the web, and forgetting it is how 4.0.1 was left out of `next`.
