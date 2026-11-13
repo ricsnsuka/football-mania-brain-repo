@@ -1,6 +1,33 @@
 # Project Status
 
-**Snapshot: 2026-11-09, after 4.0.0: the rest of the 2026-11 gap programme, on the web and the
+**Snapshot: 2026-11-13, after 4.1.0: a match made by hand can carry its pitch cost, and notification
+settings are grouped by type.** **Both repos are on `4.1.0`**:
+- the backend, read back from `/api/version` and `/api/health`;
+- the frontend, from what the live site serves.
+
+Both `v4.1.0` tags are on the remotes, and `next..main` is empty in both repos. Migration V76 ran on
+boot.
+
+An organiser who makes a match by hand can now enter the pitch cost, and the players picked are charged
+an equal share, as a match drawn from a plan charges its squad. Before this they corrected each balance
+by hand. The notification switches in Settings sit under headings by type.
+
+The web also shipped **4.0.1** on 2026-11-12, frontend only: the public `/support` page, the App Store
+listing's support URL. This page did not record it at the time; the
+[4.1.0 section](#410--shipped-and-confirmed-2026-11-13-early-morning) below carries it.
+
+⚠️ **Neither the Heroku release number nor the Netlify deploy id was read back, and nobody has looked
+at the pitch cost field, the grouped notification list or the What's new dialog by eye, on the web or
+on the iPhone.** The owner ordered both releases knowing the screens were unseen.
+
+**The iPhone app, to 2026-11-13: `next` is on build 17, not yet uploaded.** `next` carries the pitch
+cost field ([FootMania-iOS#124](https://github.com/ricsnsuka/FootMania-iOS/pull/124)), the grouped notification settings
+([#126](https://github.com/ricsnsuka/FootMania-iOS/pull/126)) and the build number ([#125](https://github.com/ricsnsuka/FootMania-iOS/pull/125)); backend 4.1.0, which the pitch cost field
+needs, is live. The build number went from 13 to 17 because the owner's working copy had reached 16;
+which of 14 to 16 were uploaded was not checked in App Store Connect. The paragraph on the iPhone
+further down is as of 2026-11-09.
+
+**The snapshot before that: 2026-11-09, after 4.0.0: the rest of the 2026-11 gap programme, on the web and the
 backend.** **Both repos are on `4.0.0`**:
 - the backend, read back from `/api/version` and `/api/health`;
 - the frontend, from what the live site serves.
@@ -242,6 +269,65 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 4.1.0 — shipped and confirmed 2026-11-13, early morning
+
+**Both repos are on `4.1.0`.** A paired minor release, ordered by the owner: the backend takes a pitch
+cost on a match made by hand, and the web offers the field and groups the notification settings.
+
+The backend went first:
+- version bump [FootMania-Back#446](https://github.com/ricsnsuka/FootMania-Back/pull/446);
+- promotion [#447](https://github.com/ricsnsuka/FootMania-Back/pull/447).
+
+Then the web, once the backend read back `4.1.0`:
+- version bump [FootMania-Simple-Front#360](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/360);
+- promotion [#361](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/361).
+
+Both Release Gates passed. Each promotion left `next` one commit behind, and it was fast-forwarded. On
+the web that push bypassed the `Check` rule on `next`; the tree is the one `Check` passed on #360.
+
+⚠️ **The web's 4.0.1 promotion merge (`da231b4`) had never come back into `next`**, so `next..main` was
+not empty there from 2026-11-12 until this release, and the Release Gate would have been red. #360
+merged `main` into the release branch to bring it back; that merge carries no change of its own.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `c145c18` (merge of #447). GitHub's deployment record for the `footmania` environment names it, at `2026-11-13T05:57:51Z`. Heroku wasn't asked: the CLI isn't installed on the machine that cut this | `5a3cbd6` (merge of #361). `main` has no later commit; Netlify wasn't asked |
+| Read back | production `/api/version` reports `4.1.0`, `buildTime` `2026-11-13T05:58:13.773Z`, where it reported `4.0.0` a minute earlier; `/api/health` `UP` on `4.1.0`. The Heroku release number wasn't read | the live site serves a bundle containing `4.1.0` (`/_next/static/chunks/1ok0le28j2ba5.js`) from 06:07 UTC, where two fetches in the minute before did not. The Netlify deploy id wasn't read. What's new shows nothing new, by design, and was not opened |
+| Migration | V76 `player_charges.match_id`, nullable, with a unique `(match_id, player_id)`. Additive, so not a rollback boundary | None |
+| Tag | `v4.1.0` at `c145c18`, annotated, pushed | `v4.1.0` at `5a3cbd6`, annotated, pushed |
+| `next..main` | empty, after `next` was fast-forwarded to `c145c18` | empty, after `next` was fast-forwarded to `5a3cbd6` |
+
+**What shipped on the backend**
+- **A match made by hand can carry its pitch cost** ([#445](https://github.com/ricsnsuka/FootMania-Back/pull/445), V76): `POST /api/matches/manual`
+  takes an optional `totalCostCents`. The players picked are charged an equal share once the match is
+  saved, and calling an unplayed match off voids those charges. A cost that would give a player less
+  than one cent is refused with `400`.
+
+**What shipped on the web**
+- **The Pitch cost field** on the Create Custom Match form ([#358](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/358)), in euros. Empty leaves
+  the match uncharged, as before.
+- **Notification settings grouped by type** ([#359](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/359)): Matches, Teams, Votes and rankings, Fees
+  and payments, Chat, For organisers. A category the server adds before it has a heading appears under
+  Other.
+
+**Web 4.0.1, 2026-11-12, frontend only, recorded here late**
+- **The `/support` page** ([#355](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/355)), the App Store listing's support URL; version bump
+  [#356](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/356), promotion [#357](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/357). Running commit `da231b4`, tagged `v4.0.1`. `/support`
+  answered `200` on the live site. Neither a bundle carrying `4.0.1` nor the Netlify deploy id was read
+  back. The backend stayed on 4.0.0.
+
+**On the iPhone, merged into `next`, not uploaded**
+- The pitch cost field ([FootMania-iOS#124](https://github.com/ricsnsuka/FootMania-iOS/pull/124)), the grouped notification settings
+  ([#126](https://github.com/ricsnsuka/FootMania-iOS/pull/126)) and build number 17 ([#125](https://github.com/ricsnsuka/FootMania-iOS/pull/125)). The simulator build and tests passed for each
+  feature; the repository runs no CI, and neither screen was opened in the Simulator.
+
+**What's next**
+- **Nobody has looked at the 4.1.0 screens by eye**, on the web or the iPhone.
+- **The next TestFlight upload** is build 17, from `next`.
+- **The demo group for App Review** ([FootMania-Back#444](https://github.com/ricsnsuka/FootMania-Back/pull/444)) is open and not part of this release.
+- **The fast-forward of `next` after a promotion** is a direct push that only the owner's bypass allows
+  on the web, and forgetting it is how 4.0.1 was left out of `next`.
 
 ## 4.0.0 — shipped and confirmed 2026-11-09, afternoon
 
