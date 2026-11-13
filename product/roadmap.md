@@ -135,6 +135,9 @@ decisions locked: multiple groups per account; picker addressing (not subdomains
 gated creation; tenancy first, billing later. The engagement-signal gate above applies to the
 onboarding rung, not the hardening rungs — sign-off is booked there.
 
+**Pricing and feature ideas, 2026-11-13** (ideas only; billing stays on hold):
+[commercial-ideas-2026-11](commercial-ideas-2026-11.md).
+
 * * *
 
 ## Suggested overall order

@@ -18,6 +18,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [product/roadmap](product/roadmap.md) | The five-phase improvement and mobile roadmap |
 | [product/feature-status](product/feature-status.md) | Every feature × backend × frontend × docs |
 | [product/backlog-2026-09](product/backlog-2026-09.md) | The batched backlog that became **3.3.0** — what shipped, the four unbuilt specs and where they live, what the batch got wrong about itself, and what is still open |
+| [product/commercial-ideas-2026-11](product/commercial-ideas-2026-11.md) | Ideas only, nothing built: the owner's pricing idea (player-count levels paid by the organiser), what they ruled out (money through the app, adverts), features that could be paid, ideas for players, and what offering it to pitch owners would change |
 | [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
 | [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V33 history + deployment state |
 | [architecture/multi-tenancy](architecture/multi-tenancy.md) | Phase 5 cross-repo contract: tenant resolution, cache/key rules, the rollout ladder |
