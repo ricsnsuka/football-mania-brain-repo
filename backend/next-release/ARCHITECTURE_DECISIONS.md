@@ -235,7 +235,7 @@ These are the details most likely to be got wrong from memory, so they are pinne
 
 ### What the build added, and where it departs from the above (2026-11-15)
 
-Built in FootMania-Back #448 after two weeks of the owner reading reports generated from real
+Built in FootMania-Back #448 after the owner read reports generated from real
 matches by a script outside the repos. The contract is `docs/api/MATCH-REPORTS-API-CONTRACT.md` in
 the backend. Where this section and the text above disagree, this section is what was built.
 
