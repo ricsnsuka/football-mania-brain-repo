@@ -1,6 +1,25 @@
 # Project Status
 
-**Snapshot: 2026-11-13, after 4.1.0: a match made by hand can carry its pitch cost, and notification
+**Snapshot: 2026-11-16, after backend 4.2.0: polls opened by the organiser, and the AI match reports
+shipped switched off.** **The backend is on `4.2.0`, the web is still on `4.1.0`.** The backend was
+read back from `/api/version` and `/api/health` on production, both reporting `4.2.0`, and from
+`heroku releases -a footmania`: release **v119**, `Deploy 0a8fcf73`, 2026-11-16 12:33 UTC. The
+`v4.2.0` tag is at `0a8fcf73`, and `next..main` is empty in the backend. Migrations V77
+(`match_plans.poll_opens_at`, `poll_opened_at`) and V78 (`match_reports`) are additive; neither is a
+rollback boundary. That they ran on boot is inferred from the app reporting UP, not read from the log.
+
+⚠️ **The web is behind the backend, and that is a gap users can hit.** A plan made from now on is
+created closed, and only the web in the frontend's `next` (meant to ship as 4.2.0) and the iPhone
+restyle ([FootMania-iOS#128](https://github.com/ricsnsuka/FootMania-iOS/pull/128), a draft) can open
+its poll. Until the web ships, nobody can answer a new plan. Plans that existed before this deploy
+stay open.
+
+**The AI match reports ship dark.** Nothing is written until the operator switch
+(`AI_MATCH_REPORTS_ENABLED`), an `ANTHROPIC_API_KEY` and each group's `MATCH_REPORTS_ENABLED` are all
+on, and Anthropic must be on the privacy page's sub-processor list before the operator switch is.
+The web's card is in the frontend's `next`; the iPhone's is in #128.
+
+**The snapshot before that: 2026-11-13, after 4.1.0: a match made by hand can carry its pitch cost, and notification
 settings are grouped by type.** **Both repos are on `4.1.0`**:
 - the backend, read back from `/api/version` and `/api/health`;
 - the frontend, from what the live site serves.
