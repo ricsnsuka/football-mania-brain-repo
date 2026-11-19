@@ -1,6 +1,23 @@
 # Project Status
 
-**Snapshot: 2026-11-19, after 5.0.0: the redesigned web on desktop and phone, the AI match texts' cards,
+**Snapshot: 2026-11-19, after web 5.0.1: the league table follows its boards on a phone and with the
+ladder on, and What's new is switched off.** **The web is on `5.0.1`, the backend stays on `5.0.0`**:
+- the frontend, read back from the live bundle on sidekickfc.netlify.app at 21:25 UTC: the app chunk
+  carries `5.0.1` with What's new off (no Netlify status reaches GitHub, and this machine has no
+  Netlify CLI);
+- the backend, unchanged since it was read back at 5.0.0 (Heroku v122).
+
+`v5.0.1` is on the frontend's remote, at `b931f27` (the promotion, FootMania-Simple-Front#386). `next..main`
+is empty on the web once [FootMania-Simple-Front#387](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/387)
+merges. Frontend only, no migration.
+
+Web 5.0.1 carries three changes: What's new switched off until further notice (#382); the league table
+on a phone in two lines under the name, an unranked row muted once, and with the ladder on a rung column
+(tier colour, a 72px bar, the points; "Placing 2/5") at both widths, the qualify line counting placement
+matches (#384); and the Netlify guide naming the right site (#380). ⚠️ **The owner asked for the release
+and did not separately confirm a local look at the UI before the promotion.**
+
+**The snapshot before that: 2026-11-19, after 5.0.0: the redesigned web on desktop and phone, the AI match texts' cards,
 and a rating chart that ends on the current rating.** **Both repos are on `5.0.0`**:
 - the backend, read back from `/api/version` (Heroku v122) and `heroku ps`;
 - the frontend, on the owner's word that the live site serves it (no Netlify status reaches GitHub, and
