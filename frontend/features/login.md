@@ -100,7 +100,7 @@ relaunched, restores from that copy with no access token, and the first request 
 
 **Why `localStorage` and not an httpOnly cookie.** A cookie page scripts cannot read is the better
 place in principle, and it was the first choice. It does not work on this deployment: the web is on
-`amadora-foot.netlify.app` and the API on Heroku, and `netlify.app` and `herokuapp.com` are both on
+`sidekickfc.netlify.app` and the API on Heroku, and `netlify.app` and `herokuapp.com` are both on
 the public suffix list, so the two are different *sites*. A cookie the API sets is third-party, and
 Safari blocks third-party cookies by default, including in the app installed to an iPhone home
 screen, which is most of the audience. The alternatives were weighed and set aside for now:
