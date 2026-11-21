@@ -139,7 +139,7 @@ Twelve open differences, each with a recommendation; the owner answered by numbe
 | 5 | "Guests per member" on Plan a match | **Retire the guest limit entirely**: brain#153 with Back#458 (backend first) and Front#390; the iPhone hides it now; row off the board |
 | 6 | "Guest · brought by Ana" | Built from data the app already had (`invitedByPlayerId`); no backend change needed |
 | 7 | "Add people" on a group conversation | Hidden until the server supports it; not a priority |
-| 8 | "Share of the pitch" under ledger charges | **Open**: the server sends no such text, and the app shows nothing there. Owner to choose: redraw the boards, or the app writes it under every match charge |
+| 8 | "Share of the pitch" under ledger charges | The app shows it under every charge from a plan. A match made by hand gets it once the server sends the charge's `matchId` (stored, not yet sent); the app already reads it |
 | 9 | One-word initials ("R" vs "RI") | Two letters, as the board |
 | 10 | "Added by" / "Started by" | Usernames; boards redrawn |
 | 11 | Draft averages for non-managers, ladder on | Keep the server's privacy rule; noted on the board |
@@ -168,7 +168,7 @@ The process is the same; the tools differ.
 
 ## Still open
 
-- Item 8, "Share of the pitch".
+- The server sends `matchId` on a charge from a match made by hand, so "Share of the pitch" shows there too.
 - The board's Epic field needs an option for brain#153, which the owner adds by hand.
 - The "iPhone components" page lacks the newest parts: Pager, RatingCompareChart, StatePage,
   PasswordFields, the Live Activity views.
