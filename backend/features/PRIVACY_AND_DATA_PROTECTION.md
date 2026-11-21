@@ -236,6 +236,21 @@ does, and leaving it behind would make the erasure cosmetic.
 attempt, it distinguishes an erased record from one merely deactivated, and it is the evidence the
 request was actioned. It holds no personal data itself.
 
+### When the last member goes, the group is deleted
+
+**Decided by the owner on 2026-11-07, for [FootMania-Back#398](https://github.com/ricsnsuka/FootMania-Back/issues/398).**
+Someone who is a group's last administrator and last member could not leave or delete their account:
+nobody was left to take the role, and nothing could delete a group. Now that person can go, after
+confirming, and the group goes with them.
+
+This is deletion, not anonymisation, and **the payment records are deleted with the group.** The
+reasoning in this section for keeping rows is that they protect other players' records, and with
+nobody left there are no other players to protect. The group is the controller of its fee ledger, its
+last member is the one acting for it, and keeping the ledger would mean holding financial history on
+people after the only party who could use it had gone. Anonymised records are not kept either.
+
+Suspended members count as members, so a group is never deleted from under them.
+
 ### Crowd MOTM votes survive, deliberately
 
 `match_mvp_votes` cascades from `players`, but erasure never deletes a player — so votes remain,
@@ -280,6 +295,7 @@ this should be set explicitly before public signup rather than left to the platf
 | Item | Owner | Blocking |
 |------|-------|----------|
 | **Public privacy policy page** | Frontend | Mandatory for both app stores (Phase 4) and for any public signup |
+| **Terms of service** | Product | Drafts in [`product/legal/`](../../product/legal/README.md), not in use yet |
 | **Log retention policy** | Deployment | Erasure cannot reach logs; retention is the backstop |
 | **Controller/processor split** | Phase 5 | Only becomes a question once one deployment serves multiple independent groups |
 | ~~**Push subscription data**~~ | ~~Phase 2~~ | ✅ Done — `push_subscriptions` and `notification_mutes` are in the export and cascade on erasure. See below |

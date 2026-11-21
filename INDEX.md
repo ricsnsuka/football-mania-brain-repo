@@ -17,6 +17,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [development-learnings](development-learnings.md) | Read before starting work: the steps of one change, the mistakes made in the September 2026 screen audit and the rule for each, and the code patterns to reuse |
 | [product/roadmap](product/roadmap.md) | The five-phase improvement and mobile roadmap |
 | [product/feature-status](product/feature-status.md) | Every feature × backend × frontend × docs |
+| [product/legal](product/legal/README.md) | Draft Terms of Service and Group Organiser Terms, what to settle before they go live, and what has to be built to present them. Not in use |
 | [product/backlog-2026-09](product/backlog-2026-09.md) | The batched backlog that became **3.3.0** — what shipped, the four unbuilt specs and where they live, what the batch got wrong about itself, and what is still open |
 | [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
 | [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V33 history + deployment state |
