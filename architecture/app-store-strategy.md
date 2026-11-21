@@ -477,7 +477,7 @@ rung that can be done without spending money.
   `capacitor://localhost` — not the site's `https://` origin. `CorsConfig` uses
   `setAllowedOrigins`, an **exact-match** allowlist, together with `setAllowCredentials(true)`,
   which forbids a `*` wildcard. Production currently allows exactly one origin,
-  `https://amadora-foot.netlify.app`, set through the `CORS_ALLOWED_ORIGINS` config var on Heroku.
+  `https://sidekickfc.netlify.app`, set through the `CORS_ALLOWED_ORIGINS` config var on Heroku.
   Without the new origin, **every authenticated request from the app fails preflight while the
   website keeps working perfectly** — the precise shape of the 2026-08-02 outage, which no test
   tier caught because CORS is enforced only by a browser. See hazard 4 in

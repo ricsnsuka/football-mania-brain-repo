@@ -585,7 +585,7 @@ each was fast-forwarded.
 - **`MAIL_FROM_NAME`** wasn't read from Heroku, and production email is on. If it's set, it overrides
   the new sender name. A real reset email will show which.
 - **`sidekickfc.dpdns.org`** didn't answer on HTTPS on 2026-11-07. The site and the iPhone app still
-  use `amadora-foot.netlify.app`.
+  use `sidekickfc.netlify.app`.
 - The two critical `spring-webmvc` Dependabot alerts and the web's three moderate ones still stand.
 
 ## Web 3.18.0 — shipped and confirmed 2026-11-07, just after midnight
@@ -726,7 +726,7 @@ to `c0adcd3`, which went through on the owner's admin bypass of the `next` rules
 | | Backend | Frontend |
 |---|---|---|
 | Running commit | `34f876d` (merge of #388). `main` moved `07206dc..34f876d` with no other commit since | `c0adcd3` (merge of #295). `main` moved `d048052..c0adcd3` with no other commit since |
-| Read back | production `/api/version` reports `3.17.0`, `buildTime` `2026-11-05T00:41:44.203Z`, read at 00:42:54Z; `/api/health` `UP`. Heroku release number **not read back**: the CLI is not installed on the machine that ran this release | the bundles `amadora-foot.netlify.app` serves carry version `3.17.0`, read 2026-11-05, and the site answers 200. Netlify deploy id **not read back**: no CLI or connector on the machine that ran this release. The What's new dialog was not read, since it needs a sign-in; the 3.17.0 highlights list is empty |
+| Read back | production `/api/version` reports `3.17.0`, `buildTime` `2026-11-05T00:41:44.203Z`, read at 00:42:54Z; `/api/health` `UP`. Heroku release number **not read back**: the CLI is not installed on the machine that ran this release | the bundles `sidekickfc.netlify.app` serves carry version `3.17.0`, read 2026-11-05, and the site answers 200. Netlify deploy id **not read back**: no CLI or connector on the machine that ran this release. The What's new dialog was not read, since it needs a sign-in; the 3.17.0 highlights list is empty |
 | Migration | `V67`, applied on boot. `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise; the schema history itself was not read. Not a rollback boundary in practice | none |
 | Tag | `v3.17.0` at `34f876d`, annotated, pushed | `v3.17.0` at `c0adcd3`, annotated, pushed |
 | `next..main` | empty, after `next` was fast-forwarded to `34f876d` | empty, after `next` was fast-forwarded to `c0adcd3` |
