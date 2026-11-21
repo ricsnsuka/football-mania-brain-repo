@@ -1,6 +1,28 @@
 # Project Status
 
-**Snapshot: 2026-11-16, after backend 4.2.0: polls opened by the organiser, and the AI match reports
+**Snapshot: 2026-11-19, after 5.0.0: the redesigned web on desktop and phone, the AI match texts' cards,
+and a rating chart that ends on the current rating.** **Both repos are on `5.0.0`**:
+- the backend, read back from `/api/version` (Heroku v122) and `heroku ps`;
+- the frontend, on the owner's word that the live site serves it (no Netlify status reaches GitHub, and
+  this machine has no Netlify CLI).
+
+Both `v5.0.0` tags are on the remotes. `next..main` is empty on the backend; on the web it is empty once
+[FootMania-Simple-Front#379](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/379) merges. No
+migration: the latest is still V78.
+
+The web ships the redesign, desktop and phone, every screen held to the canvas boards; What's new shows
+two highlights, the new look and the AI match texts. The backend's rating history ends each player's line
+on their current rating. Next.js went to 16.4.6 first, because 16.4.4's advisories stopped the build.
+
+⚠️ Production has had `ANTHROPIC_API_KEY` and `AI_MATCH_REPORTS_EFFORT` set since 2026-11-17 (Heroku v120, v121); whether the
+group switches are on decides whether anybody sees AI texts, and that was not checked.
+
+**The iPhone app, to 2026-11-19: build 20 is on TestFlight** (the owner's word; App Store Connect was not
+read), carrying the squads' and the timeline's figures and the Watch's grey losing score; `next` is on
+build 21. The iPhone boards were all redrawn with native iOS patterns the same day and are proposals
+again; the app does not follow them yet.
+
+**The snapshot before that: 2026-11-16, after backend 4.2.0: polls opened by the organiser, and the AI match reports
 shipped switched off.** **The backend is on `4.2.0`, the web is still on `4.1.0`.** The backend was
 read back from `/api/version` and `/api/health` on production, both reporting `4.2.0`, and from
 `heroku releases -a footmania`: release **v119**, `Deploy 0a8fcf73`, 2026-11-16 12:33 UTC. The
@@ -289,6 +311,24 @@ read back from both platforms, and the evidence is in the table.
 | Latest migration | **`V48__notification_preference_enabled.sql`**. Three this release: `V46` session token generation, `V47` fee-reminder cadence and cap, `V48` a notification category that can arrive switched off. All additive with defaults, so the previous jar starts against this schema unchanged and **rollback stays a redeploy** | â |
 | Deployed through | **`V48`**, applied on boot â `/api/health` `UP` is the evidence, since Flyway would have refused the start otherwise. The standing boundaries are unchanged: `V42` and `V40` â see the 2.2.0 section | â |
 | Tags | `v1.0.0` → `v1.7.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`478446b`, placed retroactively 2026-08-28 from Heroku v71), **`v2.3.0`** (`c962b5b`), **`v2.4.0`** (`456c071`) **`v3.0.0`** (`7eca59f`, annotated with the /api/version + Heroku v75 evidence) and **`v3.1.0`** (`f1b25a6`, annotated with the /api/version + Heroku v76 evidence), and **`v3.3.0`** (`3eeddb0`, annotated with the /api/version + /api/health evidence and with the missing Heroku number named as missing) — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.0`, `v1.9.1`, `v1.9.2` — **and now `v2.5.0`**, which shipped 2026-08-29 untagged in the same lapse that skipped this file; place it retroactively from Heroku v74's commit when someone has the evidence in hand | `v1.1.0` → `v1.4.2`, `v1.6.0`, then **`v1.10.0`**, **`v2.0.0`**, **`v2.1.0`**, **`v2.2.0`** (`a20c968`, placed retroactively 2026-08-28 from the Netlify deploy record), **`v2.3.0`** (`151b896`), **`v2.3.1`** (`8098d81`), **`v2.4.0`** (`7b507ff`) **`v3.0.0`** (`e3c7470`, annotated with the CSS-fingerprint evidence), **`v3.1.0`** (`f1e45f0`, annotated with the Netlify deploy-id evidence) and **`v3.1.1`** (`e6f3a83`, same evidence route: deploy `6a95757a`), and **`v3.3.0`** (`0999bd3`, deploy `6a98b860`). â ï¸ `v3.2.0` was never placed â that release skipped this page too — on the remote, at the deployed commits. ⚠️ Missing: `v1.8.0`, `v1.9.1`, `v1.7.0` — **and now `v2.5.0`**, same lapse as the backend's |
+
+## 5.0.0 — shipped and confirmed 2026-11-19, late afternoon
+
+Backend [#454](https://github.com/ricsnsuka/FootMania-Back/pull/454) cut, promotion
+[#455](https://github.com/ricsnsuka/FootMania-Back/pull/455), back into `next` by
+[#456](https://github.com/ricsnsuka/FootMania-Back/pull/456) (a direct push to `next` was refused).
+Web: Next.js 16.4.6 [#376](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/376), cut
+[#377](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/377), promotion
+[#378](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/378), back into `next` by
+[#379](https://github.com/ricsnsuka/FootMania-Simple-Front/pull/379). Both Release Gates passed.
+
+| | Backend | Frontend |
+|---|---|---|
+| Running commit | `031b0d6d` (merge of #455). Heroku: **v122 "Deploy 031b0d6d"**, 2026-11-19 16:17:20 UTC; `heroku ps` shows `web.1` on `football-5.0.0.jar` | `57d8664` (merge of #378), 16:48 UTC. Netlify published it on the owner's word; the deploy id wasn't read |
+| Read back | `/api/version` reports `5.0.0`, `buildTime` `2026-11-19T16:16:53.671Z` | The owner checked the live site. Nobody here fetched the bundle |
+| Migration | None (V78 is still the latest). Not a rollback boundary | None |
+| Tag | `v5.0.0` at `031b0d6d`, annotated with the Heroku and `/api/version` evidence, pushed | `v5.0.0` at `57d8664`, annotated as owner-confirmed, pushed |
+| `next..main` | empty after #456 | empty once #379 merges |
 
 ## 4.1.0 — shipped and confirmed 2026-11-13, early morning
 

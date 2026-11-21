@@ -17,7 +17,9 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | [development-learnings](development-learnings.md) | Read before starting work: the steps of one change, the mistakes made in the September 2026 screen audit and the rule for each, and the code patterns to reuse |
 | [product/roadmap](product/roadmap.md) | The five-phase improvement and mobile roadmap |
 | [product/feature-status](product/feature-status.md) | Every feature × backend × frontend × docs |
+| [product/legal](product/legal/README.md) | Draft Terms of Service and Group Organiser Terms, what to settle before they go live, and what has to be built to present them. Not in use |
 | [product/backlog-2026-09](product/backlog-2026-09.md) | The batched backlog that became **3.3.0** — what shipped, the four unbuilt specs and where they live, what the batch got wrong about itself, and what is still open |
+| [product/commercial-ideas-2026-11](product/commercial-ideas-2026-11.md) | Ideas only, nothing built: the owner's pricing idea (player-count levels paid by the organiser), what they ruled out (money through the app, adverts), features that could be paid, ideas for players, and what offering it to pitch owners would change |
 | [architecture/system-overview](architecture/system-overview.md) | How the two repos meet; the conventions that bite |
 | [architecture/database-migrations](architecture/database-migrations.md) | Complete V1–V33 history + deployment state |
 | [architecture/multi-tenancy](architecture/multi-tenancy.md) | Phase 5 cross-repo contract: tenant resolution, cache/key rules, the rollout ladder |
@@ -89,6 +91,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | Document | What it is |
 |---|---|
 | [architecture/overview](frontend/architecture/overview.md) | Tech stack, folder structure, data flow |
+| [plans/REDESIGN-2026-11](frontend/plans/REDESIGN-2026-11.md) | The November 2026 redesign: why, the direction the owner chose, the colours, type and screens, the four steps on the web, and what the iPhone app will need when it is rebranded — **step 1 open as FootMania-Simple-Front #362, nothing released** |
 | [plans/screen-audit-2026-09](frontend/plans/screen-audit-2026-09.md) | One job per screen: what the September 2026 audit of the heaviest screens found, the ten patterns, and the steps as they went (FootMania-Simple-Front #241–#267) — **done, on `next`, not released** |
 | [login](frontend/features/login.md) | Auth flow, change-password |
 | [password-recovery](frontend/features/password-recovery.md) | Forgot-password and reset screens, and the admin-issued link — **2.2.0, cut not deployed** |
