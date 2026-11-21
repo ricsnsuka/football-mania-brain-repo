@@ -91,6 +91,7 @@ Why a document is here rather than there: [where-documents-live.md](where-docume
 | Document | What it is |
 |---|---|
 | [architecture/overview](frontend/architecture/overview.md) | Tech stack, folder structure, data flow |
+| [plans/REDESIGN-2026-11](frontend/plans/REDESIGN-2026-11.md) | The November 2026 redesign: why, the direction the owner chose, the colours, type and screens, the four steps on the web, and what the iPhone app will need when it is rebranded — **step 1 open as FootMania-Simple-Front #362, nothing released** |
 | [plans/screen-audit-2026-09](frontend/plans/screen-audit-2026-09.md) | One job per screen: what the September 2026 audit of the heaviest screens found, the ten patterns, and the steps as they went (FootMania-Simple-Front #241–#267) — **done, on `next`, not released** |
 | [login](frontend/features/login.md) | Auth flow, change-password |
 | [password-recovery](frontend/features/password-recovery.md) | Forgot-password and reset screens, and the admin-issued link — **2.2.0, cut not deployed** |
